@@ -1,0 +1,5 @@
+name: ConsulatAPI
+author: Amisoz
+version: ${version}
+main: fr.leconsulat.api.ConsulatAPI
+loadbefore: [ConsulatEconomy, ConsulatCore]
