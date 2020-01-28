@@ -31,4 +31,23 @@ public class PlayersManager {
             return new ConsulatPlayer(RankEnum.INVITE, 0);
         }
     }
+
+    public static OfflineConsulat getOffline(String playerName) throws SQLException {
+        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM players WHERE player_name = ?");
+        request.setString(1, playerName);
+        ResultSet resultSet = request.executeQuery();
+        if(resultSet.next()){
+            int id = resultSet.getInt("id");
+            RankEnum player_rank = RankManager.getRankByName(resultSet.getString("player_rank"));
+            String player_uuid = resultSet.getString("player_uuid");
+            String player_name = resultSet.getString("player_name");
+            String date_registered = resultSet.getString("registered");
+            Double money = resultSet.getDouble("money");
+            int more_homes = resultSet.getInt("moreHomes");
+            int shops = resultSet.getInt("Shops");
+            return new OfflineConsulat(id, player_uuid, player_name, player_rank, date_registered, money, more_homes, shops);
+        }else{
+            return null;
+        }
+    }
 }
