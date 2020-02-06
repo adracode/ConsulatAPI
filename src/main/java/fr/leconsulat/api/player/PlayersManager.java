@@ -26,8 +26,12 @@ public class PlayersManager {
         if(resultSet.next()){
             RankEnum playerRank = RankManager.getRankByName(resultSet.getString("player_rank"));
             int id = resultSet.getInt("id");
+            resultSet.close();
+            request.close();
             return new ConsulatPlayer(playerRank, id);
         }else{
+            resultSet.close();
+            request.close();
             return new ConsulatPlayer(RankEnum.INVITE, 0);
         }
     }
@@ -45,8 +49,12 @@ public class PlayersManager {
             Double money = resultSet.getDouble("money");
             int more_homes = resultSet.getInt("moreHomes");
             int shops = resultSet.getInt("Shops");
+            resultSet.close();
+            request.close();
             return new OfflineConsulat(id, player_uuid, player_name, player_rank, date_registered, money, more_homes, shops);
         }else{
+            resultSet.close();
+            request.close();
             return null;
         }
     }

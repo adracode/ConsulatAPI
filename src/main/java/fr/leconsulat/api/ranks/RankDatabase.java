@@ -22,20 +22,27 @@ public class RankDatabase {
         request.setString(1, newRank.getRankName());
         request.setString(2, player.getName());
         request.executeUpdate();
+        request.close();
     }
 
     public boolean hasAccount(String playerUUID) throws SQLException {
         PreparedStatement request = this.connection.prepareStatement("SELECT * FROM players WHERE player_uuid = ?");
         request.setString(1, playerUUID);
         ResultSet resultSet = request.executeQuery();
-        return resultSet.isBeforeFirst();
+        boolean account = resultSet.isBeforeFirst();
+        resultSet.close();
+        request.close();
+        return account;
     }
 
     public String getUUID(String playerName) throws SQLException {
         PreparedStatement request = this.connection.prepareStatement("SELECT * FROM players WHERE player_name = ?");
         request.setString(1, playerName);
         ResultSet resultSet = request.executeQuery();
-        return resultSet.next() ? resultSet.getString("player_uuid") : null;
+        String result = resultSet.getString("player_uuid");
+        resultSet.close();
+        request.close();
+        return result;
     }
 
 }
