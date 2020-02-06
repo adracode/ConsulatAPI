@@ -26,6 +26,11 @@ public class ConsulatAPI extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ConnectionListeners(new RankDatabase()), this);
     }
 
+    @Override
+    public void onDisable() {
+        databaseManager.disconnect();
+    }
+
     public static ConsulatAPI getConsulatAPI() { return consulatAPI; }
 
     public static Connection getDatabase(){
