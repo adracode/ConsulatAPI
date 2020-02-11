@@ -1,6 +1,8 @@
 package fr.leconsulat.api.player;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.custom.CustomDatabase;
+import fr.leconsulat.api.custom.CustomObject;
 import fr.leconsulat.api.ranks.RankEnum;
 import fr.leconsulat.api.ranks.RankManager;
 import org.bukkit.entity.Player;
@@ -28,11 +30,11 @@ public class PlayersManager {
             int id = resultSet.getInt("id");
             resultSet.close();
             request.close();
-            return new ConsulatPlayer(playerRank, id);
+            return new ConsulatPlayer(playerRank, id, CustomDatabase.getCustom(player));
         }else{
             resultSet.close();
             request.close();
-            return new ConsulatPlayer(RankEnum.INVITE, 0);
+            return new ConsulatPlayer(RankEnum.INVITE, 0, CustomDatabase.getCustom(player));
         }
     }
 
