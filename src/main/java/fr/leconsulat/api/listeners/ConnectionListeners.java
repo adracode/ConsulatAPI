@@ -28,6 +28,8 @@ public class ConnectionListeners implements Listener {
         int id;
         try {
             PlayersManager.initializePlayer(player, PlayersManager.fetchPlayer(player));
+            ConsulatPlayer consulatPlayer = PlayersManager.getConsulatPlayer(player);
+            System.out.println(consulatPlayer.getRank());
         } catch (SQLException e) {
             e.printStackTrace();
             player.kickPlayer(ChatColor.RED + "Erreur lors de la récupération de vos données.\n" + e.getMessage());

@@ -20,7 +20,7 @@ public class CustomDatabase {
             request.close();
             return new CustomObject(hasCustom, prefix);
         }
-        return null;
+        return new CustomObject(false, "");
     }
 
     public static void activePerso(Player player) throws SQLException {
