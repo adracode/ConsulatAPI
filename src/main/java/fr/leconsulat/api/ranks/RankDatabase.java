@@ -39,10 +39,13 @@ public class RankDatabase {
         PreparedStatement request = this.connection.prepareStatement("SELECT * FROM players WHERE player_name = ?");
         request.setString(1, playerName);
         ResultSet resultSet = request.executeQuery();
-        String result = resultSet.getString("player_uuid");
-        resultSet.close();
-        request.close();
-        return result;
+        if(resultSet.next()) {
+            String result = resultSet.getString("player_uuid");
+            resultSet.close();
+            request.close();
+            return result;
+        }
+        return null;
     }
 
 }

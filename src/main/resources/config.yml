@@ -1,4 +1,4 @@
 host: localhost
 database: serveur
-user: default
+username: default
 password: default
