@@ -9,6 +9,7 @@ public class ConsulatPlayer {
     private int idPlayer;
     private boolean hasPerso;
     private String persoPrefix;
+    private Double money;
 
     public ConsulatPlayer(RankEnum playerRank, int id, CustomObject customObject) {
         this.playerRank = playerRank;
@@ -19,6 +20,26 @@ public class ConsulatPlayer {
 
     public RankEnum getRank() {
         return playerRank;
+    }
+
+    public Double getMoney() {
+        return money;
+    }
+
+    public void setMoney(Double money)  {
+        this.money = money;
+    }
+
+    public void addMoney(Double amount) {
+        this.money += amount;
+    }
+
+    public void removeMoney(Double amount) {
+        this.money = this.money - amount;
+    }
+
+    public boolean canRemove(Double amount) {
+        return !((this.money - amount) < 0);
     }
 
     public void setRank(RankEnum playerRank) {
