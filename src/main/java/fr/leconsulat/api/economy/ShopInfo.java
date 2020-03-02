@@ -6,12 +6,13 @@ import java.util.UUID;
 
 public class ShopInfo {
 
-    private int x, z, price;
+    private int x, y, z, price;
     private String material, owner_uuid;
 
-    public ShopInfo(int x, int z, String material, int price, String owner_uuid) {
+    public ShopInfo(int x, int y, int z, String material, int price, String owner_uuid) {
         this.x = x;
         this.z = z;
+        this.y = y;
         this.material = material;
         this.price = price;
         this.owner_uuid = owner_uuid;
@@ -24,6 +25,8 @@ public class ShopInfo {
     public int getShopZ() {
         return z;
     }
+
+    public int getShopY() { return y; }
 
     public String getShopMaterial() {
         return material;
