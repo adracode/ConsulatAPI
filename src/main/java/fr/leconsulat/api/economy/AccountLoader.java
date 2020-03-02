@@ -79,26 +79,28 @@ public class AccountLoader {
         return hasAccount;
     }
 
-    public static void addShopToBdd(int x, int z, String mat, int price, OfflinePlayer offlinePlayer) throws SQLException {
+    public static void addShopToBdd(int x, int y, int z, String mat, Double price, OfflinePlayer offlinePlayer) throws SQLException {
         PreparedStatement rs;
-        rs = ConsulatAPI.getDatabase().prepareStatement("INSERT INTO shopinfo(shop_x, shop_z, material, price, owner_uuid) VALUES(?, ?, ?, ?, ?)");
+        rs = ConsulatAPI.getDatabase().prepareStatement("INSERT INTO shopinfo(shop_x, shop_y, shop_z, material, price, owner_uuid) VALUES(?, ?, ?, ?, ?, ?)");
         rs.setInt(1, x);
-        rs.setInt(2, z);
-        rs.setString(3, mat);
-        rs.setInt(4, price);
-        rs.setString(5, offlinePlayer.getUniqueId().toString());
+        rs.setInt(2, y);
+        rs.setInt(3, z);
+        rs.setString(4, mat);
+        rs.setDouble(5, price);
+        rs.setString(6, offlinePlayer.getUniqueId().toString());
         rs.executeUpdate();
         rs.close();
     }
 
-    public static void removeShopFromBdd(int x, int z, String mat, int price, OfflinePlayer offlinePlayer) throws SQLException {
+    public static void removeShopFromBdd(int x, int y, int z, String mat, Double price, OfflinePlayer offlinePlayer) throws SQLException {
         PreparedStatement rs;
-        rs = ConsulatAPI.getDatabase().prepareStatement("DELETE FROM shopinfo WHERE shop_x = ? AND shop_z = ? AND material = ? AND price = ? AND owner_uuid = ?;");
+        rs = ConsulatAPI.getDatabase().prepareStatement("DELETE FROM shopinfo WHERE shop_x = ? AND shop_y = ? AND shop_z = ? AND material = ? AND price = ? AND owner_uuid = ?;");
         rs.setInt(1, x);
-        rs.setInt(2, z);
-        rs.setString(3, mat);
-        rs.setInt(4, price);
-        rs.setString(5, offlinePlayer.getUniqueId().toString());
+        rs.setInt(2, y);
+        rs.setInt(3, z);
+        rs.setString(4, mat);
+        rs.setDouble(5, price);
+        rs.setString(6, offlinePlayer.getUniqueId().toString());
         rs.executeUpdate();
         rs.close();
     }
@@ -108,7 +110,7 @@ public class AccountLoader {
         PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM shopinfo");
         ResultSet resultSet = preparedStatement.executeQuery();
         while(resultSet.next()) {
-            allShops.add(new ShopInfo(resultSet.getInt("shop_x"), resultSet.getInt("shop_z"), resultSet.getString("material"), resultSet.getInt("price"), resultSet.getString("owner_uuid")));
+            allShops.add(new ShopInfo(resultSet.getInt("shop_x"), resultSet.getInt("shop_y"), resultSet.getInt("shop_z"), resultSet.getString("material"), resultSet.getInt("price"), resultSet.getString("owner_uuid")));
         }
 
         preparedStatement.close();

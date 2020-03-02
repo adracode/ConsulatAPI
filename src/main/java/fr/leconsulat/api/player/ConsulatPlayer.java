@@ -1,5 +1,6 @@
 package fr.leconsulat.api.player;
 
+import fr.leconsulat.api.claim.ClaimObject;
 import fr.leconsulat.api.custom.CustomObject;
 import fr.leconsulat.api.ranks.RankEnum;
 
@@ -11,11 +12,14 @@ public class ConsulatPlayer {
     private String persoPrefix;
     private Double money;
 
-    public ConsulatPlayer(RankEnum playerRank, int id, CustomObject customObject) {
+    public ClaimObject claimedChunk;
+
+    public ConsulatPlayer(RankEnum playerRank, int id, CustomObject customObject, Double money) {
         this.playerRank = playerRank;
         this.idPlayer = id;
         this.hasPerso = customObject.isBuyed();
         this.persoPrefix = customObject.getPrefix();
+        this.money = money;
     }
 
     public RankEnum getRank() {
