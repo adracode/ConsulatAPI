@@ -110,7 +110,7 @@ public class AccountLoader {
         PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM shopinfo");
         ResultSet resultSet = preparedStatement.executeQuery();
         while(resultSet.next()) {
-            allShops.add(new ShopInfo(resultSet.getInt("shop_x"), resultSet.getInt("shop_y"), resultSet.getInt("shop_z"), resultSet.getString("material"), resultSet.getInt("price"), resultSet.getString("owner_uuid")));
+            allShops.add(new ShopInfo(resultSet.getInt("shop_x"), resultSet.getInt("shop_y"), resultSet.getInt("shop_z"), resultSet.getString("material"), resultSet.getDouble("price"), resultSet.getString("owner_uuid")));
         }
 
         preparedStatement.close();
