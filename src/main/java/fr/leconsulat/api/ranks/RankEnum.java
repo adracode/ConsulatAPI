@@ -12,6 +12,7 @@ public enum RankEnum {
     ANIMATEUR("Animateur", ChatColor.BLUE, 15, 100),
     MECENE("Mécène", ChatColor.GREEN, 15, 90),
     FINANCEUR("Financeur", ChatColor.DARK_GREEN, 5, 90),
+    TOURISTE("Touriste", ChatColor.GRAY, 0, 100),
     JOUEUR("Joueur", ChatColor.GRAY, 0, 100),
     INVITE("Invité", ChatColor.WHITE, 0, 100);
 
