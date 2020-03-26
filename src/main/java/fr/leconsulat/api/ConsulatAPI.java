@@ -1,7 +1,9 @@
 package fr.leconsulat.api;
 
 import fr.leconsulat.api.database.DatabaseManager;
+import fr.leconsulat.api.listeners.ChunkChangeEvent;
 import fr.leconsulat.api.listeners.ConnectionListeners;
+import fr.leconsulat.api.listeners.PlayerMove;
 import fr.leconsulat.api.ranks.RankDatabase;
 import fr.leconsulat.api.runnable.KeepAlive;
 import org.bukkit.Bukkit;
@@ -24,6 +26,7 @@ public class ConsulatAPI extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20*60*5);
 
         Bukkit.getPluginManager().registerEvents(new ConnectionListeners(new RankDatabase()), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerMove(), this);
     }
 
     @Override
