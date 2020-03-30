@@ -25,7 +25,7 @@ public class ConsulatAPI extends JavaPlugin {
 
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20*60*5);
 
-        Bukkit.getPluginManager().registerEvents(new ConnectionListeners(new RankDatabase()), this);
+        Bukkit.getPluginManager().registerEvents(new ConnectionListeners(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerMove(), this);
     }
 

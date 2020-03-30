@@ -22,8 +22,8 @@ public class PlayersManager {
     public static void initializePlayer(Player player, ConsulatPlayer consulatPlayer){ consulatPlayers.put(player, consulatPlayer); }
 
     public static ConsulatPlayer fetchPlayer(Player player) throws SQLException {
-        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("SELECT player_rank, id,money FROM players WHERE player_name = ?");
-        request.setString(1, player.getName());
+        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("SELECT player_rank, id,money FROM players WHERE player_uuid = ?");
+        request.setString(1, player.getUniqueId().toString());
         ResultSet resultSet = request.executeQuery();
         if(resultSet.next()){
             RankEnum playerRank = RankManager.getRankByName(resultSet.getString("player_rank"));
@@ -35,7 +35,7 @@ public class PlayersManager {
         }else{
             resultSet.close();
             request.close();
-            return new ConsulatPlayer(RankEnum.INVITE, 0, CustomDatabase.getCustom(player), 0D);
+            return null;
         }
     }
 
