@@ -6,6 +6,7 @@ import fr.leconsulat.api.player.PlayersManager;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -15,7 +16,7 @@ import java.sql.SQLException;
 
 public class ConnectionListeners implements Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
         try {
