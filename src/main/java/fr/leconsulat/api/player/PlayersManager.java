@@ -35,7 +35,7 @@ public class PlayersManager {
         }else{
             resultSet.close();
             request.close();
-            return null;
+            return new ConsulatPlayer(RankEnum.INVITE, 0, CustomDatabase.getCustom(player), -1D);
         }
     }
 

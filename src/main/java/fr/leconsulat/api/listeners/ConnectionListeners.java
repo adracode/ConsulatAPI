@@ -16,16 +16,15 @@ import java.sql.SQLException;
 
 public class ConnectionListeners implements Listener {
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onJoin(PlayerJoinEvent event){
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         try {
             ConsulatPlayer consulatPlayer = PlayersManager.fetchPlayer(player);
-            if(consulatPlayer != null){
-                PlayersManager.initializePlayer(player, PlayersManager.fetchPlayer(player));
-                System.out.println(consulatPlayer.getMoney());
-            }else{
-                player.kickPlayer(ChatColor.RED + "Erreur, reconnecte-toi. Si cela persiste, contact un administrateur.");
+            PlayersManager.initializePlayer(player, PlayersManager.fetchPlayer(player));
+            System.out.println(consulatPlayer.getMoney());
+            if(consulatPlayer.getMoney() == -1){
+                player.kickPlayer(ChatColor.RED + "Erreur lors de la récupération de vos données. Reconnecte-toi !");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -34,13 +33,13 @@ public class ConnectionListeners implements Listener {
     }
 
     @EventHandler
-    public void onQuit(PlayerQuitEvent event){
+    public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        try{
+        try {
             ConsulatPlayer consulatPlayer = PlayersManager.getConsulatPlayer(player);
-            if(consulatPlayer != null)
+            if (consulatPlayer.getMoney() != -1)
                 saveMoney(player);
-        }catch(SQLException exception){
+        } catch (SQLException exception) {
             exception.printStackTrace();
         }
     }
