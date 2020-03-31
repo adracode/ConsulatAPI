@@ -21,11 +21,7 @@ public class ConnectionListeners implements Listener {
         Player player = event.getPlayer();
         try {
             ConsulatPlayer consulatPlayer = PlayersManager.fetchPlayer(player);
-            PlayersManager.initializePlayer(player, PlayersManager.fetchPlayer(player));
-            System.out.println(consulatPlayer.getMoney());
-            if(consulatPlayer.getMoney() == -1){
-                player.kickPlayer(ChatColor.RED + "Erreur lors de la récupération de vos données. Reconnecte-toi !");
-            }
+            PlayersManager.initializePlayer(player, consulatPlayer);
         } catch (SQLException e) {
             e.printStackTrace();
             player.kickPlayer(ChatColor.RED + "Erreur lors de la récupération de vos données.\n" + e.getMessage());
@@ -36,9 +32,7 @@ public class ConnectionListeners implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         try {
-            ConsulatPlayer consulatPlayer = PlayersManager.getConsulatPlayer(player);
-            if (consulatPlayer.getMoney() != -1)
-                saveMoney(player);
+            saveMoney(player);
         } catch (SQLException exception) {
             exception.printStackTrace();
         }
