@@ -107,7 +107,7 @@ public class AccountLoader {
 
     public static ArrayList<ShopInfo> getShopList() throws SQLException {
         ArrayList<ShopInfo> allShops = new ArrayList<>();
-        PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM shopinfo");
+        PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM shopinfo WHERE isEmpty = 0");
         ResultSet resultSet = preparedStatement.executeQuery();
         while(resultSet.next()) {
             allShops.add(new ShopInfo(resultSet.getInt("shop_x"), resultSet.getInt("shop_y"), resultSet.getInt("shop_z"), resultSet.getString("material"), resultSet.getDouble("price"), resultSet.getString("owner_uuid")));
