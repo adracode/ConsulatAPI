@@ -6,7 +6,7 @@ public enum RankEnum {
 
     ADMIN("Admin", ChatColor.RED, 100, 100),
     RESPONSABLE("Responsable", ChatColor.GOLD, 95, 100),
-    MODPLUS("Mod+", ChatColor.YELLOW, 90, 100),
+    MODPLUS("Superviseur", ChatColor.YELLOW, 90, 100),
     MODO("Modérateur", ChatColor.YELLOW, 50, 95),
     DEVELOPPEUR("Développeur", ChatColor.BLUE, 30, 100),
     BUILDER("Builder", ChatColor.BLUE, 30, 100),
