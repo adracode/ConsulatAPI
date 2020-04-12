@@ -1,6 +1,7 @@
 package fr.leconsulat.api.economy;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.claim.ClaimObject;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.player.PlayersManager;
 import org.bukkit.Bukkit;
@@ -145,13 +146,11 @@ public class AccountLoader {
         }
     }
 
-    public static ArrayList<Claim> getClaims(Player player) throws SQLException {
-        ArrayList<Claim> myClaims = new ArrayList<>();
+    public static ArrayList<ClaimObject> getClaims(Player player) throws SQLException {
+        ArrayList<ClaimObject> myClaims = new ArrayList<>();
         ArrayList<String> accessed;
 
-        ConsulatPlayer consulatPlayer = PlayersManager.getConsulatPlayer(player);
-
-        final PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT `claim_x`, `claim_z`  FROM `claims` WHERE `player_uuid` = ?");
+        final PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT *  FROM `claims` WHERE `player_uuid` = ?");
         preparedStatement.setString(1, player.getUniqueId().toString());
         preparedStatement.executeQuery();
         final ResultSet resultat = preparedStatement.executeQuery();
@@ -161,7 +160,7 @@ public class AccountLoader {
             Chunk c = Objects.requireNonNull(Bukkit.getWorld("world")).getChunkAt(x, z);
             String description = resultat.getString("description");
             accessed = getAccessedOfAClaim(c);
-            myClaims.add(new Claim(x, z, accessed, description));
+            myClaims.add(new ClaimObject(x, z, accessed, player.getUniqueId().toString(), description));
         }
         preparedStatement.close();
         return myClaims;

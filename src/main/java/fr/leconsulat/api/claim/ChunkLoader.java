@@ -22,7 +22,7 @@ public class ChunkLoader {
         ResultSet resultSet = preparedStatement.executeQuery();
 
         while(resultSet.next()) {
-            ClaimObject claimObject = new ClaimObject(resultSet.getInt("claim_x"), resultSet.getInt("claim_z"), resultSet.getString("player_uuid"));
+            ClaimObject claimObject = new ClaimObject(resultSet.getInt("claim_x"), resultSet.getInt("claim_z"), new ArrayList<String>(), resultSet.getString("player_uuid"), resultSet.getString("description"));
             PreparedStatement accessStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM access WHERE claim_x = ? AND claim_z = ?");
             accessStatement.setInt(1, resultSet.getInt("claim_x"));
             accessStatement.setInt(2, resultSet.getInt("claim_z"));
@@ -66,7 +66,7 @@ public class ChunkLoader {
         preparedStatement.setString(3, player.getUniqueId().toString());
         preparedStatement.executeUpdate();
         preparedStatement.close();
-        claims.add(new ClaimObject(x, z, player.getUniqueId().toString()));
+        claims.add(new ClaimObject(x, z, new ArrayList<>(), player.getUniqueId().toString(),null));
     }
 
     public static void unclaim(int x, int z) throws SQLException {

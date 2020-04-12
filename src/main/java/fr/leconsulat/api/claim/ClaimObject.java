@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.entity.Player;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -16,12 +17,14 @@ public class ClaimObject {
     private int Z;
     private String playerUUID;
     public List<String> access;
+    private String description;
 
-    public ClaimObject(int x, int z, String playerUUID)  {
+    public ClaimObject(int x, int z, List<String> access, String playerUUID, String description)  {
         this.X = x;
         this.Z = z;
-        this.access = new ArrayList<>();
+        this.access = access;
         this.playerUUID = playerUUID;
+        this.description = description;
     }
 
     public int getX() {
@@ -47,4 +50,11 @@ public class ClaimObject {
         return chunk.getX() == this.X && chunk.getZ() == Z;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }
