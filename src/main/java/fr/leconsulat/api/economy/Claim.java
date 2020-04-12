@@ -6,12 +6,14 @@ public class Claim {
 
     private int firstX;
     private int firstZ;
-    public ArrayList<String> access;
+    private String description;
 
-    public Claim(int firstX, int firstZ, ArrayList<String> access)  {
+    public ArrayList<String> access;
+    public Claim(int firstX, int firstZ, ArrayList<String> access, String description)  {
         this.firstX = firstX;
         this.firstZ = firstZ;
         this.access = access;
+        this.description = description;
     }
 
     public int getX()
@@ -29,4 +31,7 @@ public class Claim {
         return access;
     }
 
+    public String getDescription() {
+        return description;
+    }
 }

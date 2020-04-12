@@ -159,8 +159,9 @@ public class AccountLoader {
             int x = resultat.getInt("claim_x");
             int z = resultat.getInt("claim_z");
             Chunk c = Objects.requireNonNull(Bukkit.getWorld("world")).getChunkAt(x, z);
+            String description = resultat.getString("description");
             accessed = getAccessedOfAClaim(c);
-            myClaims.add(new Claim(x, z, accessed));
+            myClaims.add(new Claim(x, z, accessed, description));
         }
         preparedStatement.close();
         return myClaims;
