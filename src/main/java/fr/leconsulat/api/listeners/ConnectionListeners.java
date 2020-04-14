@@ -1,12 +1,12 @@
 package fr.leconsulat.api.listeners;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.claim.ChunkLoader;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.player.PlayersManager;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -22,6 +22,7 @@ public class ConnectionListeners implements Listener {
         try {
             ConsulatPlayer consulatPlayer = PlayersManager.fetchPlayer(player);
             PlayersManager.initializePlayer(player, consulatPlayer);
+            consulatPlayer.claimedChunk = ChunkLoader.getClaimedZone(player.getLocation().getChunk());
         } catch (SQLException e) {
             e.printStackTrace();
             player.kickPlayer(ChatColor.RED + "Erreur lors de la récupération de vos données.\n" + e.getMessage());
