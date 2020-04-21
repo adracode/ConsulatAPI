@@ -4,3 +4,4 @@ username: default
 password: default
 
 player: fr.amisoz.consulatcore.players.SurvivalPlayer
+debug: false

@@ -20,6 +20,7 @@ public class ConsulatAPI extends JavaPlugin {
     private CPlayerManager playerManager;
     private DatabaseManager databaseManager;
     private File log;
+    private boolean debug = false;
     
     @Override
     public void onEnable(){
@@ -29,6 +30,7 @@ public class ConsulatAPI extends JavaPlugin {
         consulatAPI = this;
         log = new File(this.getDataFolder(), "log.txt");
         saveDefaultConfig();
+        this.debug = getConfig().getBoolean("debug", false);
         databaseManager = new DatabaseManager();
         databaseManager.connect();
         playerManager = new CPlayerManager();
@@ -43,6 +45,10 @@ public class ConsulatAPI extends JavaPlugin {
     @Override
     public void onDisable(){
         databaseManager.disconnect();
+    }
+    
+    public boolean isDebug(){
+        return debug;
     }
     
     public static ConsulatAPI getConsulatAPI(){
