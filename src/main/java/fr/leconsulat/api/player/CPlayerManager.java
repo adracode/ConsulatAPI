@@ -101,7 +101,9 @@ public class CPlayerManager implements Listener {
                     );
                 });
             } catch(SQLException e){
-                event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage());
+                Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
+                    event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage());
+                });
                 e.printStackTrace();
             }
         });
