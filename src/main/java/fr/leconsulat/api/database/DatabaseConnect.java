@@ -21,7 +21,7 @@ public class DatabaseConnect {
 
     synchronized void connectDatabase() throws SQLException {
         if(connection != null && !connection.isClosed()) return;
-        Bukkit.getLogger().log(Level.WARNING, "Database connected");
+        Bukkit.getLogger().log(Level.INFO, "Database connected");
         connection = DriverManager.getConnection("jdbc:mysql://" + host + "/" + database, username, password);
     }
 

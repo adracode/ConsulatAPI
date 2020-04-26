@@ -68,11 +68,20 @@ public class CPlayerManager implements Listener {
     }
     
     private void loadAllPlayers() throws SQLException{
-        PreparedStatement load = ConsulatAPI.getDatabase().prepareStatement("SELECT player_uuid, player_name FROM players");
+        PreparedStatement load = ConsulatAPI.getDatabase().prepareStatement("SELECT id, player_uuid, player_name FROM players");
         ResultSet all = load.executeQuery();
         while(all.next()){
-            offlinePlayers.put(all.getString("player_name").toLowerCase(),
-                    UUID.fromString(all.getString("player_uuid")));
+            String name = all.getString("player_name");
+            if(name == null){
+                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "NULL player_name at id " + all.getInt("id"));
+                continue;
+            }
+            String uuid = all.getString("player_uuid");
+            if(uuid == null){
+                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "NULL player_uuid at id " + all.getInt("id"));
+                continue;
+            }
+            offlinePlayers.put(name.toLowerCase(), UUID.fromString(uuid));
         }
         all.close();
         load.close();
@@ -152,9 +161,16 @@ public class CPlayerManager implements Listener {
         fetch.setString(1, player.getUUID().toString());
         ResultSet resultSet = fetch.executeQuery();
         if(resultSet.next()){
+            int id = resultSet.getInt("id");
+            String rank = resultSet.getString("player_rank");
+            if(rank == null){
+                resultSet.close();
+                fetch.close();
+                throw new SQLException("player_rank is null at id " + id);
+            }
             player.initialize(
-                    resultSet.getInt("id"),
-                    Rank.byName(resultSet.getString("player_rank")),
+                    id,
+                    Rank.byName(rank),
                     resultSet.getBoolean("buyedPerso"),
                     resultSet.getString("prefix_perso"),
                     resultSet.getString("registered")
@@ -172,11 +188,24 @@ public class CPlayerManager implements Listener {
         ResultSet resultFetch = fetch.executeQuery();
         ConsulatOffline offline;
         if(resultFetch.next()){
+            int id = resultFetch.getInt("id");
+            String uuid = resultFetch.getString("player_uuid");
+            if(uuid == null){
+                resultFetch.close();
+                fetch.close();
+                throw new SQLException("player_uuid is null at id " + id);
+            }
+            String rank = resultFetch.getString("player_rank");
+            if(rank == null){
+                resultFetch.close();
+                fetch.close();
+                throw new SQLException("player_rank is null at id " + id);
+            }
             offline = new ConsulatOffline(
-                    resultFetch.getInt("id"),
-                    UUID.fromString(resultFetch.getString("player_uuid")),
+                    id,
+                    UUID.fromString(uuid),
                     resultFetch.getString("player_name"),
-                    Rank.byName(resultFetch.getString("player_rank")),
+                    Rank.byName(rank),
                     resultFetch.getString("registered"));
         } else {
             return Optional.empty();
@@ -222,4 +251,5 @@ public class CPlayerManager implements Listener {
         request.executeUpdate();
         request.close();
     }
+    
 }
