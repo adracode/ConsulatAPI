@@ -8,16 +8,15 @@ import java.sql.SQLException;
 
 public class DatabaseManager {
 
-    private ConsulatAPI consulatAPI;
     private DatabaseConnect databaseConnect;
 
     public Connection database;
 
-    public DatabaseManager(ConsulatAPI consulatAPI) {
-        this.consulatAPI = consulatAPI;
-    }
+    public DatabaseManager() {
+            }
 
     public void connect(){
+        ConsulatAPI consulatAPI = ConsulatAPI.getConsulatAPI();
         String host = consulatAPI.getConfig().getString("host");
         String databaseString = consulatAPI.getConfig().getString("database");
         String username = consulatAPI.getConfig().getString("username");

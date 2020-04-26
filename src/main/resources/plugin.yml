@@ -1,5 +1,6 @@
 name: ConsulatAPI
-author: Amisoz
+authors: [Amisoz, adracode]
 version: ${version}
 main: fr.leconsulat.api.ConsulatAPI
-loadbefore: [ConsulatEconomy, ConsulatCore]
+loadbefore: [ConsulatCore]
+api-version: 1.14

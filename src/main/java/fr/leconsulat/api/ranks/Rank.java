@@ -2,7 +2,9 @@ package fr.leconsulat.api.ranks;
 
 import org.bukkit.ChatColor;
 
-public enum RankEnum {
+import java.util.Arrays;
+
+public enum Rank {
 
     ADMIN("Admin", ChatColor.RED, 100, 100),
     RESPONSABLE("Responsable", ChatColor.GOLD, 95, 100),
@@ -21,7 +23,7 @@ public enum RankEnum {
     private int rankPower;
     private int minPower;
 
-    RankEnum(String rankName, ChatColor rankColor, int rankPower, int minPower) {
+    Rank(String rankName, ChatColor rankColor, int rankPower, int minPower) {
         this.rankName = rankName;
         this.rankColor = rankColor;
         this.rankPower = rankPower;
@@ -43,4 +45,9 @@ public enum RankEnum {
     public int getMinPower() {
         return minPower;
     }
+    
+    public static Rank byName(String name){
+        return Arrays.stream(Rank.values()).filter(rank -> rank.getRankName().equalsIgnoreCase(name)).findFirst().orElse(Rank.INVITE);
+    }
+    
 }

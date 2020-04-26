@@ -1,8 +1,8 @@
 package fr.leconsulat.api.commands;
 
 import fr.leconsulat.api.player.ConsulatPlayer;
-import fr.leconsulat.api.player.PlayersManager;
-import fr.leconsulat.api.ranks.RankEnum;
+import fr.leconsulat.api.player.CPlayerManager;
+import fr.leconsulat.api.ranks.Rank;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -13,54 +13,37 @@ public abstract class ConsulatCommand implements CommandExecutor {
 
     private String usage;
     private int argsMin;
-    private RankEnum rankMinimum;
+    private Rank rankMinimum;
 
-    private Player player;
-    private String[] args;
-
-    public ConsulatCommand(String usage, int argsMin, RankEnum rankMinimum) {
+    public ConsulatCommand(String usage, int argsMin, Rank rankMinimum) {
         this.usage = usage;
         this.argsMin = argsMin;
         this.rankMinimum = rankMinimum;
     }
 
-    public abstract void consulatCommand();
+    public abstract void onCommand(ConsulatPlayer player, String[] args);
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        this.args = args;
-
         if(!(sender instanceof Player)){
-            sender.sendMessage(ChatColor.RED + "Il faut être en jeu pour éxecuter cette commande.");
+            sender.sendMessage("§cIl faut être en jeu pour éxecuter cette commande.");
             return false;
         }
-
         if(args.length < argsMin){
             sender.sendMessage(ChatColor.RED + usage);
             return false;
         }
-
-        player = (Player) sender;
-        ConsulatPlayer consulatPlayer = PlayersManager.getConsulatPlayer(player);
-
-        if(consulatPlayer.getRank().getRankPower() < rankMinimum.getRankPower()){
-            player.sendMessage(ChatColor.RED + "Tu n'as pas le power requis.");
+        Player bukkitPlayer = (Player)sender;
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(bukkitPlayer.getUniqueId());
+        if(!player.hasPower(rankMinimum)){
+            bukkitPlayer.sendMessage("§cTu n'as pas le power requis.");
             return false;
         }
-
-        consulatCommand();
+        onCommand(player, args);
         return true;
     }
-
-    public ConsulatPlayer getConsulatPlayer(){
-        return PlayersManager.getConsulatPlayer(player);
-    }
-
-    public Player getPlayer() {
-        return player;
-    }
-
-    public String[] getArgs() {
-        return args;
+    
+    public String getUsage(){
+        return usage;
     }
 }
