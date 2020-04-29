@@ -1,6 +1,12 @@
 package fr.leconsulat.api;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import fr.leconsulat.api.commands.CommandManager;
+import fr.leconsulat.api.commands.TestCommand;
 import fr.leconsulat.api.database.DatabaseManager;
+import fr.leconsulat.api.gui.AGuiManager;
+import fr.leconsulat.api.gui.exemples.TestGui;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.runnable.KeepAlive;
 import org.bukkit.Bukkit;
@@ -17,8 +23,11 @@ public class ConsulatAPI extends JavaPlugin {
     
     private static ConsulatAPI consulatAPI;
     
+    private ProtocolManager protocolManager;
     private CPlayerManager playerManager;
     private DatabaseManager databaseManager;
+    private AGuiManager guiManager;
+    private CommandManager commandManager;
     private File log;
     private boolean debug = false;
     
@@ -33,7 +42,12 @@ public class ConsulatAPI extends JavaPlugin {
         this.debug = getConfig().getBoolean("debug", false);
         databaseManager = new DatabaseManager();
         databaseManager.connect();
+        protocolManager = ProtocolLibrary.getProtocolManager();
         playerManager = new CPlayerManager();
+        commandManager = new CommandManager(this);
+        guiManager = new AGuiManager(this);
+        commandManager.addCommand(new TestCommand());
+        guiManager.addRootGui("yes", new TestGui());
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
     }
@@ -73,5 +87,9 @@ public class ConsulatAPI extends JavaPlugin {
                 e.printStackTrace();
             }
         });
+    }
+    
+    public ProtocolManager getProtocolManager(){
+        return protocolManager;
     }
 }

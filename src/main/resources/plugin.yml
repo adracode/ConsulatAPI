@@ -3,4 +3,6 @@ authors: [Amisoz, adracode]
 version: ${version}
 main: fr.leconsulat.api.ConsulatAPI
 loadbefore: [ConsulatCore]
+depend:
+  - ProtocolLib
 api-version: 1.14
