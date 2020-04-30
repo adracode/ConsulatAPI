@@ -1,6 +1,6 @@
 package fr.leconsulat.api.commands;
 
-import fr.leconsulat.api.gui.AGuiManager;
+import fr.leconsulat.api.gui.GuiManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
 
@@ -12,6 +12,6 @@ public class TestCommand extends ConsulatCommand {
     
     @Override
     public void onCommand(ConsulatPlayer player, String[] args){
-        AGuiManager.getInstance().getRootGui("yes").open(player, player);
+        GuiManager.getInstance().getRootGui("yes").open(player, player);
     }
 }

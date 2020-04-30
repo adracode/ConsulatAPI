@@ -1,30 +1,31 @@
-package fr.leconsulat.api.gui;
+package fr.leconsulat.api.gui.events;
 
+import fr.leconsulat.api.gui.Gui;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.inventory.ClickType;
 
 /**
  * Event appelé lors d'un click sur un item dans un Gui
  */
-public class AGClickEvent {
+public class GuiClickEvent {
 
-    private final AGui gui;
-    private final byte slot;
+    private final Gui gui;
+    private final int slot;
     private final ClickType clickType;
     private final ConsulatPlayer player;
 
-    public AGClickEvent(AGui gui, byte slot, ClickType clickType, ConsulatPlayer player){
+    public GuiClickEvent(Gui gui, int slot, ClickType clickType, ConsulatPlayer player){
         this.gui = gui;
         this.slot = slot;
         this.clickType = clickType;
         this.player = player;
     }
     
-    public AGui getGui(){
+    public Gui getGui(){
         return gui;
     }
     
-    public byte getSlot(){
+    public int getSlot(){
         return slot;
     }
     

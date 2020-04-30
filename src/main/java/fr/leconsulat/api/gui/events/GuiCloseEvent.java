@@ -1,17 +1,17 @@
-package fr.leconsulat.api.gui;
+package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.player.ConsulatPlayer;
 
 /**
  * Event appelé lorsque qu'un Gui est fermé
  */
-public class AGCloseEvent {
+public class GuiCloseEvent {
 
     private final ConsulatPlayer player;
     private Object key;
     private boolean openFatherGui;
 
-    public AGCloseEvent(ConsulatPlayer player, boolean openFatherGui){
+    public GuiCloseEvent(ConsulatPlayer player, boolean openFatherGui){
         this.player = player;
         this.openFatherGui = openFatherGui;
     }

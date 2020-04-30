@@ -1,25 +1,28 @@
 package fr.leconsulat.api.gui.exemples;
 
+import fr.leconsulat.api.gui.events.GuiClickEvent;
+import fr.leconsulat.api.gui.events.GuiCloseEvent;
+import fr.leconsulat.api.gui.events.GuiCreateEvent;
+import fr.leconsulat.api.gui.events.GuiOpenEvent;
 import fr.leconsulat.api.gui.*;
 import org.bukkit.Material;
 
-public class ChildTestGui extends AGListener {
+public class ChildTestGui extends GuiListener {
     
-    public ChildTestGui(AGListener father){
+    public ChildTestGui(GuiListener father){
         super(father, int.class);
         addGui(null, this, "Classement", 6,
-                addItem("1er", 0, "adracode", "§r§aBravo !", "§7Tu es le premier !"),
-                addItem("Page: ", 49, Material.PAPER).setGlowing(true),
-                addItem("Suivant", 53, Material.ARROW),
-                addItem("Précédent", 45, Material.ARROW),
-                addItem("§eJe me déplace !", 1, Material.SLIME_BALL)
+                getItem("1er", 0, "adracode", "§r§aBravo !", "§7Tu es le premier !"),
+                getItem("Page: ", 49, Material.PAPER).setGlowing(true),
+                getItem("Suivant", 53, Material.ARROW),
+                getItem("Précédent", 45, Material.ARROW),
+                getItem("§eJe me déplace !", 1, Material.SLIME_BALL)
         );
-        create();
         setCreateOnOpen(true);
     }
     
     @Override
-    public void onCreate(AGCreateEvent event){
+    public void onCreate(GuiCreateEvent event){
         if(event.getKey() == null){
             return;
         }
@@ -34,17 +37,17 @@ public class ChildTestGui extends AGListener {
     }
     
     @Override
-    public void onOpen(AGOpenEvent event){
+    public void onOpen(GuiOpenEvent event){
     
     }
     
     @Override
-    public void onClose(AGCloseEvent event){
+    public void onClose(GuiCloseEvent event){
         event.setKey(event.getPlayer());
     }
     
     @Override
-    public void onClick(AGClickEvent event){
+    public void onClick(GuiClickEvent event){
         switch(event.getSlot()){
             case 53:{
                 open(event.getPlayer(), (int)event.getGui().getKey() + 1);

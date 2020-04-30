@@ -1,26 +1,26 @@
-package fr.leconsulat.api.events;
+package fr.leconsulat.api.gui.events;
 
-import fr.leconsulat.api.gui.AGListener;
+import fr.leconsulat.api.gui.GuiListener;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.inventory.ClickType;
 
-public class AGuiInteractEvent extends Event {
+public class GuiInteractEvent extends Event {
 
-    private final byte slot;
+    private final int slot;
     private final ClickType click;
-    private final AGListener listener;
+    private final GuiListener listener;
     private final ConsulatPlayer player;
 
-    public AGuiInteractEvent(AGListener listener, byte slot, ClickType click, ConsulatPlayer player){
+    public GuiInteractEvent(GuiListener listener, int slot, ClickType click, ConsulatPlayer player){
         this.listener = listener;
         this.slot = slot;
         this.click = click;
         this.player = player;
     }
 
-    public byte getSlot(){
+    public int getSlot(){
         return slot;
     }
 
@@ -28,7 +28,7 @@ public class AGuiInteractEvent extends Event {
         return click;
     }
 
-    public AGListener getGui(){
+    public GuiListener getGui(){
         return listener;
     }
 

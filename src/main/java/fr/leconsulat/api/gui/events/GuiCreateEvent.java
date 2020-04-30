@@ -1,15 +1,17 @@
-package fr.leconsulat.api.gui;
+package fr.leconsulat.api.gui.events;
+
+import fr.leconsulat.api.gui.Gui;
 
 /**
  * Event appelé lorsqu'un nouveau Gui est crée
  */
-public class AGCreateEvent {
+public class GuiCreateEvent {
 
     private Object key;
-    private AGui gui;
+    private Gui gui;
     private boolean cancelled = false;
 
-    public AGCreateEvent(AGui gui, Object key){
+    public GuiCreateEvent(Gui gui, Object key){
         this.key = key;
         this.gui = gui;
     }
@@ -18,7 +20,7 @@ public class AGCreateEvent {
         return key;
     }
 
-    public AGui getGui(){
+    public Gui getGui(){
         return gui;
     }
 
@@ -26,7 +28,7 @@ public class AGCreateEvent {
         this.key = key;
     }
 
-    public void setGui(AGui gui){
+    public void setGui(Gui gui){
         this.gui = gui;
     }
 

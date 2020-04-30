@@ -1,16 +1,16 @@
-package fr.leconsulat.api.gui;
+package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.player.ConsulatPlayer;
 
 /**
  * Event appelé lorsqu'un Gui est ouvert
  */
-public class AGOpenEvent {
+public class GuiOpenEvent {
 
     private final ConsulatPlayer player;
     private boolean cancelled;
 
-    public AGOpenEvent(ConsulatPlayer player){
+    public GuiOpenEvent(ConsulatPlayer player){
         this.player = player;
         this.cancelled = false;
     }
