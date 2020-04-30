@@ -10,6 +10,8 @@ import fr.leconsulat.api.gui.exemples.TestGui;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.runnable.KeepAlive;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.BufferedWriter;
@@ -60,6 +62,11 @@ public class ConsulatAPI extends JavaPlugin {
     
     @Override
     public void onDisable(){
+        if(isDebug()){
+            for(Player player : Bukkit.getOnlinePlayers()){
+                getServer().getPluginManager().callEvent(new PlayerQuitEvent(player, ""));
+            }
+        }
         databaseManager.disconnect();
     }
     
