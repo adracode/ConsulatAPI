@@ -5,10 +5,12 @@ import com.comphenix.protocol.ProtocolManager;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.TestCommand;
 import fr.leconsulat.api.database.DatabaseManager;
+import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
 import fr.leconsulat.api.gui.exemples.TestGui;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.runnable.KeepAlive;
+import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -24,6 +26,8 @@ import java.util.logging.Level;
 public class ConsulatAPI extends JavaPlugin {
     
     private static ConsulatAPI consulatAPI;
+    
+    private Object dedicatedServer;
     
     private ProtocolManager protocolManager;
     private CPlayerManager playerManager;
@@ -42,18 +46,19 @@ public class ConsulatAPI extends JavaPlugin {
         log = new File(this.getDataFolder(), "log.txt");
         saveDefaultConfig();
         this.debug = getConfig().getBoolean("debug", false);
+        dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
+        System.out.println(dedicatedServer);
         databaseManager = new DatabaseManager();
         databaseManager.connect();
         protocolManager = ProtocolLibrary.getProtocolManager();
         playerManager = new CPlayerManager();
         commandManager = new CommandManager(this);
         guiManager = new GuiManager(this);
-        if(isDebug()){
-            commandManager.addCommand(new TestCommand());
-            guiManager.addRootGui("yes", new TestGui());
-        }
+        //commandManager.addCommand(new TestCommand());
+        //guiManager.addRootGui("yes", new TestGui());
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, ()-> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
     }
     
     private void registerEvents(){
@@ -96,6 +101,10 @@ public class ConsulatAPI extends JavaPlugin {
                 e.printStackTrace();
             }
         });
+    }
+    
+    public Object getDedicatedServer(){
+        return dedicatedServer;
     }
     
     public ProtocolManager getProtocolManager(){

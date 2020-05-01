@@ -11,7 +11,6 @@ import java.util.List;
 
 public class ReflectionUtils {
     
-    
     public static List<Field> getAllDeclaredFields(Class<?> start){
         List<Field> fields = new ArrayList<>(Arrays.asList(start.getDeclaredFields()));
         Class<?> superClass = start.getSuperclass();
@@ -55,10 +54,15 @@ public class ReflectionUtils {
         return null;
     }
     
-    public static Field getDeclaredField(Class<?> c, String name){
+    public static Object getDeclaredField(Class<?> c, String name, Object instance){
         try {
-            return c.getDeclaredField(name);
-        } catch(NoSuchFieldException e){
+            
+            Field field = c.getDeclaredField(name);
+            if(!field.isAccessible()){
+                field.setAccessible(true);
+            }
+            return field.get(instance);
+        } catch(NoSuchFieldException | IllegalAccessException e){
             e.printStackTrace();
         }
         return null;

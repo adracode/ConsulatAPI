@@ -1,7 +1,7 @@
 package fr.leconsulat.api.commands;
 
-import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.player.CPlayerManager;
+import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -10,9 +10,8 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-public abstract class ConsulatCommand extends Command implements Comparable<ConsulatCommand>  {
+public abstract class ConsulatCommand extends Command implements Comparable<ConsulatCommand> {
     
     private String usage;
     private int argsMin;
@@ -33,6 +32,11 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
         }
         commandManager.addCommand(this);
     }
+    
+    /*public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded, LiteralArgumentBuilder<CommandListenerWrapper> suggestion){
+        this(name, aliases, usage, argsMin, rankNeeded);
+        CommandManager.getInstance().suggest(suggestion);
+    }*/
     
     public abstract void onCommand(ConsulatPlayer player, String[] args);
     

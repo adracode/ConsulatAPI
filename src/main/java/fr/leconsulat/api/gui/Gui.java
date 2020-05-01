@@ -195,7 +195,7 @@ public class Gui implements InventoryHolder {
     }
     
     public void moveItem(int from, Gui guiTo, int to){
-        if(from == to){
+        if(from == to && this.equals(guiTo)){
             return;
         }
         GuiItem itemFrom = this.getItem(from);
