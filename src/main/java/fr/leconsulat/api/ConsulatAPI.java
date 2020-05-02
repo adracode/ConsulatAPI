@@ -13,6 +13,9 @@ import fr.leconsulat.api.runnable.KeepAlive;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,7 +26,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.logging.Level;
 
-public class ConsulatAPI extends JavaPlugin {
+public class ConsulatAPI extends JavaPlugin implements Listener {
     
     private static ConsulatAPI consulatAPI;
     
@@ -47,21 +50,26 @@ public class ConsulatAPI extends JavaPlugin {
         saveDefaultConfig();
         this.debug = getConfig().getBoolean("debug", false);
         dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
-        System.out.println(dedicatedServer);
         databaseManager = new DatabaseManager();
         databaseManager.connect();
         protocolManager = ProtocolLibrary.getProtocolManager();
         playerManager = new CPlayerManager();
         commandManager = new CommandManager(this);
         guiManager = new GuiManager(this);
-        //commandManager.addCommand(new TestCommand());
         //guiManager.addRootGui("yes", new TestGui());
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, ()-> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
     }
     
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPostInit(PostInitEvent event){
+        //commandManager.addCommand(new TestCommand());
+    }
+    
+    
     private void registerEvents(){
+        this.getServer().getPluginManager().registerEvents(this, this);
         this.getServer().getPluginManager().registerEvents(playerManager, this);
     }
     

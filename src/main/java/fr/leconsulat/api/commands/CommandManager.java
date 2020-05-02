@@ -1,5 +1,14 @@
 package fr.leconsulat.api.commands;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.utility.MinecraftReflection;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.tree.CommandNode;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.player.CPlayerManager;
@@ -14,9 +23,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -24,12 +37,14 @@ public class CommandManager implements Listener {
     
     private static CommandManager instance;
     
-    private Object vanillaDispatcher;
-    private Object nmsDispatcher;
-    //private CommandDispatcher<CommandListenerWrapper> dispatcher;
+    private CommandDispatcher<?> vanillaDispatcher;
+    private CommandDispatcher<?> dispatcher;
+    private Map<String, CommandNode<?>> vanillaChildren;
+    private Map<String, CommandNode<?>> children;
     
-    private Map<String, Command> bukkitCommands;
-    private Method removeCommand;
+    private Map<String, Command> commands;
+    
+    private Method updateCommands;
     
     @SuppressWarnings("unchecked")
     public CommandManager(ConsulatAPI core){
@@ -37,23 +52,24 @@ public class CommandManager implements Listener {
             return;
         }
         instance = this;
-        /*vanillaDispatcher = ReflectionUtils.getDeclaredField(core.getDedicatedServer().getClass().getSuperclass(), "vanillaCommandDispatcher", core.getDedicatedServer());
-        nmsDispatcher = ReflectionUtils.getDeclaredField(core.getDedicatedServer().getClass().getSuperclass(), "commandDispatcher", core.getDedicatedServer());
-        dispatcher = (CommandDispatcher<CommandListenerWrapper>)ReflectionUtils.getDeclaredField(nmsDispatcher, "b");
-        */
         core.getServer().getPluginManager().registerEvents(this, core);
         SimpleCommandMap commandMap = (SimpleCommandMap)ReflectionUtils.getDeclaredField(Bukkit.getServer(), "commandMap");
         if(commandMap == null){
             ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Couldn't find Map Command");
-            bukkitCommands = new HashMap<>();
+            commands = new HashMap<>();
             return;
         }
-        bukkitCommands = (Map<String, Command>)ReflectionUtils.getDeclaredField(SimpleCommandMap.class, "knownCommands", commandMap);
-        if(bukkitCommands == null){
-            bukkitCommands = new HashMap<>();
+        commands = (Map<String, Command>)ReflectionUtils.getDeclaredField(SimpleCommandMap.class, "knownCommands", commandMap);
+        if(commands == null){
+            commands = new HashMap<>();
             ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Couldn't find Bukkit Commands");
         }
-        /*ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(),
+        try {
+            updateCommands = MinecraftReflection.getCraftPlayerClass().getMethod("updateCommands");
+        } catch(NoSuchMethodException e){
+            e.printStackTrace();
+        }
+        ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(),
                 ListenerPriority.LOWEST, PacketType.Play.Server.COMMANDS) {
             @Override
             public void onPacketSending(PacketEvent event){
@@ -62,81 +78,105 @@ public class CommandManager implements Listener {
                 }
             }
         });
-        try {
-            removeCommand = Class.forName("com.mojang.brigadier.tree.CommandNode").getDeclaredMethod("removeCommand", String.class);
-        } catch(NoSuchMethodException | ClassNotFoundException e){
-            e.printStackTrace();
-        }*/
-        /*try {
-            getHandle = MinecraftReflection.getCraftPlayerClass().getMethod("getHandle");
-            a = MinecraftReflection.getMinecraftClass("CommandDispatcher").getDeclaredMethod("a",
-                    CommandNode.class, CommandNode.class, CommandListenerWrapper.class, Map.class);
-            a.setAccessible(true);
-            Field field = CraftServer.class.getDeclaredField("console");
-            field.setAccessible(true);
-            getCommandListener = MinecraftReflection.getEntityClass().getDeclaredMethod("getCommandListener");
-        } catch(NoSuchMethodException | NoSuchFieldException e){
-            e.printStackTrace();
-        }*/
     }
     
-    @EventHandler
+    @SuppressWarnings("unchecked")
+    @EventHandler(priority = EventPriority.LOW)
     public void onPostInit(PostInitEvent e){
-        bukkitCommands.remove("?");
-        bukkitCommands.remove("bukkit:?");
-        bukkitCommands.remove("about");
-        bukkitCommands.remove("bukkit:about");
-        bukkitCommands.remove("bukkit:help");
-        bukkitCommands.remove("pl");
-        bukkitCommands.remove("bukkit:pl");
-        bukkitCommands.remove("plugins");
-        bukkitCommands.remove("bukkit:plugins");
-        bukkitCommands.remove("ver");
-        bukkitCommands.remove("bukkit:ver");
-        bukkitCommands.remove("version");
-        bukkitCommands.remove("bukkit:version");
-        bukkitCommands.remove("minecraft:help");
-        bukkitCommands.remove("list");
-        bukkitCommands.remove("minecraft:list");
-        bukkitCommands.remove("me");
-        bukkitCommands.remove("minecraft:me");
-        bukkitCommands.remove("minecraft:msg");
-        bukkitCommands.remove("teammsg");
-        bukkitCommands.remove("minecraft:teammsg");
-        bukkitCommands.remove("minecraft:tell");
-        bukkitCommands.remove("tm");
-        bukkitCommands.remove("minecraft:tm");
-        bukkitCommands.remove("trigger");
-        bukkitCommands.remove("minecraft:trigger");
-        bukkitCommands.remove("w");
-        bukkitCommands.remove("minecraft:w");
+        ConsulatAPI core = ConsulatAPI.getConsulatAPI();
+        vanillaDispatcher = (CommandDispatcher<?>)ReflectionUtils.getDeclaredField(ReflectionUtils.getDeclaredField(core.getDedicatedServer().getClass().getSuperclass(), "vanillaCommandDispatcher", core.getDedicatedServer()), "b");
+        dispatcher = (CommandDispatcher<?>)ReflectionUtils.getDeclaredField(ReflectionUtils.getDeclaredField(core.getDedicatedServer().getClass().getSuperclass(), "commandDispatcher", core.getDedicatedServer()), "b");
+        vanillaChildren = (Map<String, CommandNode<?>>)ReflectionUtils.getDeclaredField(CommandNode.class, "children", vanillaDispatcher.getRoot());
+        children = (Map<String, CommandNode<?>>)ReflectionUtils.getDeclaredField(CommandNode.class, "children", dispatcher.getRoot());
+        removeBukkitCommand("?");
+        removeBukkitCommand("bukkit:?");
+        removeBukkitCommand("about");
+        removeBukkitCommand("bukkit:about");
+        removeBukkitCommand("bukkit:help");
+        removeBukkitCommand("pl");
+        removeBukkitCommand("bukkit:pl");
+        removeBukkitCommand("plugins");
+        removeBukkitCommand("bukkit:plugins");
+        removeBukkitCommand("ver");
+        removeBukkitCommand("bukkit:ver");
+        removeBukkitCommand("version");
+        removeBukkitCommand("bukkit:version");
+        removeMinecraftCommand("minecraft:help");
+        removeMinecraftCommand("list");
+        removeMinecraftCommand("minecraft:list");
+        removeMinecraftCommand("me");
+        removeMinecraftCommand("minecraft:me");
+        removeMinecraftCommand("minecraft:msg");
+        removeMinecraftCommand("teammsg");
+        removeMinecraftCommand("minecraft:teammsg");
+        removeMinecraftCommand("minecraft:tell");
+        removeMinecraftCommand("tm");
+        removeMinecraftCommand("minecraft:tm");
+        removeMinecraftCommand("trigger");
+        removeMinecraftCommand("minecraft:trigger");
+        removeMinecraftCommand("w");
+        removeMinecraftCommand("minecraft:w");
+        children.remove("boutique");
+        children.remove("consulatcore:boutique");
     }
     
-    public void removeCommand(String command){
+    public void sendCommands(ConsulatPlayer player){
+        try {
+            updateCommands.invoke(player.getPlayer());
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+    }
     
+    public void removeBukkitCommand(String command){
+        commands.remove(command);
+        children.remove(command);
+    }
+    
+    public void removeMinecraftCommand(String command){
+        removeBukkitCommand(command);
+        vanillaChildren.remove(command);
     }
     
     public void addCommand(Command command){
-        bukkitCommands.put(command.getName(), command);
+        commands.put(command.getName(), command);
         for(String alias : command.getAliases()){
-            bukkitCommands.put(alias, command);
+            commands.put(alias, command);
+        }
+    }
+    
+    @EventHandler
+    public void onCommandUpdate(PlayerCommandSendEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player == null){
+            return;
+        }
+        for(Iterator<String> iterator = event.getCommands().iterator(); iterator.hasNext(); ){
+            Command command = commands.get(iterator.next());
+            if(!(command instanceof ConsulatCommand)){
+                continue;
+            }
+            if(!player.hasPower(((ConsulatCommand)command).getRankNeeded())){
+                iterator.remove();
+            }
         }
     }
     
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onCommand(PlayerCommandPreprocessEvent e){
-        //ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
-        /*if(player.hasPermission("api.bypass.command")){
-            return;
-        }*/
-        //Command command = bukkitCommands.get(e.getMessage().substring(1, e.getMessage().indexOf(' ')).toLowerCase());
-        /*if(!(command instanceof ConsulatCommand)){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
+        int separator = e.getMessage().indexOf(' ');
+        Command command = commands.get((separator == -1 ? e.getMessage().substring(1) : e.getMessage().substring(1, separator)).toLowerCase());
+        if(command == null){
             e.setMessage("/help");
             return;
-        }*/
-        /*if(!player.hasPermission(command.getPermission())){
+        }
+        if(!(command instanceof ConsulatCommand)){
+            return;
+        }
+        if(!player.hasPower(((ConsulatCommand)command).getRankNeeded())){
             e.setMessage("/help");
-        }*/
+        }
     }
 
     /*@EventHandler(priority = EventPriority.HIGHEST)
@@ -148,7 +188,7 @@ public class CommandManager implements Listener {
     }*/
     
     public void execute(CommandSender sender, String alias, String[] args){
-        Command cmd = bukkitCommands.get(alias);
+        Command cmd = commands.get(alias);
         if(cmd instanceof ConsulatCommand){
             ConsulatCommand command = (ConsulatCommand)cmd;
             ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(((Player)sender).getUniqueId());
@@ -157,68 +197,19 @@ public class CommandManager implements Listener {
     }
     
     public Command getCommand(String command){
-        return bukkitCommands.get(command);
+        return commands.get(command);
     }
     
     public Map<String, Command> getCommands(){
-        return bukkitCommands;
+        return commands;
     }
-    /*
-    private Method getHandle;
-    private Method a;
-    private Method getCommandListener;
-    
-    public void sendCommands(ConsulatPlayer player){
-        Object entityPlayer = null, entitygetCommandListener = null;
-        try {
-            entityPlayer = getHandle.invoke(player.getPlayer());
-            entitygetCommandListener = getCommandListener.invoke(entityPlayer);
-        } catch(IllegalAccessException | InvocationTargetException e){
-            e.printStackTrace();
-        }
-        Map<CommandNode<CommandListenerWrapper>, CommandNode<ICompletionProvider>> map = Maps.newIdentityHashMap();
-        RootCommandNode<ICompletionProvider> vanillaRoot = new RootCommandNode<>();
-        RootCommandNode<CommandListenerWrapper> vanilla = dispatcher.getRoot();
-        map.put(vanilla, vanillaRoot);
-        try {
-            a.invoke(nmsDispatcher, vanilla, vanillaRoot, entitygetCommandListener, map);
-        } catch(IllegalAccessException | InvocationTargetException e){
-            e.printStackTrace();
-        }
-        RootCommandNode<ICompletionProvider> rootcommandnode = new RootCommandNode<>();
-        try {
-            map.put(dispatcher.getRoot(), rootcommandnode);
-            a.invoke(nmsDispatcher, dispatcher.getRoot(), rootcommandnode, getCommandListener.invoke(entityPlayer), map);
-        } catch(IllegalAccessException | InvocationTargetException e){
-            e.printStackTrace();
-        }
-        Collection<String> bukkit = new LinkedHashSet<>();
-        
-        for(CommandNode<ICompletionProvider> iCompletionProviderCommandNode : rootcommandnode.getChildren()){
-            bukkit.add(iCompletionProviderCommandNode.getName());
-        }
-        
-        PlayerCommandSendEvent event = new PlayerCommandSendEvent(player.getPlayer(), new LinkedHashSet<>(bukkit));
-        event.getPlayer().getServer().getPluginManager().callEvent(event);
-        System.out.println(bukkit);
-        System.out.println(event.getCommands());
-        for(String orig : bukkit){
-            if(!event.getCommands().contains(orig)){
-                rootcommandnode.removeCommand(orig);
-            }
-        }
-         try {
-            ProtocolLibrary.getProtocolManager().sendServerPacket(player.getPlayer(), PacketContainer.fromPacket(new PacketPlayOutCommands(rootcommandnode)));
-        } catch(InvocationTargetException e){
-            e.printStackTrace();
-        }
-    }*/
     
     public static CommandManager getInstance(){
         return instance;
     }
-    /*
-    public void suggest(LiteralArgumentBuilder<CommandListenerWrapper> suggestion){
-        dispatcher.register(suggestion);
-    }*/
+    
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void suggest(LiteralArgumentBuilder<?> suggestion){
+        dispatcher.register((LiteralArgumentBuilder)suggestion);
+    }
 }

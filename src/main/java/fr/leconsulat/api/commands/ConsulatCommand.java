@@ -1,5 +1,6 @@
 package fr.leconsulat.api.commands;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
@@ -31,6 +32,12 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
             throw new IllegalStateException("Command Manager is not instantiated");
         }
         commandManager.addCommand(this);
+        CommandManager.getInstance().suggest(LiteralArgumentBuilder.literal(name));
+    }
+    
+    public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded, LiteralArgumentBuilder<?> suggestion){
+        this(name, aliases, usage, argsMin, rankNeeded);
+        CommandManager.getInstance().suggest(suggestion);
     }
     
     /*public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded, LiteralArgumentBuilder<CommandListenerWrapper> suggestion){

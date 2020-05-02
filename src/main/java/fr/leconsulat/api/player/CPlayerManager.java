@@ -121,7 +121,7 @@ public class CPlayerManager implements Listener {
     
     @EventHandler
     public void onConsulatPlayerLoaded(ConsulatPlayerLoadedEvent event){
-        //CommandManager.getInstance().sendCommands(event.getPlayer());
+        CommandManager.getInstance().sendCommands(event.getPlayer());
     }
     
     @EventHandler(priority = EventPriority.LOWEST)
