@@ -11,10 +11,9 @@ public class TestCommand extends ConsulatCommand {
     
     @SuppressWarnings("ConstantConditions")
     public TestCommand(){
-        super("test", Collections.singletonList("testtest"), "gugyu", 0, Rank.DEVELOPPEUR,
-                LiteralArgumentBuilder.literal("test").then(
-                        Arguments.operators("salut")
-                ));
+        super("test", Collections.singletonList("testtest"), "gugyu", 0, Rank.DEVELOPPEUR);
+        suggest(LiteralArgumentBuilder.literal("test").then(
+                        Arguments.operators("salut")));
     }
     
     @Override

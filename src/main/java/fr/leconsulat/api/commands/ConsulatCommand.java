@@ -1,25 +1,41 @@
 package fr.leconsulat.api.commands;
 
+import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
+import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ConsulatCommand extends Command implements Comparable<ConsulatCommand> {
+    
+    private static Method getEntity;
+    
+    static {
+        try {
+            getEntity = MinecraftReflection.getMinecraftClass("CommandListenerWrapper").getMethod("h");
+        } catch(NoSuchMethodException e){
+            e.printStackTrace();
+        }
+    }
     
     private String usage;
     private int argsMin;
     private Rank rankNeeded;
     
     public ConsulatCommand(String name, String usage, int argsMin, Rank rankNeeded){
-        this(name, new ArrayList<>(), usage, argsMin, rankNeeded);
+        this(name, Collections.emptyList(), usage, argsMin, rankNeeded);
     }
     
     public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded){
@@ -32,11 +48,9 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
             throw new IllegalStateException("Command Manager is not instantiated");
         }
         commandManager.addCommand(this);
-        CommandManager.getInstance().suggest(LiteralArgumentBuilder.literal(name));
     }
     
-    public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded, LiteralArgumentBuilder<?> suggestion){
-        this(name, aliases, usage, argsMin, rankNeeded);
+    protected void suggest(LiteralArgumentBuilder<?> suggestion){
         CommandManager.getInstance().suggest(suggestion);
     }
     
@@ -44,6 +58,19 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
         this(name, aliases, usage, argsMin, rankNeeded);
         CommandManager.getInstance().suggest(suggestion);
     }*/
+    
+    protected static ConsulatPlayer getConsulatPlayer(Object commandListenerWrapper){
+        try {
+            Player player = (Player)MinecraftReflection.getBukkitEntity(getEntity.invoke(commandListenerWrapper));
+            if(player == null){
+                return null;
+            }
+            return CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());
+        } catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
     
     public abstract void onCommand(ConsulatPlayer player, String[] args);
     

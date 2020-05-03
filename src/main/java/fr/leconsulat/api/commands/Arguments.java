@@ -3,6 +3,7 @@ package fr.leconsulat.api.commands;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -13,7 +14,10 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class Arguments {
@@ -57,6 +61,23 @@ public class Arguments {
             return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
                 for(Player player : Bukkit.getOnlinePlayers()){
                     builder.suggest(player.getName());
+                }
+                return builder.buildFuture();
+            });
+        } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public static RequiredArgumentBuilder<Object, ?> player(String show, Collection<UUID> list){
+        try {
+            return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
+                for(UUID uuid : list){
+                    Player player = Bukkit.getPlayer(uuid);
+                    if(player != null){
+                        builder.suggest(player.getName());
+                    }
                 }
                 return builder.buildFuture();
             });
