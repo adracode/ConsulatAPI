@@ -3,7 +3,6 @@ package fr.leconsulat.api.commands;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -15,14 +14,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class Arguments {
     
-    private static Constructor argumentProfile;
+    private static Constructor<?> argumentProfile;
     
     private static Class<?> commandListenerWrapper;
     

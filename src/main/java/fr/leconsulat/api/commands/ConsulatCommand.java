@@ -1,28 +1,26 @@
 package fr.leconsulat.api.commands;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
-import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 public abstract class ConsulatCommand extends Command implements Comparable<ConsulatCommand> {
     
     private static Method getEntity;
     
-    static {
+    static{
         try {
             getEntity = MinecraftReflection.getMinecraftClass("CommandListenerWrapper").getMethod("h");
         } catch(NoSuchMethodException e){
@@ -50,22 +48,50 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
         commandManager.addCommand(this);
     }
     
-    protected void suggest(LiteralArgumentBuilder<?> suggestion){
-        CommandManager.getInstance().suggest(suggestion);
+    @SafeVarargs
+    protected final void suggest(boolean replace, ArgumentBuilder<Object, ?>... suggestions){
+        CommandManager manager = CommandManager.getInstance();
+        if(suggestions.length == 0){
+            manager.suggest(LiteralArgumentBuilder.literal(this.getName()), replace);
+            for(String aliases : this.getAliases()){
+                manager.suggest(LiteralArgumentBuilder.literal(aliases), replace);
+            }
+            return;
+        }
+        for(ArgumentBuilder<Object, ?> suggestion : suggestions){
+            manager.suggest(LiteralArgumentBuilder.literal(this.getName()).then(suggestion), replace);
+        }
+        for(String aliases : this.getAliases()){
+            for(ArgumentBuilder<Object, ?> suggestion : suggestions){
+                manager.suggest(LiteralArgumentBuilder.literal(aliases).then(suggestion), replace);
+            }
+        }
     }
     
-    /*public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded, LiteralArgumentBuilder<CommandListenerWrapper> suggestion){
-        this(name, aliases, usage, argsMin, rankNeeded);
-        CommandManager.getInstance().suggest(suggestion);
-    }*/
+    @SafeVarargs
+    protected final void suggest(boolean replace, Predicate<Object> predicate, ArgumentBuilder<Object, ?>... suggestions){
+        CommandManager manager = CommandManager.getInstance();
+        if(suggestions.length == 0){
+            manager.suggest(LiteralArgumentBuilder.literal(this.getName()).requires(predicate), replace);
+            for(String aliases : this.getAliases()){
+                manager.suggest(LiteralArgumentBuilder.literal(aliases).requires(predicate), replace);
+            }
+            return;
+        }
+        for(ArgumentBuilder<Object, ?> suggestion : suggestions){
+            manager.suggest(LiteralArgumentBuilder.literal(this.getName()).requires(predicate).then(suggestion), replace);
+        }
+        for(String aliases : this.getAliases()){
+            for(ArgumentBuilder<Object, ?> suggestion : suggestions){
+                manager.suggest(LiteralArgumentBuilder.literal(aliases).requires(predicate).then(suggestion), replace);
+            }
+        }
+    }
     
     protected static ConsulatPlayer getConsulatPlayer(Object commandListenerWrapper){
         try {
             Player player = (Player)MinecraftReflection.getBukkitEntity(getEntity.invoke(commandListenerWrapper));
-            if(player == null){
-                return null;
-            }
-            return CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());
+            return player == null ? null : CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());
         } catch(Exception e){
             e.printStackTrace();
             return null;

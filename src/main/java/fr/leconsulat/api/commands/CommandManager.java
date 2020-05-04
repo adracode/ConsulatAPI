@@ -5,7 +5,6 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.utility.MinecraftReflection;
-import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
@@ -209,6 +208,20 @@ public class CommandManager implements Listener {
     
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void suggest(LiteralArgumentBuilder<?> suggestion){
+        suggest(suggestion, false);
+    }
+    
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void suggest(LiteralArgumentBuilder<?> suggestion, boolean replace){
+        if(replace){
+            String command = suggestion.getLiteral();
+            if(children.get(command) != null){
+                children.remove(command);
+            }
+            if(vanillaChildren.get(command) != null){
+                vanillaChildren.remove(command);
+            }
+        }
         dispatcher.register((LiteralArgumentBuilder)suggestion);
     }
 }
