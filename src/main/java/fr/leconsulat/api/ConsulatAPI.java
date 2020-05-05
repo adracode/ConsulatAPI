@@ -1,9 +1,22 @@
 package fr.leconsulat.api;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import fr.leconsulat.api.commands.CommandManager;
+import fr.leconsulat.api.commands.TestCommand;
 import fr.leconsulat.api.database.DatabaseManager;
+import fr.leconsulat.api.events.PostInitEvent;
+import fr.leconsulat.api.gui.GuiManager;
+import fr.leconsulat.api.gui.exemples.TestGui;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.runnable.KeepAlive;
+import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.BufferedWriter;
@@ -13,12 +26,17 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.logging.Level;
 
-public class ConsulatAPI extends JavaPlugin {
+public class ConsulatAPI extends JavaPlugin implements Listener {
     
     private static ConsulatAPI consulatAPI;
     
+    private Object dedicatedServer;
+    
+    private ProtocolManager protocolManager;
     private CPlayerManager playerManager;
     private DatabaseManager databaseManager;
+    private GuiManager guiManager;
+    private CommandManager commandManager;
     private File log;
     private boolean debug = false;
     
@@ -31,19 +49,37 @@ public class ConsulatAPI extends JavaPlugin {
         log = new File(this.getDataFolder(), "log.txt");
         saveDefaultConfig();
         this.debug = getConfig().getBoolean("debug", false);
+        dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
         databaseManager = new DatabaseManager();
         databaseManager.connect();
+        protocolManager = ProtocolLibrary.getProtocolManager();
         playerManager = new CPlayerManager();
+        commandManager = new CommandManager(this);
+        guiManager = new GuiManager(this);
+        //guiManager.addRootGui("yes", new TestGui());
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, ()-> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
     }
     
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPostInit(PostInitEvent event){
+        //commandManager.addCommand(new TestCommand());
+    }
+    
+    
     private void registerEvents(){
+        this.getServer().getPluginManager().registerEvents(this, this);
         this.getServer().getPluginManager().registerEvents(playerManager, this);
     }
     
     @Override
     public void onDisable(){
+        if(isDebug()){
+            for(Player player : Bukkit.getOnlinePlayers()){
+                getServer().getPluginManager().callEvent(new PlayerQuitEvent(player, ""));
+            }
+        }
         databaseManager.disconnect();
     }
     
@@ -73,5 +109,13 @@ public class ConsulatAPI extends JavaPlugin {
                 e.printStackTrace();
             }
         });
+    }
+    
+    public Object getDedicatedServer(){
+        return dedicatedServer;
+    }
+    
+    public ProtocolManager getProtocolManager(){
+        return protocolManager;
     }
 }

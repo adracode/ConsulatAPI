@@ -1,6 +1,7 @@
 package fr.leconsulat.api.player;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.ranks.Rank;
@@ -116,7 +117,11 @@ public class CPlayerManager implements Listener {
                 e.printStackTrace();
             }
         });
-        
+    }
+    
+    @EventHandler
+    public void onConsulatPlayerLoaded(ConsulatPlayerLoadedEvent event){
+        CommandManager.getInstance().sendCommands(event.getPlayer());
     }
     
     @EventHandler(priority = EventPriority.LOWEST)
@@ -252,4 +257,7 @@ public class CPlayerManager implements Listener {
         request.close();
     }
     
+    public Class<?> getPlayerClass(){
+        return playerClass;
+    }
 }

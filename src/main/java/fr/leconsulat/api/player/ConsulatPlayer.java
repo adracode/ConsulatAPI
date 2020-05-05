@@ -1,5 +1,6 @@
 package fr.leconsulat.api.player;
 
+import fr.leconsulat.api.gui.Gui;
 import fr.leconsulat.api.ranks.Rank;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -20,6 +21,8 @@ public class ConsulatPlayer {
     private boolean initialized = false;
     private CustomRank customRank;
     private String registered;
+    private Gui currentlyOpen;
+    private boolean close = true;
     
     public ConsulatPlayer(UUID uuid, String name){
         this.uuid = uuid;
@@ -155,5 +158,13 @@ public class ConsulatPlayer {
                 ", customRank=" + customRank +
                 ", registered='" + registered + '\'' +
                 '}';
+    }
+    
+    public Gui getCurrentlyOpen(){
+        return currentlyOpen;
+    }
+    
+    public void setCurrentlyOpen(Gui gui){
+        this.currentlyOpen = gui;
     }
 }
