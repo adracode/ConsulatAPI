@@ -58,7 +58,9 @@ public class Arguments {
         try {
             return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
                 for(Player player : Bukkit.getOnlinePlayers()){
-                    builder.suggest(player.getName());
+                    if(player.getName().toLowerCase().startsWith(builder.getRemaining().toLowerCase())){
+                        builder.suggest(player.getName());
+                    }
                 }
                 return builder.buildFuture();
             });
@@ -74,7 +76,9 @@ public class Arguments {
                 for(UUID uuid : list){
                     Player player = Bukkit.getPlayer(uuid);
                     if(player != null){
-                        builder.suggest(player.getName());
+                        if(player.getName().toLowerCase().startsWith(builder.getRemaining().toLowerCase())){
+                            builder.suggest(player.getName());
+                        }
                     }
                 }
                 return builder.buildFuture();
