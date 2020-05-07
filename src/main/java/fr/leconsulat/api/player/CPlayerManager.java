@@ -1,5 +1,6 @@
 package fr.leconsulat.api.player;
 
+import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
@@ -7,6 +8,7 @@ import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -15,18 +17,26 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 public class CPlayerManager implements Listener {
     
     private static CPlayerManager instance;
+    private static Method getEntity;
+    
+    static {
+        try {
+            getEntity = MinecraftReflection.getMinecraftClass("CommandListenerWrapper").getMethod("h");
+        } catch (NoSuchMethodException var1) {
+            var1.printStackTrace();
+        }
+        
+    }
     
     private Class<?> playerClass;
     private Constructor<?> playerConstructor;
@@ -132,6 +142,16 @@ public class CPlayerManager implements Listener {
         this.players.remove(event.getPlayer().getUniqueId());
     }
     
+    public ConsulatPlayer getConsulatPlayerFromContext(Object commandListenerWrapper){
+        try {
+            Player player = (Player)MinecraftReflection.getBukkitEntity(getEntity.invoke(commandListenerWrapper));
+            return player == null ? null : CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());
+        } catch (Exception var2) {
+            var2.printStackTrace();
+            return null;
+        }
+    }
+    
     public ConsulatPlayer getConsulatPlayer(UUID uuid){
         return players.get(uuid);
     }
@@ -142,6 +162,15 @@ public class CPlayerManager implements Listener {
             return null;
         }
         return getConsulatPlayer(uuid);
+    }
+    
+    /**
+     * Renvoie tous les joueurs connectés sous forme de ConsulatPlayer
+     *
+     * @return Une collection contenant  les joueurs
+     */
+    public Collection<ConsulatPlayer> getConsulatPlayers(){
+        return Collections.unmodifiableCollection(players.values());
     }
     
     public UUID getPlayerUUID(String name){

@@ -11,7 +11,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 public class GuiItem extends ItemStack implements Cloneable {
     
@@ -23,7 +26,7 @@ public class GuiItem extends ItemStack implements Cloneable {
         super(item);
         this.permission = item.permission;
         this.slot = item.slot;
-        this.attachedObject = null;
+        this.attachedObject = item.attachedObject;
     }
     
     public GuiItem(String name, byte slot, Material material){

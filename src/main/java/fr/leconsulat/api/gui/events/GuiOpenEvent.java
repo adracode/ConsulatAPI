@@ -1,5 +1,6 @@
 package fr.leconsulat.api.gui.events;
 
+import fr.leconsulat.api.gui.Gui;
 import fr.leconsulat.api.player.ConsulatPlayer;
 
 /**
@@ -8,13 +9,25 @@ import fr.leconsulat.api.player.ConsulatPlayer;
 public class GuiOpenEvent {
 
     private final ConsulatPlayer player;
+    private final Gui gui;
+    private final Object Key;
     private boolean cancelled;
 
-    public GuiOpenEvent(ConsulatPlayer player){
+    public GuiOpenEvent(ConsulatPlayer player, Gui gui, Object key){
         this.player = player;
+        this.gui = gui;
+        Key = key;
         this.cancelled = false;
     }
-
+    
+    public Gui getGui(){
+        return gui;
+    }
+    
+    public Object getKey(){
+        return Key;
+    }
+    
     public ConsulatPlayer getPlayer(){
         return player;
     }

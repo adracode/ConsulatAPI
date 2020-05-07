@@ -1,10 +1,10 @@
 package fr.leconsulat.api.gui.exemples;
 
+import fr.leconsulat.api.gui.GuiListener;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
 import fr.leconsulat.api.gui.events.GuiCloseEvent;
 import fr.leconsulat.api.gui.events.GuiCreateEvent;
 import fr.leconsulat.api.gui.events.GuiOpenEvent;
-import fr.leconsulat.api.gui.*;
 import org.bukkit.Material;
 
 public class ChildTestGui extends GuiListener {
@@ -43,7 +43,7 @@ public class ChildTestGui extends GuiListener {
     
     @Override
     public void onClose(GuiCloseEvent event){
-        event.setKey(event.getPlayer());
+        event.setFatherKey(event.getPlayer());
     }
     
     @Override

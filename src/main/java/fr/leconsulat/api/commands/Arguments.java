@@ -4,67 +4,50 @@ import com.comphenix.protocol.utility.MinecraftReflection;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.player.CPlayerManager;
+import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class Arguments {
     
     private static Constructor<?> argumentProfile;
     
-    private static Class<?> commandListenerWrapper;
+    /*private static Class<?> commandListenerWrapper;
     
     private static Method getPlayerList;
-    private static Method getOperators;
+    private static Method getOperators;*/
     
     static{
         try {
             argumentProfile = MinecraftReflection.getMinecraftClass("ArgumentProfile").getConstructor();
-            commandListenerWrapper = MinecraftReflection.getMinecraftClass("CommandListenerWrapper");
+            /*commandListenerWrapper = MinecraftReflection.getMinecraftClass("CommandListenerWrapper");
             getPlayerList = MinecraftReflection.getMinecraftClass("MinecraftServer").getMethod("getPlayerList");
-            getOperators = MinecraftReflection.getMinecraftClass("PlayerList").getMethod("m");
+            getOperators = MinecraftReflection.getMinecraftClass("PlayerList").getMethod("m");*/
         } catch(NoSuchMethodException e){
             e.printStackTrace();
         }
     }
     
-    public static RequiredArgumentBuilder<Object, ?> operators(String show){
-        try {
-            return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
-                try {
-                    return a((String[])getOperators.invoke(getPlayerList.invoke(ConsulatAPI.getConsulatAPI().getDedicatedServer())), builder);
-                } catch(IllegalAccessException | InvocationTargetException e){
-                    e.printStackTrace();
-                }
-                return null;
-            });
-        } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
-            e.printStackTrace();
-        }
-        return null;
-    }
-    
     public static RequiredArgumentBuilder<Object, ?> player(String show){
         try {
-            return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
-                for(Player player : Bukkit.getOnlinePlayers()){
-                    if(player.getName().toLowerCase().startsWith(builder.getRemaining().toLowerCase())){
-                        builder.suggest(player.getName());
+            return RequiredArgumentBuilder.argument(show,  (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
+                ConsulatPlayer sender = CPlayerManager.getInstance().getConsulatPlayerFromContext(context.getSource());
+                if(sender != null){
+                    for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
+                        if(sender.getPlayer().canSee(player.getPlayer()) && player.getName().toLowerCase().startsWith(builder.getRemaining().toLowerCase())){
+                            builder.suggest(player.getName());
+                        }
                     }
                 }
                 return builder.buildFuture();
             });
-        } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+        } catch(IllegalAccessException | InvocationTargetException | InstantiationException e){
             e.printStackTrace();
         }
         return null;
@@ -73,11 +56,14 @@ public class Arguments {
     public static RequiredArgumentBuilder<Object, ?> player(String show, Collection<UUID> list){
         try {
             return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
-                for(UUID uuid : list){
-                    Player player = Bukkit.getPlayer(uuid);
-                    if(player != null){
-                        if(player.getName().toLowerCase().startsWith(builder.getRemaining().toLowerCase())){
-                            builder.suggest(player.getName());
+                ConsulatPlayer sender = CPlayerManager.getInstance().getConsulatPlayerFromContext(context.getSource());
+                if(sender != null){
+                    for(UUID uuid : list){
+                        Player player = Bukkit.getPlayer(uuid);
+                        if(player != null){
+                            if(sender.getPlayer().canSee(player) && player.getName().toLowerCase().startsWith(builder.getRemaining().toLowerCase())){
+                                builder.suggest(player.getName());
+                            }
                         }
                     }
                 }
@@ -92,15 +78,4 @@ public class Arguments {
     public static RequiredArgumentBuilder<Object, ?> word(String show){
         return RequiredArgumentBuilder.argument(show, StringArgumentType.word());
     }
-    
-    private static CompletableFuture<Suggestions> a(String[] args, SuggestionsBuilder builder){
-        String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
-        for(String arg : args){
-            if(arg.toLowerCase(Locale.ROOT).startsWith(remaining)){
-                builder.suggest(arg);
-            }
-        }
-        return builder.buildFuture();
-    }
-    
 }

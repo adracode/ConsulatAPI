@@ -10,7 +10,6 @@ public class TestCommand extends ConsulatCommand {
     
     public TestCommand(){
         super("test", Collections.singletonList("testtest"), "gugyu", 0, Rank.DEVELOPPEUR);
-        suggest(false, Arguments.operators("salut"));
     }
     
     @Override

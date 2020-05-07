@@ -71,7 +71,11 @@ public class CommandManager implements Listener {
                 ListenerPriority.LOWEST, PacketType.Play.Server.COMMANDS) {
             @Override
             public void onPacketSending(PacketEvent event){
-                if(CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId()) == null){
+                try {
+                    if(CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId()) == null){
+                        event.setCancelled(true);
+                    }
+                } catch(UnsupportedOperationException e){
                     event.setCancelled(true);
                 }
             }
