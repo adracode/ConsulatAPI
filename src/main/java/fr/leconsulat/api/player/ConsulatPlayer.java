@@ -8,25 +8,31 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
-import java.util.Objects;
 import java.util.UUID;
 
 public class ConsulatPlayer {
     
     private int id;
-    private UUID uuid;
-    private Player player;
-    private String name;
+    private final UUID uuid;
+    private final Player player;
+    private final String name;
     private Rank rank;
     private boolean initialized = false;
     private CustomRank customRank;
     private String registered;
     private Gui currentlyOpen;
-    private boolean close = true;
+    private boolean vanished;
     
     public ConsulatPlayer(UUID uuid, String name){
+        if(uuid == null || name == null){
+            throw new NullPointerException("Consulat Player cannot be instantiated with null arguments");
+        }
         this.uuid = uuid;
         this.name = name;
+        this.player = Bukkit.getPlayer(uuid);
+        if(player == null){
+            throw new NullPointerException("Player cannot be null");
+        }
     }
     
     public void initialize(int id, Rank rank, boolean hasCustomRank, String customRank, String registered){
@@ -46,7 +52,7 @@ public class ConsulatPlayer {
     }
     
     public Player getPlayer(){
-        return player == null ? player = Bukkit.getPlayer(uuid) : player;
+        return player;
     }
     
     public Rank getRank(){
@@ -76,14 +82,23 @@ public class ConsulatPlayer {
     }
     
     public void setColorPrefix(ChatColor colorPrefix){
+        if(!hasCustomRank()){
+            return;
+        }
         this.customRank.setColorPrefix(colorPrefix);
     }
     
     public void setPrefix(String prefix){
+        if(!hasCustomRank()){
+            return;
+        }
         this.customRank.setPrefix(prefix);
     }
     
     public void setColorName(ChatColor colorName){
+        if(!hasCustomRank()){
+            return;
+        }
         this.customRank.setColorName(colorName);
     }
     
@@ -107,11 +122,11 @@ public class ConsulatPlayer {
     }
     
     public String getCustomPrefix(){
-        return customRank.getCustomPrefix();
+        return hasCustomRank() ? customRank.getCustomPrefix() : null;
     }
     
     public boolean hasPower(Rank neededRank){
-        return this.rank.getRankPower() >= neededRank.getRankPower();
+        return this.rank != null && this.rank.getRankPower() >= neededRank.getRankPower();
     }
     
     public String getName(){
@@ -130,6 +145,14 @@ public class ConsulatPlayer {
         getPlayer().spigot().sendMessage(message);
     }
     
+    public boolean isVanished(){
+        return vanished;
+    }
+    
+    public void setVanished(boolean vanished){
+        this.vanished = vanished;
+    }
+    
     @Override
     public boolean equals(Object o){
         if(this == o){
@@ -143,7 +166,7 @@ public class ConsulatPlayer {
     
     @Override
     public int hashCode(){
-        return Objects.hash(uuid);
+        return uuid.hashCode();
     }
     
     @Override

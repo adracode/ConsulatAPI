@@ -155,7 +155,7 @@ public abstract class GuiListener implements Comparable<GuiListener> {
                 return false;
             }
         }
-        GuiOpenEvent event = new GuiOpenEvent(player);
+        GuiOpenEvent event = new GuiOpenEvent(player, gui, key);
         onOpen(event);
         if(event.isCancelled()){
             return false;

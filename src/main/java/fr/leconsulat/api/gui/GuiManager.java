@@ -1,7 +1,8 @@
 package fr.leconsulat.api.gui;
 
 import fr.leconsulat.api.ConsulatAPI;
-import fr.leconsulat.api.events.*;
+import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
+import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
 import fr.leconsulat.api.gui.events.GuiCloseEvent;
 import fr.leconsulat.api.gui.events.GuiInteractEvent;
@@ -17,7 +18,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GuiManager implements Listener {
     
@@ -59,7 +63,7 @@ public class GuiManager implements Listener {
         return roots.get(name);
     }
     
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOW)
     public void onClickInventory(InventoryClickEvent e){
         ItemStack item = e.getCurrentItem();
         if(e.getClick() == ClickType.NUMBER_KEY && item == null){
@@ -99,13 +103,16 @@ public class GuiManager implements Listener {
         return ((Gui)holder).getListener();
     }
     
-    
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOW)
     public void onClose(InventoryCloseEvent e){
-        GuiListener listener = getListener(e.getInventory());
+        if(!(e.getInventory().getHolder() instanceof Gui)){
+            return;
+        }
+        Gui gui = (Gui)e.getInventory().getHolder();
+        GuiListener listener = gui.getListener();
         if(listener != null){
             final ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
-            listener.close(new GuiCloseEvent(player, true));
+            listener.close(new GuiCloseEvent(player, gui, gui.getKey(), true));
         }
     }
     
