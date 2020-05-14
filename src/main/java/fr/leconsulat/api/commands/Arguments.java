@@ -11,12 +11,15 @@ import org.bukkit.entity.Player;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.UUID;
 
 public class Arguments {
     
     private static Constructor<?> argumentProfile;
+    private static Method getItemStack;
+    private static Method getEnchant;
     
     /*private static Class<?> commandListenerWrapper;
     
@@ -26,12 +29,33 @@ public class Arguments {
     static{
         try {
             argumentProfile = MinecraftReflection.getMinecraftClass("ArgumentProfile").getConstructor();
+            getItemStack = MinecraftReflection.getMinecraftClass("ArgumentItemStack").getMethod("a");
+            getEnchant = MinecraftReflection.getMinecraftClass("ArgumentEnchantment").getMethod("a");
+            
             /*commandListenerWrapper = MinecraftReflection.getMinecraftClass("CommandListenerWrapper");
             getPlayerList = MinecraftReflection.getMinecraftClass("MinecraftServer").getMethod("getPlayerList");
             getOperators = MinecraftReflection.getMinecraftClass("PlayerList").getMethod("m");*/
         } catch(NoSuchMethodException e){
             e.printStackTrace();
         }
+    }
+    
+    public static RequiredArgumentBuilder<Object, ?> enchant(String show){
+        try {
+            return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)getEnchant.invoke(null));
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public static RequiredArgumentBuilder<Object, ?> item(String show){
+        try {
+            return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)getItemStack.invoke(null));
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
     }
     
     public static RequiredArgumentBuilder<Object, ?> player(String show){

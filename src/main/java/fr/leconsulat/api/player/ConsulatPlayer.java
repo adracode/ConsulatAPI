@@ -1,5 +1,6 @@
 package fr.leconsulat.api.player;
 
+import fr.leconsulat.api.database.Saveable;
 import fr.leconsulat.api.gui.Gui;
 import fr.leconsulat.api.ranks.Rank;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -10,7 +11,7 @@ import org.bukkit.entity.Player;
 import java.sql.SQLException;
 import java.util.UUID;
 
-public class ConsulatPlayer {
+public class ConsulatPlayer implements Saveable {
     
     private int id;
     private final UUID uuid;
@@ -189,5 +190,10 @@ public class ConsulatPlayer {
     
     public void setCurrentlyOpen(Gui gui){
         this.currentlyOpen = gui;
+    }
+    
+    @Override
+    public String getDatabaseIdentifier(){
+        return uuid.toString();
     }
 }

@@ -4,7 +4,7 @@ import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class ConsulatPlayerLoadedEvent extends Event {
+public final class ConsulatPlayerLoadedEvent extends Event {
     
     private final ConsulatPlayer player;
     
