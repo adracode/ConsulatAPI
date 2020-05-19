@@ -2,12 +2,11 @@ package fr.leconsulat.api.database;
 
 import fr.leconsulat.api.ConsulatAPI;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SaveManager implements Listener {
+public class SaveManager {
     
     private static SaveManager instance;
     
@@ -18,7 +17,6 @@ public class SaveManager implements Listener {
             return;
         }
         instance = this;
-        Bukkit.getPluginManager().registerEvents(this, ConsulatAPI.getConsulatAPI());
         //int delay = 10 * 20;
         int delay = 5 * 60 * 20;
         Bukkit.getScheduler().runTaskTimerAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {

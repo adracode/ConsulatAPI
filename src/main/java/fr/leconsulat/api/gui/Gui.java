@@ -3,15 +3,16 @@ package fr.leconsulat.api.gui;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.gui.events.GuiCreateEvent;
 import fr.leconsulat.api.player.ConsulatPlayer;
-import fr.leconsulat.api.utils.ObjectUtils;
-import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class Gui implements InventoryHolder {
     
@@ -27,11 +28,11 @@ public class Gui implements InventoryHolder {
         } catch(NoSuchFieldException e){
             e.printStackTrace();
         }
-        
     }
     
     private String name;
     private final byte lines;
+    private int page = 0;
     private Inventory gui;
     private Object key;
     private Object fatherKey;
@@ -64,6 +65,7 @@ public class Gui implements InventoryHolder {
     private Gui(Gui gui){
         this.name = gui.name;
         this.lines = gui.lines;
+        this.page = gui.page;
         this.listener = gui.listener;
         this.key = gui.key;
         this.fatherKey = gui.fatherKey;
@@ -79,8 +81,6 @@ public class Gui implements InventoryHolder {
     public Gui copy(Object key){
         Gui copy = new Gui(this);
         copy.setKey(key);
-        GuiCreateEvent event = new GuiCreateEvent(copy, key);
-        listener.onCreate(event);
         return copy;
     }
     
@@ -293,18 +293,27 @@ public class Gui implements InventoryHolder {
         this.update(slot);
     }
     
+    public int getPage(){
+        return page;
+    }
+    
+    public void setPage(int page){
+        this.page = page;
+    }
+    
     @Override
     public boolean equals(Object o){
         if(this == o) return true;
         if(o == null || getClass() != o.getClass()) return false;
         Gui gui = (Gui)o;
         return Objects.equals(key, gui.key) &&
-                listener.equals(gui.listener);
+                listener.equals(gui.listener) &&
+                page == gui.page;
     }
     
     @Override
     public int hashCode(){
-        return Objects.hash(key, listener);
+        return Objects.hash(key, listener, page);
     }
     
     @Override

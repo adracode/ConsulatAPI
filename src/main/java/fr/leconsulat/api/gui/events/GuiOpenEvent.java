@@ -2,11 +2,12 @@ package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.gui.Gui;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import org.bukkit.event.Cancellable;
 
 /**
  * Event appelé lorsqu'un Gui est ouvert
  */
-public class GuiOpenEvent {
+public class GuiOpenEvent implements Cancellable {
 
     private final ConsulatPlayer player;
     private final Gui gui;
