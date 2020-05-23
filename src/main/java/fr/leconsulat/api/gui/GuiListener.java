@@ -32,7 +32,7 @@ public abstract class GuiListener implements Comparable<GuiListener> {
     
     private UUID uuid;
     private Class<?> type = null;
-    private final Map<Object, Gui> guis = new HashMap<>();
+    private final Map<Object, List<Gui>> guis = new HashMap<>();
     
     private final GuiListener father;
     private final Map<Byte, GuiListener> children = new HashMap<>();
@@ -40,6 +40,7 @@ public abstract class GuiListener implements Comparable<GuiListener> {
     private boolean modifiable = false;
     private boolean unique = true;
     private boolean createOnOpen = false;
+    private boolean autoCreatePage = true;
     private boolean autoCreate = true; //In case of player key
     
     public GuiListener(GuiListener father){
@@ -71,7 +72,19 @@ public abstract class GuiListener implements Comparable<GuiListener> {
      * @return le gui spécifique
      */
     public Gui getGui(Object key){
-        return guis.get(key);
+        return getGui(key, 0);
+    }
+    
+    public Gui getGui(Object key, int page){
+        List<Gui> pageGuis = guis.get(key);
+        if(pageGuis == null){
+            return null;
+        }
+        if(page == pageGuis.size() && isAutoCreatePage()){
+            create(key, page);
+        }
+        //Will throws IndexOutOfBoundException
+        return pageGuis.get(page);
     }
     
     /**
@@ -125,8 +138,7 @@ public abstract class GuiListener implements Comparable<GuiListener> {
         if(key == null && !isUnique() && (type.equals(ConsulatPlayer.class) || type.equals(CPlayerManager.getInstance().getPlayerClass()))){
             GuiManager.getInstance().setPlayerBounded(this);
         }
-        this.guis.put(key, gui);
-        gui.setKey(key);
+        this.guis.put(key, new ArrayList<>(Collections.singletonList(gui)));
         return gui;
     }
     
@@ -139,6 +151,10 @@ public abstract class GuiListener implements Comparable<GuiListener> {
         guis.remove(key);
     }
     
+    public boolean open(ConsulatPlayer player, Object key){
+        return open(player, key, 0);
+    }
+    
     /**
      * Ouvre un gui à un joueur
      *
@@ -146,8 +162,8 @@ public abstract class GuiListener implements Comparable<GuiListener> {
      * @param key    la clé correspondante au gui à ouvrir
      * @return true si le gui a été ouvert
      */
-    public boolean open(ConsulatPlayer player, Object key){
-        Gui gui = getGui(key);
+    public boolean open(ConsulatPlayer player, Object key, int page){
+        Gui gui = getGui(key, page);
         if(gui == null){
             if(isCreateOnOpen()){
                 gui = create(key);
@@ -167,6 +183,10 @@ public abstract class GuiListener implements Comparable<GuiListener> {
     void close(GuiCloseEvent e){
         onClose(e);
         Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
+            if(e.isCancelled()){
+                open(e.getPlayer(), e.getKey(), e.getGui().getPage());
+                return;
+            }
             if(e.getPlayer().getPlayer().getOpenInventory().getTitle().equals("Crafting")){
                 e.getPlayer().setCurrentlyOpen(null);
                 if(getFather() != null && e.isOpenFatherGui()){
@@ -175,6 +195,11 @@ public abstract class GuiListener implements Comparable<GuiListener> {
             }
         }, 1L);
         
+    }
+    
+    public int getPages(Object key){
+        List<Gui> guis = this.guis.get(key);
+        return guis == null ? 0 : guis.size();
     }
     
     public boolean isCreateOnOpen(){
@@ -224,13 +249,32 @@ public abstract class GuiListener implements Comparable<GuiListener> {
      * @return le nouveau gui crée
      */
     public Gui create(Object key){
+        return create(key, 0);
+    }
+    
+    private Gui create(Object key, int page){
         Gui defaultGui = getGui();
         if(defaultGui == null){
             throw new IllegalStateException("Un gui par défaut doit être spécifié");
         }
         Gui gui = defaultGui.copy(key);
-        addGui(key, gui);
+        gui.setPage(page);
+        GuiCreateEvent event = new GuiCreateEvent(gui, key);
+        onCreate(event);
+        page = gui.getPage();
+        if(!event.isCancelled()){
+            if(page != 0){
+                this.guis.get(key).add(page, gui);
+            } else {
+                addGui(key, gui);
+            }
+        }
         return gui;
+    }
+    
+    public Gui addPage(Object key){
+        List<Gui> gui = guis.get(key);
+        return create(key, gui == null ? 0 : gui.size());
     }
     
     public boolean isModifiable(){
@@ -249,7 +293,7 @@ public abstract class GuiListener implements Comparable<GuiListener> {
         this.unique = unique;
     }
     
-    protected Map<Object, Gui> getGuis(){
+    protected Map<Object, List<Gui>> getGuis(){
         return Collections.unmodifiableMap(guis);
     }
     
@@ -304,5 +348,13 @@ public abstract class GuiListener implements Comparable<GuiListener> {
     @Override
     public int compareTo(GuiListener o){
         return uuid.compareTo(o.uuid);
+    }
+    
+    public boolean isAutoCreatePage(){
+        return autoCreatePage;
+    }
+    
+    public void setAutoCreatePage(boolean autoCreatePage){
+        this.autoCreatePage = autoCreatePage;
     }
 }
