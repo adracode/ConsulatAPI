@@ -1,7 +1,9 @@
 package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.gui.Gui;
+import fr.leconsulat.api.gui.PagedGui;
 import org.bukkit.event.Cancellable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Event appelé lorsqu'un nouveau Gui est crée
@@ -9,14 +11,19 @@ import org.bukkit.event.Cancellable;
 public class GuiCreateEvent implements Cancellable {
 
     private Object key;
-    private Gui gui;
+    private final PagedGui pagedGui;
+    private final Gui gui;
+    private final int page;
     private boolean cancelled = false;
 
-    public GuiCreateEvent(Gui gui, Object key){
+    public GuiCreateEvent(Gui gui, Object key, PagedGui pagedGui, int page){
         this.key = key;
         this.gui = gui;
+        this.pagedGui = pagedGui;
+        this.page = page;
     }
-
+    
+    @NotNull
     public Object getKey(){
         return key;
     }
@@ -28,18 +35,6 @@ public class GuiCreateEvent implements Cancellable {
     public void setKey(Object key){
         this.key = key;
     }
-
-    public void setGui(Gui gui){
-        this.gui = gui;
-    }
-
-    public int getPage(){
-        return gui.getPage();
-    }
-    
-    public void setPage(int page){
-        gui.setPage(page);
-    }
     
     public boolean isCancelled(){
         return cancelled;
@@ -47,5 +42,13 @@ public class GuiCreateEvent implements Cancellable {
 
     public void setCancelled(boolean cancelled){
         this.cancelled = cancelled;
+    }
+    
+    public int getPage(){
+        return page;
+    }
+    
+    public PagedGui getPagedGui(){
+        return pagedGui;
     }
 }

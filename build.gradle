@@ -33,6 +33,7 @@ dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.14.4-R0.1-SNAPSHOT'
     compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "4.4.0"
     compile 'com.mojang:brigadier:1.0.17'
+    compile 'org.jetbrains:annotations:16.0.2'
 }
 
 processResources {

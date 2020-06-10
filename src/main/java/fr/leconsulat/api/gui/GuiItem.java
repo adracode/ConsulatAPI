@@ -43,6 +43,11 @@ public class GuiItem extends ItemStack implements Cloneable {
         this.slot = slot;
     }
     
+    public GuiItem(String name, byte slot, UUID player, List<String> description){
+        this(name, player, description);
+        this.slot = slot;
+    }
+    
     private GuiItem(Material material){
         super(material);
     }
@@ -84,7 +89,19 @@ public class GuiItem extends ItemStack implements Cloneable {
         setItemMeta(meta);
     }
     
-    public GuiItem setGlowing(boolean b){
+    public GuiItem(String name, UUID uuid, List<String> description){
+        this(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta)getItemMeta();
+        meta.setDisplayName(name);
+        if(description != null){
+            meta.setLore(description);
+        }
+        Player bukkitPlayer = Bukkit.getPlayer(uuid);
+        meta.setOwningPlayer(bukkitPlayer == null ? Bukkit.getOfflinePlayer(uuid) : bukkitPlayer);
+        setItemMeta(meta);
+    }
+    
+        public GuiItem setGlowing(boolean b){
         ItemMeta meta = getItemMeta();
         if(b){
             meta.addEnchant(Enchantment.ARROW_INFINITE, 0, true);

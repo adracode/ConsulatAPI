@@ -1,19 +1,18 @@
 package fr.leconsulat.api.gui.exemples;
 
+import fr.leconsulat.api.gui.GuiListener;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
 import fr.leconsulat.api.gui.events.GuiCloseEvent;
 import fr.leconsulat.api.gui.events.GuiCreateEvent;
 import fr.leconsulat.api.gui.events.GuiOpenEvent;
-import fr.leconsulat.api.gui.*;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Material;
 
 public class TestGui extends GuiListener {
     
     public TestGui(){
-        super(null, ConsulatPlayer.class);
-        addGui(null,
-                this, "§cCou§ecou", 4,
+        super(null, ConsulatPlayer.class, 4);
+        setTemplate(this, "§cCou§ecou",
                 getItem("§aSalut", 10, Material.ENDER_PEARL, "§7Ceci est un §8item §7de §cTest", "§7Veuillez le traiter avec §arespect"),
                 getItem("nom du joueur", 28, Material.HEART_OF_THE_SEA),
                 getItem("§aSalut", 0, Material.ENDER_PEARL, "§dOui").setGlowing(true)
@@ -23,9 +22,6 @@ public class TestGui extends GuiListener {
     
     @Override
     public void onCreate(GuiCreateEvent event){
-        if(event.getKey() == null){
-            return;
-        }
         event.getGui().setDisplayName(28, ((ConsulatPlayer)event.getKey()).getName());
     }
     

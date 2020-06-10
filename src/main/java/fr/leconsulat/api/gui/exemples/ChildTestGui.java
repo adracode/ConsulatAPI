@@ -10,8 +10,8 @@ import org.bukkit.Material;
 public class ChildTestGui extends GuiListener {
     
     public ChildTestGui(GuiListener father){
-        super(father, int.class);
-        addGui(null, this, "Classement", 6,
+        super(father, int.class, 6);
+        setTemplate(this, "Classement",
                 getItem("1er", 0, "adracode", "§r§aBravo !", "§7Tu es le premier !"),
                 getItem("Page: ", 49, Material.PAPER).setGlowing(true),
                 getItem("Suivant", 53, Material.ARROW),
@@ -23,9 +23,6 @@ public class ChildTestGui extends GuiListener {
     
     @Override
     public void onCreate(GuiCreateEvent event){
-        if(event.getKey() == null){
-            return;
-        }
         event.getGui().setDisplayName(49, "Page: " + event.getKey());
         int slot = ((int)event.getKey()) % 45;
         if(slot == 0){

@@ -1,7 +1,6 @@
 package fr.leconsulat.api.gui;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
-import fr.leconsulat.api.gui.events.GuiCreateEvent;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -31,7 +30,6 @@ public class Gui implements InventoryHolder {
     }
     
     private String name;
-    private final byte lines;
     private int page = 0;
     private Inventory gui;
     private Object key;
@@ -39,38 +37,30 @@ public class Gui implements InventoryHolder {
     private GuiListener listener;
     private GuiItem[] items;
     
-    public Gui(Object key, GuiListener listener, String name, int lines, GuiItem... items){
+    public Gui(Object key, GuiListener listener, String name, GuiItem... items){
         if(listener == null){
             throw new NullPointerException("Listener cannot be null");
         }
         this.listener = listener;
         this.name = name;
-        this.lines = (byte)lines;
         this.key = key;
-        this.items = new GuiItem[this.lines * 9];
-        String preName = this.listener.getFather() == null ?
-                name :
-                this.listener.getFather().getGui(this.getFatherKey()).getName() + " §e> " + name;
-        if(preName.length() > 32){
-            preName = name;
-        }
-        this.gui = Bukkit.createInventory(this, lines * 9, preName);
+        this.items = new GuiItem[listener.getLine() * 9];
+        this.gui = Bukkit.createInventory(this, listener.getLine() * 9,
+                listener.getFather() == null ? name :
+                        listener.getFather().getGui(this.getFatherKey(), 0).getName() + " §e> " + name);
         for(GuiItem item : items){
             setItem(item);
         }
-        GuiCreateEvent event = new GuiCreateEvent(this, key);
-        listener.onCreate(event);
     }
     
-    private Gui(Gui gui){
-        this.name = gui.name;
-        this.lines = gui.lines;
+    private Gui(Gui gui, String name){
+        this.name = name == null ? gui.name : name;
         this.page = gui.page;
         this.listener = gui.listener;
         this.key = gui.key;
         this.fatherKey = gui.fatherKey;
-        this.items = new GuiItem[this.lines * 9];
-        this.gui = Bukkit.createInventory(this, lines * 9, name);
+        this.items = new GuiItem[listener.getLine() * 9];
+        this.gui = Bukkit.createInventory(this, listener.getLine() * 9, this.name);
         for(GuiItem item : gui.items){
             if(item != null){
                 this.setItem(item.clone());
@@ -79,7 +69,11 @@ public class Gui implements InventoryHolder {
     }
     
     public Gui copy(Object key){
-        Gui copy = new Gui(this);
+        return copy(key, null);
+    }
+    
+    public Gui copy(Object key, String name){
+        Gui copy = new Gui(this, name);
         copy.setKey(key);
         return copy;
     }
@@ -143,7 +137,12 @@ public class Gui implements InventoryHolder {
     }
     
     public Gui setFatherKey(Object fatherKey){
+        if(listener.getFather() == null){
+            throw new IllegalStateException("This listener don't have a father");
+        }
         this.fatherKey = fatherKey;
+        setTitle(listener.getFather().getGui(fatherKey).getName() + " §e> " + name);
+        System.out.println(listener.getFather().getGui(fatherKey).getName() + " §e> " + name);
         return this;
     }
     
@@ -260,10 +259,6 @@ public class Gui implements InventoryHolder {
         return name;
     }
     
-    public byte getLines(){
-        return lines;
-    }
-    
     public Inventory getGui(){
         return gui;
     }
@@ -275,6 +270,10 @@ public class Gui implements InventoryHolder {
      */
     public void setName(String name){
         this.name = name;
+        setTitle(name);
+    }
+    
+    private void setTitle(String name){
         try {
             titleField.set(inventoryField.get(gui), name);
         } catch(IllegalAccessException e){

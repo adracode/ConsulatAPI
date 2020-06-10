@@ -27,4 +27,5 @@ public final class ConsulatPlayerLoadedEvent extends Event {
         return handlers;
     }
     
+    
 }

@@ -27,4 +27,5 @@ public class ConsulatPlayerLeaveEvent extends Event {
         return handlers;
     }
     
+    
 }

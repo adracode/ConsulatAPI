@@ -2,9 +2,12 @@ package fr.leconsulat.api;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
+import fr.leconsulat.api.commands.PermissionCommand;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
+import fr.leconsulat.api.events.EventManager;
 import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
 import fr.leconsulat.api.player.CPlayerManager;
@@ -53,6 +56,8 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         databaseManager.connect();
         protocolManager = ProtocolLibrary.getProtocolManager();
         new SaveManager();
+        new ChannelManager();
+        new EventManager();
         playerManager = new CPlayerManager();
         commandManager = new CommandManager(this);
         guiManager = new GuiManager(this);
@@ -62,9 +67,11 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, ()-> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
     }
     
+    
+    
     @EventHandler(priority = EventPriority.HIGH)
     public void onPostInit(PostInitEvent event){
-        //commandManager.addCommand(new TestCommand());
+        commandManager.addCommand(new PermissionCommand());
     }
     
     
@@ -80,6 +87,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
                 getServer().getPluginManager().callEvent(new PlayerQuitEvent(player, ""));
             }
         }
+        SaveManager.getInstance().removeAll();
         databaseManager.disconnect();
     }
     

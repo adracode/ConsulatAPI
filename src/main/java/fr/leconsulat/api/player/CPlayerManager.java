@@ -22,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 public class CPlayerManager implements Listener {
@@ -111,10 +112,14 @@ public class CPlayerManager implements Listener {
         }
         Bukkit.getServer().getScheduler().runTaskAsynchronously(consulatAPI, () -> {
             try {
-                long start = System.currentTimeMillis();
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Fetching player...");
+                long start = System.currentTimeMillis();
                 manager.fetchPlayer(player);
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " fetched in " + (System.currentTimeMillis() - start) + " ms");
+                ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions...");
+                start = System.currentTimeMillis();
+                player.initPermissions();
+                ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
                 consulatAPI.getServer().getScheduler().scheduleSyncDelayedTask(consulatAPI, () -> {
                     ConsulatAPI.getConsulatAPI().getServer().getPluginManager().callEvent(
                             new ConsulatPlayerLoadedEvent(player)
@@ -140,6 +145,11 @@ public class CPlayerManager implements Listener {
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + event.getPlayer().getName() + " has left");
         Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLeaveEvent(getConsulatPlayer(event.getPlayer().getUniqueId())));
         this.players.remove(event.getPlayer().getUniqueId());
+    }
+    
+    @EventHandler
+    public void onQuit(ConsulatPlayerLeaveEvent event){
+        event.getPlayer().savePermissions();
     }
     
     public ConsulatPlayer getConsulatPlayerFromContext(Object commandListenerWrapper){
@@ -216,6 +226,7 @@ public class CPlayerManager implements Listener {
         fetch.close();
     }
     
+    @Deprecated
     public Optional<ConsulatOffline> fetchOffline(String playerName) throws SQLException{
         PreparedStatement fetch = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM players WHERE player_name = ?");
         fetch.setString(1, playerName);
@@ -256,6 +267,63 @@ public class CPlayerManager implements Listener {
         resultLastConnection.close();
         lastConnection.close();
         return Optional.of(offline);
+    }
+    
+    public void fetchOffline(String playerName, Consumer<ConsulatOffline> consumer) {
+        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), ()-> {
+            try {
+                PreparedStatement fetch = ConsulatAPI.getDatabase().prepareStatement(
+                        "SELECT * FROM players WHERE player_name = ?");
+                fetch.setString(1, playerName);
+                ResultSet resultFetch = fetch.executeQuery();
+                final ConsulatOffline consulatOffline;
+                if(resultFetch.next()){
+                    int id = resultFetch.getInt("id");
+                    String uuid = resultFetch.getString("player_uuid");
+                    if(uuid == null){
+                        resultFetch.close();
+                        fetch.close();
+                        throw new SQLException("player_uuid is null at id " + id);
+                    }
+                    String rank = resultFetch.getString("player_rank");
+                    if(rank == null){
+                        resultFetch.close();
+                        fetch.close();
+                        throw new SQLException("player_rank is null at id " + id);
+                    }
+                    consulatOffline = new ConsulatOffline(
+                            id,
+                            UUID.fromString(uuid),
+                            resultFetch.getString("player_name"),
+                            Rank.byName(rank),
+                            resultFetch.getString("registered"));
+                } else {
+                    Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), ()->{
+                        consumer.accept(null);
+                    });
+                    return;
+                }
+                resultFetch.close();
+                fetch.close();
+                PreparedStatement lastConnection = ConsulatAPI.getDatabase().prepareStatement(
+                        "SELECT connection_date FROM connections WHERE player_id = ? ORDER BY id DESC LIMIT 1");
+                lastConnection.setInt(1, consulatOffline.getId());
+                ResultSet resultLastConnection = lastConnection.executeQuery();
+                if(resultLastConnection.next()){
+                    consulatOffline.setLastConnection(resultLastConnection.getString("connection_date"));
+                }
+                resultLastConnection.close();
+                lastConnection.close();
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), ()->{
+                    consumer.accept(consulatOffline);
+                });
+            } catch(SQLException e){
+                e.printStackTrace();
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), ()->{
+                    consumer.accept(null);
+                });
+            }
+        });
     }
     
     public void setRank(UUID uuid, Rank rank) throws SQLException{

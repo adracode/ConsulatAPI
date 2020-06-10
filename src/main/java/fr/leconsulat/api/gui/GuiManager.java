@@ -5,7 +5,6 @@ import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
 import fr.leconsulat.api.gui.events.GuiCloseEvent;
-import fr.leconsulat.api.gui.events.GuiInteractEvent;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.EventHandler;
@@ -75,21 +74,20 @@ public class GuiManager implements Listener {
         if(item == null){
             return;
         }
-        GuiListener gui = getListener(e.getWhoClicked().getOpenInventory().getTopInventory());
-        if(gui != null && !gui.isModifiable()){
+        GuiListener listener = getListener(e.getWhoClicked().getOpenInventory().getTopInventory());
+        if(listener != null && !listener.isModifiable()){
             e.setCancelled(true);
         }
-        gui = getListener(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
-        if(gui == null){
+        listener = getListener(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
+        if(listener == null){
             return;
         }
         e.setCancelled(true);
-        ConsulatAPI.getConsulatAPI().getServer().getPluginManager().callEvent(new GuiInteractEvent(gui, (byte)e.getSlot(), e.getClick(), CPlayerManager.getInstance().getConsulatPlayer(e.getWhoClicked().getUniqueId())));
-    }
-    
-    @EventHandler(priority = EventPriority.NORMAL)
-    public void onInteractGui(GuiInteractEvent e){
-        e.getGui().onClick(new GuiClickEvent(e.getPlayer().getCurrentlyOpen(), e.getSlot(), e.getClick(), e.getPlayer()));
+        if(e.getClick() == ClickType.DOUBLE_CLICK){
+            return;
+        }
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getWhoClicked().getUniqueId());
+        listener.onClick(new GuiClickEvent(player.getCurrentlyOpen(), e.getSlot(), e.getClick(), player));
     }
     
     private GuiListener getListener(Inventory inventory){
@@ -112,7 +110,7 @@ public class GuiManager implements Listener {
         GuiListener listener = gui.getListener();
         if(listener != null){
             final ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
-            listener.close(new GuiCloseEvent(player, gui, gui.getKey(), true));
+            listener.close(new GuiCloseEvent(player, gui, gui.getKey(), gui.getFatherKey(), true));
         }
     }
     

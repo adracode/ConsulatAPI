@@ -16,10 +16,11 @@ public class GuiCloseEvent implements Cancellable {
     private boolean openFatherGui;
     private boolean cancelled;
     
-    public GuiCloseEvent(ConsulatPlayer player, Gui gui, Object key, boolean openFatherGui){
+    public GuiCloseEvent(ConsulatPlayer player, Gui gui, Object key, Object fatherKey, boolean openFatherGui){
         this.player = player;
         this.gui = gui;
         this.key = key;
+        this.fatherKey = fatherKey;
         this.openFatherGui = openFatherGui;
     }
     
