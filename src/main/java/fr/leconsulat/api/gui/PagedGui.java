@@ -6,14 +6,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class PagedGui implements Iterable<GuiItem> {
+public class PagedGui<T> implements Iterable<GuiItem> {
     
-    private List<Gui> guis = new ArrayList<>();
-    private GuiListener listener;
+    private List<Gui<T>> guis = new ArrayList<>();
+    private GuiListener<T> listener;
     
     private byte currentIndex = -1;
     
-    public PagedGui(GuiListener listener){
+    public PagedGui(GuiListener<T> listener){
         this.listener = listener;
     }
     
@@ -25,25 +25,26 @@ public class PagedGui implements Iterable<GuiItem> {
         return guis.size();
     }
     
-    public Gui getGui(int page){
+    public Gui<T> getGui(int page){
         return guis.get(page);
     }
     
-    public void addGui(Gui gui){
+    public void addGui(Gui<T> gui){
+        gui.setPagedGui(this);
         currentIndex = -1;
         guis.add(gui);
         gui.setPage(getCurrentPage());
         if(getCurrentPage() != 0){
-            Gui firstGui = getGui(0);
-            if(firstGui.getListener().getFather() != null){
-                gui.setFatherKey(getGui(0).getFatherKey());
+            Gui<T> firstGui = getGui(0);
+            if(firstGui.getFather() != null){
+                gui.setFather(getGui(0).getFather());
             }
         }
     }
     
     public void addItem(GuiItem item){
         int length = listener.getLengthMoveableSlot();
-        Gui gui;
+        Gui<T> gui;
         if(++currentIndex >= length){
             gui = listener.getGui(getKey(), guis.size());
             ++currentIndex;
@@ -87,7 +88,7 @@ public class PagedGui implements Iterable<GuiItem> {
         return true;
     }
     
-    public Object getKey(){
+    public T getKey(){
         return this.guis.get(0).getKey();
     }
     

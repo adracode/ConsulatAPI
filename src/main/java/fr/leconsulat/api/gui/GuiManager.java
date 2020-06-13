@@ -1,8 +1,6 @@
 package fr.leconsulat.api.gui;
 
 import fr.leconsulat.api.ConsulatAPI;
-import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
-import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
 import fr.leconsulat.api.gui.events.GuiCloseEvent;
 import fr.leconsulat.api.player.CPlayerManager;
@@ -17,9 +15,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class GuiManager implements Listener {
@@ -27,8 +23,7 @@ public class GuiManager implements Listener {
     private static GuiManager instance;
     
     //Store all root
-    private final Map<String, GuiListener> roots = new HashMap<>();
-    private List<GuiListener> playerGuis = new ArrayList<>();
+    private final Map<String, GuiListener<?>> roots = new HashMap<>();
     
     public GuiManager(ConsulatAPI core){
         if(instance != null){
@@ -48,7 +43,7 @@ public class GuiManager implements Listener {
      * @param name l'identifiant du gui
      * @param gui  le listener
      */
-    public void addRootGui(String name, GuiListener gui){
+    public void addRootGui(String name, GuiListener<?> gui){
         roots.put(name, gui);
     }
     
@@ -58,7 +53,7 @@ public class GuiManager implements Listener {
      * @param name l'identifiant du gui
      * @return le listener
      */
-    public GuiListener getRootGui(String name){
+    public GuiListener<?> getRootGui(String name){
         return roots.get(name);
     }
     
@@ -74,12 +69,15 @@ public class GuiManager implements Listener {
         if(item == null){
             return;
         }
-        GuiListener listener = getListener(e.getWhoClicked().getOpenInventory().getTopInventory());
-        if(listener != null && !listener.isModifiable()){
+        GuiListener<?> listener = getListener(e.getWhoClicked().getOpenInventory().getTopInventory());
+        if(listener == null){
+            return;
+        }
+        if(!listener.isModifiable()){
             e.setCancelled(true);
         }
-        listener = getListener(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
-        if(listener == null){
+        Gui<?> gui = getGui(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
+        if(gui == null){
             return;
         }
         e.setCancelled(true);
@@ -87,10 +85,10 @@ public class GuiManager implements Listener {
             return;
         }
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getWhoClicked().getUniqueId());
-        listener.onClick(new GuiClickEvent(player.getCurrentlyOpen(), e.getSlot(), e.getClick(), player));
+        listener.onClick(new GuiClickEvent(gui.getPagedGui(), gui, e.getSlot(), e.getClick(), player));
     }
     
-    private GuiListener getListener(Inventory inventory){
+    private Gui<?> getGui(Inventory inventory){
         if(inventory == null){
             return null;
         }
@@ -98,7 +96,18 @@ public class GuiManager implements Listener {
         if(!(holder instanceof Gui)){
             return null;
         }
-        return ((Gui)holder).getListener();
+        return (Gui<?>)holder;
+    }
+    
+    private GuiListener<?> getListener(Inventory inventory){
+        if(inventory == null){
+            return null;
+        }
+        InventoryHolder holder = inventory.getHolder();
+        if(!(holder instanceof Gui)){
+            return null;
+        }
+        return ((Gui<?>)holder).getListener();
     }
     
     @EventHandler(priority = EventPriority.LOW)
@@ -106,34 +115,11 @@ public class GuiManager implements Listener {
         if(!(e.getInventory().getHolder() instanceof Gui)){
             return;
         }
-        Gui gui = (Gui)e.getInventory().getHolder();
-        GuiListener listener = gui.getListener();
+        Gui<?> gui = (Gui<?>)e.getInventory().getHolder();
+        GuiListener<?> listener = gui.getListener();
         if(listener != null){
-            final ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
-            listener.close(new GuiCloseEvent(player, gui, gui.getKey(), gui.getFatherKey(), true));
+            ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
+            listener.close(new GuiCloseEvent(player, gui, gui.getKey(), gui.getFather(), true));
         }
-    }
-    
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onJoin(ConsulatPlayerLoadedEvent e){
-        for(GuiListener listener : playerGuis){
-            listener.create(e.getPlayer());
-        }
-    }
-    
-    @EventHandler
-    public void onQuit(ConsulatPlayerLeaveEvent e){
-        for(GuiListener listener : playerGuis){
-            listener.removeGui(e.getPlayer());
-        }
-    }
-    
-    /**
-     * Indique que le listener a une clé de type ConsulatPlayer
-     *
-     * @param listener
-     */
-    public void setPlayerBounded(GuiListener listener){
-        this.playerGuis.add(listener);
     }
 }

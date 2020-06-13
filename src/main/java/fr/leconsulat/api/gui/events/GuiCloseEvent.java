@@ -7,24 +7,24 @@ import org.bukkit.event.Cancellable;
 /**
  * Event appelé lorsque qu'un Gui est fermé
  */
-public class GuiCloseEvent implements Cancellable {
+public class GuiCloseEvent<T> implements Cancellable {
 
     private final ConsulatPlayer player;
-    private final Gui gui;
-    private final Object key;
-    private Object fatherKey;
+    private final Gui<T> gui;
+    private final T key;
+    private final Gui<?> father;
     private boolean openFatherGui;
     private boolean cancelled;
     
-    public GuiCloseEvent(ConsulatPlayer player, Gui gui, Object key, Object fatherKey, boolean openFatherGui){
+    public GuiCloseEvent(ConsulatPlayer player, Gui<T> gui, T key, Gui<?> father, boolean openFatherGui){
         this.player = player;
         this.gui = gui;
         this.key = key;
-        this.fatherKey = fatherKey;
+        this.father = father;
         this.openFatherGui = openFatherGui;
     }
     
-    public Gui getGui(){
+    public Gui<T> getGui(){
         return gui;
     }
     
@@ -40,16 +40,8 @@ public class GuiCloseEvent implements Cancellable {
         this.openFatherGui = openFatherGui;
     }
     
-    public Object getKey(){
+    public T getKey(){
         return key;
-    }
-    
-    public Object getFatherKey(){
-        return fatherKey;
-    }
-    
-    public void setFatherKey(Object fatherKey){
-        this.fatherKey = fatherKey;
     }
     
     @Override
@@ -60,5 +52,9 @@ public class GuiCloseEvent implements Cancellable {
     @Override
     public void setCancelled(boolean cancelled){
         this.cancelled = cancelled;
+    }
+    
+    public Gui<?> getFather(){
+        return father;
     }
 }

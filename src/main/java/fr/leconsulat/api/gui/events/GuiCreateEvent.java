@@ -8,15 +8,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Event appelé lorsqu'un nouveau Gui est crée
  */
-public class GuiCreateEvent implements Cancellable {
+public class GuiCreateEvent<T> implements Cancellable {
 
-    private Object key;
-    private final PagedGui pagedGui;
-    private final Gui gui;
+    private T key;
+    private final PagedGui<T> pagedGui;
+    private final Gui<T> gui;
     private final int page;
     private boolean cancelled = false;
 
-    public GuiCreateEvent(Gui gui, Object key, PagedGui pagedGui, int page){
+    public GuiCreateEvent(Gui<T> gui, T key, PagedGui<T> pagedGui, int page){
         this.key = key;
         this.gui = gui;
         this.pagedGui = pagedGui;
@@ -24,15 +24,15 @@ public class GuiCreateEvent implements Cancellable {
     }
     
     @NotNull
-    public Object getKey(){
+    public T getKey(){
         return key;
     }
 
-    public Gui getGui(){
+    public Gui<T> getGui(){
         return gui;
     }
 
-    public void setKey(Object key){
+    public void setKey(T key){
         this.key = key;
     }
     
@@ -48,7 +48,7 @@ public class GuiCreateEvent implements Cancellable {
         return page;
     }
     
-    public PagedGui getPagedGui(){
+    public PagedGui<T> getPagedGui(){
         return pagedGui;
     }
 }

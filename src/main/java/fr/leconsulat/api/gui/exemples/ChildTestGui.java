@@ -2,15 +2,13 @@ package fr.leconsulat.api.gui.exemples;
 
 import fr.leconsulat.api.gui.GuiListener;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
-import fr.leconsulat.api.gui.events.GuiCloseEvent;
 import fr.leconsulat.api.gui.events.GuiCreateEvent;
-import fr.leconsulat.api.gui.events.GuiOpenEvent;
 import org.bukkit.Material;
 
-public class ChildTestGui extends GuiListener {
+public class ChildTestGui extends GuiListener<Integer> {
     
-    public ChildTestGui(GuiListener father){
-        super(father, int.class, 6);
+    public ChildTestGui(){
+        super(Integer.class, 6);
         setTemplate(this, "Classement",
                 getItem("1er", 0, "adracode", "§r§aBravo !", "§7Tu es le premier !"),
                 getItem("Page: ", 49, Material.PAPER).setGlowing(true),
@@ -18,7 +16,6 @@ public class ChildTestGui extends GuiListener {
                 getItem("Précédent", 45, Material.ARROW),
                 getItem("§eJe me déplace !", 1, Material.SLIME_BALL)
         );
-        setCreateOnOpen(true);
     }
     
     @Override
@@ -33,16 +30,6 @@ public class ChildTestGui extends GuiListener {
     }
     
     @Override
-    public void onOpen(GuiOpenEvent event){
-    
-    }
-    
-    @Override
-    public void onClose(GuiCloseEvent event){
-        event.setFatherKey(event.getPlayer());
-    }
-    
-    @Override
     public void onClick(GuiClickEvent event){
         switch(event.getSlot()){
             case 53:{
@@ -50,7 +37,7 @@ public class ChildTestGui extends GuiListener {
             }
             break;
             case 45:
-                getGui((int)event.getGui().getKey() - 1).open(event.getPlayer());
+                open(event.getPlayer(), (int)event.getGui().getKey() - 1);
                 break;
         }
     }

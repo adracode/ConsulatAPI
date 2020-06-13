@@ -8,12 +8,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-public class Gui implements InventoryHolder {
+public class Gui<T> implements InventoryHolder {
     
     private static Field inventoryField;
     private static Field titleField;
@@ -37,13 +34,15 @@ public class Gui implements InventoryHolder {
     
     private String name;
     private int page = 0;
+    private PagedGui<T> pagedGui;
     private Inventory gui;
-    private Object key;
-    private Object fatherKey;
-    private GuiListener listener;
+    private T key;
+    private GuiListener<T> listener;
     private GuiItem[] items;
+    private Gui<?> father;
+    private Map<Object, Gui<?>> children = new HashMap<>();
     
-    public Gui(Object key, GuiListener listener, String name, GuiItem... items){
+    public Gui(T key, GuiListener<T> listener, String name, GuiItem... items){
         if(listener == null){
             throw new NullPointerException("Listener cannot be null");
         }
@@ -57,12 +56,25 @@ public class Gui implements InventoryHolder {
         }
     }
     
-    private Gui(Gui gui){
+    void setPagedGui(PagedGui<T> pagedGui){
+        this.pagedGui = pagedGui;
+    }
+    
+    public void addChild(Object key, Gui<?> gui){
+        children.put(key, gui);
+    }
+    
+    public Gui<?> getChild(Object gui){
+        return children.get(gui);
+    }
+    
+    private Gui(Gui<T> gui){
         this.name = gui.name;
         this.page = gui.page;
         this.listener = gui.listener;
         this.key = gui.key;
-        this.fatherKey = gui.fatherKey;
+        this.father = gui.father;
+        this.pagedGui = gui.pagedGui;
         this.items = new GuiItem[listener.getLine() * 9];
         this.gui = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
         for(GuiItem item : gui.items){
@@ -72,11 +84,11 @@ public class Gui implements InventoryHolder {
         }
     }
     
-    public Gui copy(){
-        return new Gui(this);
+    public Gui<T> copy(){
+        return new Gui<>(this);
     }
     
-    public Gui setDeco(Material type, int... slots){
+    public Gui<T> setDeco(Material type, int... slots){
         for(int slot : slots){
             setItem(new GuiItem(" ", (byte)slot, type));
         }
@@ -90,7 +102,6 @@ public class Gui implements InventoryHolder {
                 ", page=" + page +
                 ", gui=" + gui +
                 ", key=" + key +
-                ", fatherKey=" + fatherKey +
                 ", items=" + Arrays.toString(items) +
                 '}';
     }
@@ -149,24 +160,21 @@ public class Gui implements InventoryHolder {
         }
     }
     
-    public Object getFatherKey(){
-        return fatherKey;
+    public Gui<?> getFather(){
+        return father;
     }
     
-    public Gui setFatherKey(Object fatherKey){
-        if(listener.getFather() == null){
-            throw new IllegalStateException("This listener don't have a father");
-        }
-        this.fatherKey = fatherKey;
+    public Gui<?> setFather(Gui<?> father){
+        this.father = father;
         setTitle();
         return this;
     }
     
-    public Object getKey(){
+    public T getKey(){
         return key;
     }
     
-    public void setKey(Object key){
+    public void setKey(T key){
         this.key = key;
     }
     
@@ -174,7 +182,7 @@ public class Gui implements InventoryHolder {
         return Collections.unmodifiableList(Arrays.asList(this.items));
     }
     
-    public Gui setItem(int slot, GuiItem item){
+    public Gui<T> setItem(int slot, GuiItem item){
         if(item == null){
             return setItem(null);
         }
@@ -188,7 +196,7 @@ public class Gui implements InventoryHolder {
      * @param item l'item à ajouter
      * @return le gui où l'item a été ajouté
      */
-    public Gui setItem(GuiItem item){
+    public Gui<T> setItem(GuiItem item){
         if(item == null){
             return this;
         }
@@ -209,7 +217,7 @@ public class Gui implements InventoryHolder {
         moveItem(from, this, to);
     }
     
-    public void moveItem(int from, Gui guiTo, int to){
+    public void moveItem(int from, Gui<T> guiTo, int to){
         if(from == to && this.equals(guiTo)){
             return;
         }
@@ -290,18 +298,10 @@ public class Gui implements InventoryHolder {
     }
     
     private String buildInventoryTitle(){
-        if(listener.getFather() == null){
+        if(father == null){
             return name;
         } else {
-            if(NO_FATHER.equals(fatherKey)){
-                return name;
-            }
-            Gui fatherGui = listener.getFather().getGui(fatherKey);
-            if(fatherGui == null){
-                return name;
-            } else {
-                return fatherGui.getName() + " > " + name;
-            }
+            return father.getName() + " > " + name;
         }
     }
     
@@ -337,7 +337,7 @@ public class Gui implements InventoryHolder {
     public boolean equals(Object o){
         if(this == o) return true;
         if(o == null || getClass() != o.getClass()) return false;
-        Gui gui = (Gui)o;
+        Gui<?> gui = (Gui<?>)o;
         return Objects.equals(key, gui.key) &&
                 listener.equals(gui.listener) &&
                 page == gui.page;
@@ -351,5 +351,9 @@ public class Gui implements InventoryHolder {
     @Override
     public Inventory getInventory(){
         return gui;
+    }
+    
+    public PagedGui<T> getPagedGui(){
+        return pagedGui;
     }
 }

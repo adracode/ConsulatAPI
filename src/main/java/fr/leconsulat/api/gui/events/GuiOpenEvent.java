@@ -7,25 +7,25 @@ import org.bukkit.event.Cancellable;
 /**
  * Event appelé lorsqu'un Gui est ouvert
  */
-public class GuiOpenEvent implements Cancellable {
+public class GuiOpenEvent<T> implements Cancellable {
 
     private final ConsulatPlayer player;
-    private final Gui gui;
-    private final Object Key;
+    private final Gui<T> gui;
+    private final T Key;
     private boolean cancelled;
 
-    public GuiOpenEvent(ConsulatPlayer player, Gui gui, Object key){
+    public GuiOpenEvent(ConsulatPlayer player, Gui<T> gui, T key){
         this.player = player;
         this.gui = gui;
         Key = key;
         this.cancelled = false;
     }
     
-    public Gui getGui(){
+    public Gui<T> getGui(){
         return gui;
     }
     
-    public Object getKey(){
+    public T getKey(){
         return Key;
     }
     

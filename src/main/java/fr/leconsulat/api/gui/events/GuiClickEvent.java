@@ -2,6 +2,7 @@ package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.gui.Gui;
 import fr.leconsulat.api.gui.GuiItem;
+import fr.leconsulat.api.gui.PagedGui;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.inventory.ClickType;
 import org.jetbrains.annotations.NotNull;
@@ -9,14 +10,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Event appelé lors d'un click sur un item dans un Gui
  */
-public class GuiClickEvent {
+public class GuiClickEvent<T> {
     
-    private final Gui gui;
+    private final PagedGui<T> pagedGui;
+    private final Gui<T> gui;
     private final int slot;
     private final ClickType clickType;
     private final ConsulatPlayer player;
     
-    public GuiClickEvent(@NotNull Gui gui, int slot, @NotNull ClickType clickType, @NotNull ConsulatPlayer player){
+    public GuiClickEvent(PagedGui<T> pagedGui, @NotNull Gui<T> gui, int slot, @NotNull ClickType clickType, @NotNull ConsulatPlayer player){
+        this.pagedGui = pagedGui;
         this.gui = gui;
         this.slot = slot;
         this.clickType = clickType;
@@ -28,7 +31,7 @@ public class GuiClickEvent {
     }
     
     @NotNull
-    public Gui getGui(){
+    public Gui<T> getGui(){
         return gui;
     }
     
@@ -50,7 +53,7 @@ public class GuiClickEvent {
     }
     
     @NotNull
-    public Object getKey(){
+    public T getKey(){
         return gui.getKey();
     }
     
@@ -67,5 +70,9 @@ public class GuiClickEvent {
                 ", clickType=" + clickType +
                 ", player=" + player +
                 '}';
+    }
+    
+    public PagedGui<T> getPagedGui(){
+        return pagedGui;
     }
 }

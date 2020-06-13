@@ -8,16 +8,17 @@ import fr.leconsulat.api.gui.events.GuiOpenEvent;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Material;
 
-public class TestGui extends GuiListener {
+public class TestGui extends GuiListener<ConsulatPlayer> {
+    
+    private ChildTestGui childTestGui = new ChildTestGui();
     
     public TestGui(){
-        super(null, ConsulatPlayer.class, 4);
+        super(ConsulatPlayer.class, 4);
         setTemplate(this, "§cCou§ecou",
                 getItem("§aSalut", 10, Material.ENDER_PEARL, "§7Ceci est un §8item §7de §cTest", "§7Veuillez le traiter avec §arespect"),
                 getItem("nom du joueur", 28, Material.HEART_OF_THE_SEA),
                 getItem("§aSalut", 0, Material.ENDER_PEARL, "§dOui").setGlowing(true)
         );
-        addChild(null, new ChildTestGui(this));
     }
     
     @Override
@@ -39,7 +40,7 @@ public class TestGui extends GuiListener {
     public void onClick(GuiClickEvent event){
         event.getPlayer().sendMessage("" + event.getSlot());
         if(event.getSlot() == 10){
-            getChild(event.getSlot()).open(event.getPlayer(), 1);
+            childTestGui.open(event.getPlayer(), 0, event.getGui());
         }
     }
 }
