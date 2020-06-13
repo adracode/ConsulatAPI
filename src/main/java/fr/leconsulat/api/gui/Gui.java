@@ -17,6 +17,12 @@ public class Gui implements InventoryHolder {
     
     private static Field inventoryField;
     private static Field titleField;
+    public static final Object NO_FATHER = new Object() {
+        //@formatter:off
+        @Override public int hashCode(){ return 0; }
+        @Override public boolean equals(Object obj){ return obj == this; }
+        //@formatter:on
+    };
     
     static{
         try {
@@ -45,22 +51,20 @@ public class Gui implements InventoryHolder {
         this.name = name;
         this.key = key;
         this.items = new GuiItem[listener.getLine() * 9];
-        this.gui = Bukkit.createInventory(this, listener.getLine() * 9,
-                listener.getFather() == null ? name :
-                        listener.getFather().getGui(this.getFatherKey(), 0).getName() + " §e> " + name);
+        this.gui = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
         for(GuiItem item : items){
             setItem(item);
         }
     }
     
-    private Gui(Gui gui, String name){
-        this.name = name == null ? gui.name : name;
+    private Gui(Gui gui){
+        this.name = gui.name;
         this.page = gui.page;
         this.listener = gui.listener;
         this.key = gui.key;
         this.fatherKey = gui.fatherKey;
         this.items = new GuiItem[listener.getLine() * 9];
-        this.gui = Bukkit.createInventory(this, listener.getLine() * 9, this.name);
+        this.gui = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
         for(GuiItem item : gui.items){
             if(item != null){
                 this.setItem(item.clone());
@@ -68,14 +72,27 @@ public class Gui implements InventoryHolder {
         }
     }
     
-    public Gui copy(Object key){
-        return copy(key, null);
+    public Gui copy(){
+        return new Gui(this);
     }
     
-    public Gui copy(Object key, String name){
-        Gui copy = new Gui(this, name);
-        copy.setKey(key);
-        return copy;
+    public Gui setDeco(Material type, int... slots){
+        for(int slot : slots){
+            setItem(new GuiItem(" ", (byte)slot, type));
+        }
+        return this;
+    }
+    
+    @Override
+    public String toString(){
+        return "Gui{" +
+                "name='" + name + '\'' +
+                ", page=" + page +
+                ", gui=" + gui +
+                ", key=" + key +
+                ", fatherKey=" + fatherKey +
+                ", items=" + Arrays.toString(items) +
+                '}';
     }
     
     /**
@@ -141,8 +158,7 @@ public class Gui implements InventoryHolder {
             throw new IllegalStateException("This listener don't have a father");
         }
         this.fatherKey = fatherKey;
-        setTitle(listener.getFather().getGui(fatherKey).getName() + " §e> " + name);
-        System.out.println(listener.getFather().getGui(fatherKey).getName() + " §e> " + name);
+        setTitle();
         return this;
     }
     
@@ -270,12 +286,29 @@ public class Gui implements InventoryHolder {
      */
     public void setName(String name){
         this.name = name;
-        setTitle(name);
+        setTitle();
     }
     
-    private void setTitle(String name){
+    private String buildInventoryTitle(){
+        if(listener.getFather() == null){
+            return name;
+        } else {
+            if(NO_FATHER.equals(fatherKey)){
+                return name;
+            }
+            Gui fatherGui = listener.getFather().getGui(fatherKey);
+            if(fatherGui == null){
+                return name;
+            } else {
+                return fatherGui.getName() + " > " + name;
+            }
+        }
+    }
+    
+    private void setTitle(){
+        String title = buildInventoryTitle();
         try {
-            titleField.set(inventoryField.get(gui), name);
+            titleField.set(inventoryField.get(gui), title);
         } catch(IllegalAccessException e){
             e.printStackTrace();
         }

@@ -152,7 +152,7 @@ public class CPlayerManager implements Listener {
         event.getPlayer().savePermissions();
     }
     
-    public ConsulatPlayer getConsulatPlayerFromContext(Object commandListenerWrapper){
+    public ConsulatPlayer getConsulatPlayerFromContextSource(Object commandListenerWrapper){
         try {
             Player player = (Player)MinecraftReflection.getBukkitEntity(getEntity.invoke(commandListenerWrapper));
             return player == null ? null : CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());

@@ -4,12 +4,12 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 
-public class PlayerInteractGuiBlockEvent extends PlayerInteractBlockEvent {
+public class PlayerInteractContainerBlockEvent extends PlayerInteractBlockEvent {
     
     private final EquipmentSlot hand;
     private final Type type;
     
-    public PlayerInteractGuiBlockEvent(Block block, Player player, EquipmentSlot hand, Type type){
+    public PlayerInteractContainerBlockEvent(Block block, Player player, EquipmentSlot hand, Type type){
         super(block, player);
         this.hand = hand;
         this.type = type;
@@ -19,22 +19,23 @@ public class PlayerInteractGuiBlockEvent extends PlayerInteractBlockEvent {
         return hand;
     }
     
+    
     public Type getType(){
         return type;
     }
     
     public enum Type {
-        ANVIL,
-        BEACON,
-        CARTOGRAPHY_TABLE,
-        CRAFTING_TABLE,
-        ENCHANTING_TABLE,
-        ENDER_CHEST,
-        FLETCHING_TABLE,
-        GRINDSTONE,
-        LOOM,
-        SMITHING_TABLE,
-        STONECUTTER
+        BARREL,
+        BLAST_FURNACE,
+        BREWING_STAND,
+        CHEST,
+        DISPENSER,
+        DROPPER,
+        FURNACE,
+        HOPPER,
+        SHULKER_BOX,
+        SMOKER
+        
     }
     
 }

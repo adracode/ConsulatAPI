@@ -31,6 +31,10 @@ public class EventManager implements Listener {
         Bukkit.getServer().getPluginManager().registerEvents(this, ConsulatAPI.getConsulatAPI());
     }
     
+    private boolean noInteraction(Player player){
+        return player.isSneaking() && (player.getInventory().getItemInMainHand().getType() != Material.AIR || player.getInventory().getItemInOffHand().getType() != Material.AIR);
+    }
+    
     @EventHandler
     public void onInteract(PlayerInteractEvent event){
         Player player = event.getPlayer();
@@ -40,7 +44,13 @@ public class EventManager implements Listener {
                 if(clickedBlock == null){
                     return;
                 }
-                if(player.isSneaking() && (player.getInventory().getItemInMainHand().getType() != Material.AIR || player.getInventory().getItemInOffHand().getType() != Material.AIR)){
+                PlayerClickBlockEvent clickBlockEvent = new PlayerClickBlockEvent(clickedBlock, player, event.getHand());
+                Bukkit.getPluginManager().callEvent(clickBlockEvent);
+                if(clickBlockEvent.isCancelled()){
+                    event.setCancelled(true);
+                    return;
+                }
+                if(noInteraction(player)){
                     return;
                 }
                 PType type = PType.getCategory(clickedBlock.getType());
@@ -50,142 +60,164 @@ public class EventManager implements Listener {
                 PlayerInteractBlockEvent interactBlockEvent = null;
                 switch(type){
                     case BUTTON:
-                        interactBlockEvent = new PlayerInteractButtonEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractButtonEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case DOOR:
-                        interactBlockEvent = new PlayerInteractDoorEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractDoorEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case FENCE:
-                        interactBlockEvent = new PlayerInteractFenceEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractFenceEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case FENCE_GATE:
-                        interactBlockEvent = new PlayerInteractFenceGateEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractFenceGateEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case SIGN:
-                        interactBlockEvent = new PlayerInteractSignEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractSignEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case TRAPDOOR:
-                        interactBlockEvent = new PlayerInteractTrapdoorEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractTrapdoorEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case ANVIL:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.ANVIL);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.ANVIL);
                         break;
                     case BEACON:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.BEACON);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.BEACON);
                         break;
                     case CARTOGRAPHY_TABLE:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.CARTOGRAPHY_TABLE);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.CARTOGRAPHY_TABLE);
                         break;
                     case CRAFTING_TABLE:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.CRAFTING_TABLE);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.CRAFTING_TABLE);
                         break;
                     case ENCHANTING_TABLE:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.ENCHANTING_TABLE);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.ENCHANTING_TABLE);
                         break;
                     case ENDER_CHEST:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.ENDER_CHEST);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.ENDER_CHEST);
                         break;
                     case FLETCHING_TABLE:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.FLETCHING_TABLE);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.FLETCHING_TABLE);
                         break;
                     case GRINDSTONE:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.GRINDSTONE);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.GRINDSTONE);
                         break;
                     case LOOM:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.LOOM);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.LOOM);
                         break;
                     case SMITHING_TABLE:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.SMITHING_TABLE);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.SMITHING_TABLE);
                         break;
                     case STONECUTTER:
-                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, PlayerInteractGuiBlockEvent.Type.STONECUTTER);
+                        interactBlockEvent = new PlayerInteractGuiBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractGuiBlockEvent.Type.STONECUTTER);
                         break;
                     case BARREL:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.BARREL);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.BARREL);
                         break;
                     case BLAST_FURNACE:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.BLAST_FURNACE);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.BLAST_FURNACE);
                         break;
                     case BREWING_STAND:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.BREWING_STAND);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.BREWING_STAND);
                         break;
                     case CHEST:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.CHEST);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.CHEST);
                         break;
                     case DISPENSER:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.DISPENSER);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.DISPENSER);
                         break;
                     case DROPPER:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.DROPPER);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.DROPPER);
                         break;
                     case FURNACE:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.FURNACE);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.FURNACE);
                         break;
                     case HOPPER:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.HOPPER);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.HOPPER);
                         break;
                     case SHULKER_BOX:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.SHULKER_BOX);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.SHULKER_BOX);
                         break;
                     case SMOKER:
-                        interactBlockEvent = new PlayerInteractContentBlockEvent(event.getClickedBlock(), player, PlayerInteractContentBlockEvent.Type.SMOKER);
+                        interactBlockEvent = new PlayerInteractContainerBlockEvent(event.getClickedBlock(), player, event.getHand(), PlayerInteractContainerBlockEvent.Type.SMOKER);
                         break;
                     case BELL:
-                        interactBlockEvent = new PlayerInteractBellEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractBellEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case BED:
-                        interactBlockEvent = new PlayerInteractBedEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractBedEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case CAKE:
-                        interactBlockEvent = new PlayerInteractCakeEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractCakeEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case CAMPFIRE:
-                        interactBlockEvent = new PlayerInteractCampfireEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractCampfireEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case CAULDRON:
-                        interactBlockEvent = new PlayerInteractCauldronEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractCauldronEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case OPERATOR:
-                        interactBlockEvent = new PlayerInteractForbiddenEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractForbiddenEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case COMPARATOR:
                     case DAYLIGHT_DETECTOR:
                     case REPEATER:
-                        interactBlockEvent = new PlayerInteractRedstoneComponentEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractRedstoneComponentEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case COMPOSTER:
-                        interactBlockEvent = new PlayerInteractComposterEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractComposterEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case DRAGON_EGG:
-                        interactBlockEvent = new PlayerInteractDragonEggEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractDragonEggEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case FLOWER_POT:
-                        interactBlockEvent = new PlayerInteractFlowerPotEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractFlowerPotEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case JUKEBOX:
-                        interactBlockEvent = new PlayerInteractJukeboxEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractJukeboxEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case LECTERN:
-                        interactBlockEvent = new PlayerInteractLecternEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractLecternEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case LEVER:
-                        interactBlockEvent = new PlayerInteractLeverEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractLeverEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case NOTE_BLOCK:
-                        interactBlockEvent = new PlayerInteractNoteEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractNoteEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case PUMPKIN:
-                        interactBlockEvent = new PlayerInteractPumpkinEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractPumpkinEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case REDSTONE_ORE:
-                        interactBlockEvent = new PlayerInteractRedstoneOreEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractRedstoneOreEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case SWEET_BERRY_BUSH:
-                        interactBlockEvent = new PlayerInteractBerryEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractBerryEvent(event.getClickedBlock(), player, event.getHand());
                         break;
                     case TNT:
-                        interactBlockEvent = new PlayerInteractTntEvent(event.getClickedBlock(), player);
+                        interactBlockEvent = new PlayerInteractTntEvent(event.getClickedBlock(), player, event.getHand());
                         break;
+                    
+                    case NOTHING:
+                        return;
+                }
+                if(interactBlockEvent != null){
+                    Bukkit.getPluginManager().callEvent(interactBlockEvent);
+                    if(interactBlockEvent.isCancelled()){
+                        event.setCancelled(true);
+                    }
+                }
+            }
+            break;
+            case PHYSICAL:
+                if(clickedBlock == null){
+                    return;
+                }
+                PType type = PType.getCategory(clickedBlock.getType());
+                if(type == null){
+                    return;
+                }
+                PlayerInteractBlockEvent interactBlockEvent = null;
+                switch(type){
                     case PRESSURE_PLATE:
                         interactBlockEvent = new PlayerInteractPlateEvent(event.getClickedBlock(), player);
                         break;
@@ -198,19 +230,17 @@ public class EventManager implements Listener {
                     case TURTLE_EGG:
                         interactBlockEvent = new PlayerInteractTurtleEggEvent(event.getClickedBlock(), player);
                         break;
-                    case NOTHING:
-                        return;
                 }
-                Bukkit.getPluginManager().callEvent(interactBlockEvent);
-                if(interactBlockEvent.isCancelled()){
-                    event.setCancelled(true);
+                if(interactBlockEvent != null){
+                    Bukkit.getPluginManager().callEvent(interactBlockEvent);
+                    if(interactBlockEvent.isCancelled()){
+                        event.setCancelled(true);
+                    }
                 }
-    
-            }
+                break;
         }
     }
     
-    //TODO: leash
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent interactEvent){
         Entity entity = interactEvent.getRightClicked();
@@ -370,9 +400,6 @@ public class EventManager implements Listener {
                         event = new PlayerPutInItemFrameEvent(entity, player);
                     }
                     break;
-                case LEASH_HITCH:
-                    //TODO
-                    break;
                 case MINECART_COMMAND:
                     event = new PlayerOpenCommandBlockEvent(entity, player);
                     break;
@@ -425,6 +452,7 @@ public class EventManager implements Listener {
                 case ARMOR_STAND://Handled by ArmorManipulateEvent
                 case CAVE_SPIDER:
                 case ENDER_PEARL:
+                case LEASH_HITCH://Handled by EntityLeashEvent
                 case DROPPED_ITEM:
                 case ENDER_DRAGON:
                 case ENDER_SIGNAL:

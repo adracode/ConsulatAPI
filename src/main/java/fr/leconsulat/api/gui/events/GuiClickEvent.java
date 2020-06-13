@@ -1,6 +1,7 @@
 package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.gui.Gui;
+import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.inventory.ClickType;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,10 @@ public class GuiClickEvent {
         this.slot = slot;
         this.clickType = clickType;
         this.player = player;
+    }
+    
+    public GuiItem getClickedItem(){
+        return gui.getItem(slot);
     }
     
     @NotNull
@@ -52,5 +57,15 @@ public class GuiClickEvent {
     @NotNull
     public ConsulatPlayer getPlayer(){
         return player;
+    }
+    
+    @Override
+    public String toString(){
+        return "GuiClickEvent{" +
+                "gui=" + gui +
+                ", slot=" + slot +
+                ", clickType=" + clickType +
+                ", player=" + player +
+                '}';
     }
 }

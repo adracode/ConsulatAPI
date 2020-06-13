@@ -32,7 +32,13 @@ public class PagedGui implements Iterable<GuiItem> {
     public void addGui(Gui gui){
         currentIndex = -1;
         guis.add(gui);
-        gui.setPage(guis.size() - 1);
+        gui.setPage(getCurrentPage());
+        if(getCurrentPage() != 0){
+            Gui firstGui = getGui(0);
+            if(firstGui.getListener().getFather() != null){
+                gui.setFatherKey(getGui(0).getFatherKey());
+            }
+        }
     }
     
     public void addItem(GuiItem item){
@@ -42,7 +48,7 @@ public class PagedGui implements Iterable<GuiItem> {
             gui = listener.getGui(getKey(), guis.size());
             ++currentIndex;
         } else {
-            gui = listener.getGui(getKey(), guis.size() - 1);
+            gui = listener.getGui(getKey(), getCurrentPage());
         }
         gui.setItem(getCurrentSlot(), item);
     }

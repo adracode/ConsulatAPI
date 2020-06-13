@@ -30,7 +30,6 @@ public class ChildTestGui extends GuiListener {
             event.getGui().setDescription(0, "§6Tu es passé 2e :(");
         }
         event.getGui().moveItem(1, slot);
-        
     }
     
     @Override

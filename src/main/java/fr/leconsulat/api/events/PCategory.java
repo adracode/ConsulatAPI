@@ -6,7 +6,7 @@ public enum  PCategory {
     CHANGE_REDSTONE,
     DOOR_INTERACTION,
     OPEN_GUI,
-    ACCESS_CONTENT,
+    CONTAINER,
     OTHER,
     FORBIDDEN,
     NOTHING,

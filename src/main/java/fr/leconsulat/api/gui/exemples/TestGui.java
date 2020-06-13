@@ -17,7 +17,7 @@ public class TestGui extends GuiListener {
                 getItem("nom du joueur", 28, Material.HEART_OF_THE_SEA),
                 getItem("§aSalut", 0, Material.ENDER_PEARL, "§dOui").setGlowing(true)
         );
-        addChild(10, new ChildTestGui(this));
+        addChild(null, new ChildTestGui(this));
     }
     
     @Override
