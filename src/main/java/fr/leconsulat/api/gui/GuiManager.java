@@ -1,10 +1,16 @@
 package fr.leconsulat.api.gui;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketEvent;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.events.GuiClickEvent;
-import fr.leconsulat.api.gui.events.GuiCloseEvent;
+import fr.leconsulat.api.gui.input.UserInput;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import fr.leconsulat.api.utils.minecraft.packets.PacketUtils;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -17,6 +23,8 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 public class GuiManager implements Listener {
     
@@ -24,17 +32,36 @@ public class GuiManager implements Listener {
     
     //Store all root
     private final Map<String, GuiListener<?>> roots = new HashMap<>();
+    private final Map<UUID, UserInput> inputs = new HashMap<>();
     
     public GuiManager(ConsulatAPI core){
         if(instance != null){
             return;
         }
         instance = this;
+        ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Client.UPDATE_SIGN) {
+            @Override
+            public void onPacketReceiving(PacketEvent event){
+                Player player = event.getPlayer();
+                UserInput userInput = inputs.remove(player.getUniqueId());
+                if(userInput == null){
+                    return;
+                }
+                event.setCancelled(true);
+                userInput.processInput(PacketUtils.getArrayFromUpdateSignPacket(event.getPacket().getHandle()));
+            }
+        });
         core.getServer().getPluginManager().registerEvents(this, core);
     }
     
     public static GuiManager getInstance(){
         return instance;
+    }
+    
+    public void userInput(Player player, Consumer<String> consumer, String[] defaultText, int... result){
+        UserInput userInput = new UserInput(consumer, defaultText, result);
+        inputs.put(player.getUniqueId(), userInput);
+        userInput.open(player);
     }
     
     /**
@@ -76,7 +103,7 @@ public class GuiManager implements Listener {
         if(!listener.isModifiable()){
             e.setCancelled(true);
         }
-        Gui<?> gui = getGui(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
+        IGui<?> gui = getGui(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
         if(gui == null){
             return;
         }
@@ -85,18 +112,18 @@ public class GuiManager implements Listener {
             return;
         }
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getWhoClicked().getUniqueId());
-        listener.onClick(new GuiClickEvent(gui.getPagedGui(), gui, e.getSlot(), e.getClick(), player));
+        listener.onClick(new GuiClickEvent(gui.getPagedGui(), e.getSlot(), e.getClick(), player));
     }
     
-    private Gui<?> getGui(Inventory inventory){
+    private IGui<?> getGui(Inventory inventory){
         if(inventory == null){
             return null;
         }
         InventoryHolder holder = inventory.getHolder();
-        if(!(holder instanceof Gui)){
+        if(!(holder instanceof IGui)){
             return null;
         }
-        return (Gui<?>)holder;
+        return ((IGui<?>)holder).getPagedGui();
     }
     
     private GuiListener<?> getListener(Inventory inventory){
@@ -104,22 +131,23 @@ public class GuiManager implements Listener {
             return null;
         }
         InventoryHolder holder = inventory.getHolder();
-        if(!(holder instanceof Gui)){
+        if(!(holder instanceof IGui)){
             return null;
         }
-        return ((Gui<?>)holder).getListener();
+        return ((IGui<?>)holder).getListener();
     }
     
     @EventHandler(priority = EventPriority.LOW)
     public void onClose(InventoryCloseEvent e){
-        if(!(e.getInventory().getHolder() instanceof Gui)){
+        if(!(e.getInventory().getHolder() instanceof IGui)){
             return;
         }
-        Gui<?> gui = (Gui<?>)e.getInventory().getHolder();
-        GuiListener<?> listener = gui.getListener();
-        if(listener != null){
-            ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
-            listener.close(new GuiCloseEvent(player, gui, gui.getKey(), gui.getFather(), true));
-        }
+        IGui<?> gui = (IGui<?>)e.getInventory().getHolder();
+        gui.onClose(CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId()));
     }
+    
+    void removeInput(){
+    
+    }
+    
 }

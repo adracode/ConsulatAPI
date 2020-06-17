@@ -1,359 +1,307 @@
 package fr.leconsulat.api.gui;
 
-import com.comphenix.protocol.utility.MinecraftReflection;
+import fr.leconsulat.api.gui.events.PagedGuiCreateEvent;
+import fr.leconsulat.api.gui.events.PagedGuiRemoveEvent;
+import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.entity.HumanEntity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Supplier;
 
-public class Gui<T> implements InventoryHolder {
+@SuppressWarnings({"unused", "UnusedReturnValue"})
+public class Gui<T> implements Iterable<GuiItem> {
     
-    private static Field inventoryField;
-    private static Field titleField;
-    public static final Object NO_FATHER = new Object() {
-        //@formatter:off
-        @Override public int hashCode(){ return 0; }
-        @Override public boolean equals(Object obj){ return obj == this; }
-        //@formatter:on
-    };
+    @Nullable private T data;
+    @NotNull private List<PagedGui<T>> guis;
+    @NotNull private GuiListener<T> listener;
+    @Nullable private Gui<?> father;
+    @Nullable private Map<Object, Gui<?>> children = null;
+    @Nullable private Map<Object, Supplier<Gui<?>>> createChildren = null;
     
-    static{
-        try {
-            inventoryField = MinecraftReflection.getCraftBukkitClass("inventory.CraftInventory").getDeclaredField("inventory");
-            inventoryField.setAccessible(true);
-            titleField = MinecraftReflection.getCraftBukkitClass("inventory.CraftInventoryCustom$MinecraftInventory").getDeclaredField("title");
-            titleField.setAccessible(true);
-        } catch(NoSuchFieldException e){
-            e.printStackTrace();
-        }
-    }
+    private byte currentIndex = -1;
     
-    private String name;
-    private int page = 0;
-    private PagedGui<T> pagedGui;
-    private Inventory gui;
-    private T key;
-    private GuiListener<T> listener;
-    private GuiItem[] items;
-    private Gui<?> father;
-    private Map<Object, Gui<?>> children = new HashMap<>();
-    
-    public Gui(T key, GuiListener<T> listener, String name, GuiItem... items){
-        if(listener == null){
-            throw new NullPointerException("Listener cannot be null");
-        }
+    protected Gui(@NotNull GuiListener<T> listener){
         this.listener = listener;
-        this.name = name;
-        this.key = key;
-        this.items = new GuiItem[listener.getLine() * 9];
-        this.gui = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
-        for(GuiItem item : items){
-            setItem(item);
+        this.data = null;
+        this.guis = Collections.emptyList();
+    }
+    
+    public Gui(@NotNull GuiListener<T> listener, @NotNull T data){
+        this.listener = listener;
+        this.data = data;
+        this.guis = new ArrayList<>();
+    }
+    
+    public int getItemsNumber(){
+        return currentIndex + 1 + getCurrentPage() * listener.getLengthMoveableSlot();
+    }
+    
+    @NotNull
+    public Gui<T> createSimilar(T key){
+        return getListener().createGui(key);
+    }
+    
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public Gui<T> getSimilar(T key){
+        Gui<?> pagedGui = getFather().getChild(key);
+        if(pagedGui == null){
+            pagedGui = createSimilar(key);
+            getFather().addChild(key, pagedGui);
         }
+        return (Gui<T>)pagedGui;
     }
     
-    void setPagedGui(PagedGui<T> pagedGui){
-        this.pagedGui = pagedGui;
-    }
-    
-    public void addChild(Object key, Gui<?> gui){
+    @NotNull
+    public <A> Gui<A> addChild(@Nullable Object key, @NotNull Gui<A> gui){
+        if(children == null){
+            children = new HashMap<>(1);
+        }
+        gui.setFather(this);
         children.put(key, gui);
-    }
-    
-    public Gui<?> getChild(Object gui){
-        return children.get(gui);
-    }
-    
-    private Gui(Gui<T> gui){
-        this.name = gui.name;
-        this.page = gui.page;
-        this.listener = gui.listener;
-        this.key = gui.key;
-        this.father = gui.father;
-        this.pagedGui = gui.pagedGui;
-        this.items = new GuiItem[listener.getLine() * 9];
-        this.gui = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
-        for(GuiItem item : gui.items){
-            if(item != null){
-                this.setItem(item.clone());
-            }
-        }
-    }
-    
-    public Gui<T> copy(){
-        return new Gui<>(this);
-    }
-    
-    public Gui<T> setDeco(Material type, int... slots){
-        for(int slot : slots){
-            setItem(new GuiItem(" ", (byte)slot, type));
-        }
-        return this;
-    }
-    
-    @Override
-    public String toString(){
-        return "Gui{" +
-                "name='" + name + '\'' +
-                ", page=" + page +
-                ", gui=" + gui +
-                ", key=" + key +
-                ", items=" + Arrays.toString(items) +
-                '}';
-    }
-    
-    /**
-     * Changer le nom de l'item au slot visé
-     *
-     * @param slot le slot de l'item
-     * @param name le nom à mettre
-     */
-    public void setDisplayName(int slot, String name){
-        GuiItem item = getItem(slot);
-        if(item != null){
-            item.setDisplayName(name);
-            this.update(slot);
-        }
-    }
-    
-    /**
-     * Changer la description de l'item au slot visé
-     *
-     * @param slot        le slot de l'item
-     * @param description la description à mettre
-     */
-    public void setDescription(int slot, String... description){
-        GuiItem item = getItem(slot);
-        if(item != null){
-            item.setDescription(description);
-            this.update(slot);
-        }
-        
-    }
-    
-    /**
-     * Changer le type de l'item au slot visé
-     *
-     * @param slot     le slot de l'item
-     * @param material le type à mettre
-     */
-    public void setType(int slot, Material material){
-        this.getItem(slot).setType(material);
-        this.update(slot);
-    }
-    
-    /**
-     * Changer l'effet de lueur de l'item au slot visé
-     *
-     * @param slot le slot de l'item
-     * @param glow true pour activé l'effet, false pour le désactivé
-     */
-    public void setGlowing(int slot, boolean glow){
-        GuiItem item = getItem(slot);
-        if(item != null){
-            item.setGlowing(glow);
-            this.update(slot);
-        }
-    }
-    
-    public Gui<?> getFather(){
-        return father;
-    }
-    
-    public Gui<?> setFather(Gui<?> father){
-        this.father = father;
-        setTitle();
-        return this;
-    }
-    
-    public T getKey(){
-        return key;
-    }
-    
-    public void setKey(T key){
-        this.key = key;
-    }
-    
-    public List<GuiItem> getItems(){
-        return Collections.unmodifiableList(Arrays.asList(this.items));
-    }
-    
-    public Gui<T> setItem(int slot, GuiItem item){
-        if(item == null){
-            return setItem(null);
-        }
-        item.setSlot(slot);
-        return setItem(item);
-    }
-    
-    /**
-     * Ajouter un item au gui
-     *
-     * @param item l'item à ajouter
-     * @return le gui où l'item a été ajouté
-     */
-    public Gui<T> setItem(GuiItem item){
-        if(item == null){
-            return this;
-        }
-        gui.setItem(item.getSlot(), item);
-        items[item.getSlot()] = item;
-        return this;
-    }
-    
-    /**
-     * Déplacer un item
-     * <p>
-     * Si le slot où l'item sera déplace n'est pas vide, l'item sera commuté avec lui
-     *
-     * @param from le slot de l'item à déplacer
-     * @param to   le slot où l'item sera ddéplacé
-     */
-    public void moveItem(int from, int to){
-        moveItem(from, this, to);
-    }
-    
-    public void moveItem(int from, Gui<T> guiTo, int to){
-        if(from == to && this.equals(guiTo)){
-            return;
-        }
-        GuiItem itemFrom = this.getItem(from);
-        if(itemFrom == null){
-            return;
-        }
-        itemFrom.setSlot(to);
-        GuiItem itemTo = guiTo.getItem(to);
-        if(itemTo != null){
-            itemTo.setSlot(from);
-            setItem(itemTo);
-        } else {
-            removeItem(from);
-        }
-        guiTo.setItem(itemFrom);
-    }
-    
-    /**
-     * Renvoie l'item au slot visé
-     *
-     * @param slot le slot visé
-     * @return l'item au slot vidé
-     */
-    public GuiItem getItem(int slot){
-        return items[slot];
-    }
-    
-    public GuiListener getListener(){
-        return listener;
-    }
-    
-    /**
-     * Ouvre ce gui au joueur visé
-     *
-     * @param player le joueur visé
-     */
-    public void open(ConsulatPlayer player){
-        if(this.gui == null){
-            return;
-        }
-        player.getPlayer().openInventory(this.gui);
-        player.setCurrentlyOpen(this);
-    }
-    
-    /**
-     * Mets à jour le slot visé
-     *
-     * @param slot le slot visé
-     */
-    public void update(int slot){
-        if(gui != null){
-            GuiItem item = getItem(slot);
-            if(item != null){
-                gui.setItem(slot, item);
-            } else {
-                gui.setItem(slot, null);
-            }
-        }
-    }
-    
-    public String getName(){
-        return name;
-    }
-    
-    public Inventory getGui(){
         return gui;
     }
     
-    /**
-     * Changer le nom du gui
-     *
-     * @param name
-     */
-    public void setName(String name){
-        this.name = name;
-        setTitle();
+    @SuppressWarnings("unchecked")
+    @Nullable
+    public <A> Gui<A> getChild(@Nullable Object key){
+        Gui<A> child = null;
+        if(createChildren != null && (children == null || (child = getLegacyChild(key)) == null)){
+            Supplier<Gui<?>> supplier = createChildren.remove(key);
+            if(supplier != null){
+                addChild(key, child = (Gui<A>)supplier.get());
+            }
+        }
+        return child;
     }
     
-    private String buildInventoryTitle(){
+    @SuppressWarnings("unchecked")
+    @Nullable
+    public <A> Gui<A> getLegacyChild(@Nullable Object key){
+        if(children == null){
+            return null;
+        }
+        return (Gui<A>)children.get(key);
+    }
+    
+    public void prepareChild(@Nullable Object key, @NotNull Supplier<Gui<?>> supplier){
+        if(createChildren == null){
+            createChildren = new HashMap<>();
+        }
+        createChildren.put(key, supplier);
+    }
+    
+    public boolean removeChild(Object key){
+        if(children == null){
+            return false;
+        }
+        return children.remove(key) != null;
+    }
+    
+    @NotNull
+    public String getName(){
+        return getPage().getName();
+    }
+    
+    public boolean hasFather(){
+        return father != null;
+    }
+    
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public <F> Gui<F> getFather(){
         if(father == null){
-            return name;
+            throw new NullPointerException("Father of " + listener.getClass());
+        }
+        return (Gui<F>)father;
+    }
+    
+    public void setFather(Gui<?> father){
+        this.father = father;
+        for(PagedGui<T> gui : guis){
+            gui.setTitle();
+        }
+    }
+    
+    public int getCurrentPage(){
+        return guis.size() - 1;
+    }
+    
+    public int numberOfPages(){
+        return guis.size();
+    }
+    
+    public PagedGui<T> getPage(){
+        return getPage(0);
+    }
+    
+    public PagedGui<T> getPage(int page){
+        PagedGui<T> gui = guis.get(page);
+        if(gui == null && listener.isAutoCreatePage()){
+            newPage();
+        }
+        return gui;
+    }
+    
+    @NotNull
+    public PagedGui<T> newPage(){
+        PagedGui<T> template = listener.getTemplate();
+        PagedGui<T> gui = template.copy();
+        addPage(gui);
+        gui.setTitle();
+        int page = getCurrentPage();
+        PagedGuiCreateEvent<T> event = new PagedGuiCreateEvent<>(gui, getData(), page);
+        listener.onPageCreate(event);
+        if(event.isCancelled()){
+            removePage(page);
+        }
+        return gui;
+    }
+    
+    public void addPage(PagedGui<T> gui){
+        currentIndex = -1;
+        guis.add(gui);
+        int page = getCurrentPage();
+        gui.setGui(this);
+        gui.setPage(page);
+    }
+    
+    public void addItem(GuiItem item){
+        int length = listener.getLengthMoveableSlot();
+        PagedGui<T> gui;
+        if(++currentIndex >= length){
+            gui = newPage();
+            ++currentIndex;
         } else {
-            return father.getName() + " > " + name;
+            gui = getPage(getCurrentPage());
+        }
+        gui.setItem(getCurrentSlot(), item);
+    }
+    
+    public byte getCurrentSlot(){
+        return getCurrentSlot(currentIndex);
+    }
+    
+    public byte getCurrentSlot(byte slot){
+        return listener.getMoveableSlot(slot);
+    }
+    
+    public void removeItem(int page, int slot){
+        PagedGui<T> gui = getPage(page);
+        gui.removeItem(slot);
+        int currentPage = getCurrentPage();
+        byte currentSlot = getCurrentSlot();
+        if(slot != currentSlot || currentPage != page){
+            PagedGui<T> lastGui = getPage(currentPage);
+            lastGui.moveItem(currentSlot, gui, slot);
+        }
+        if(currentIndex <= 0){
+            if(currentPage > 0){
+                removePage(currentPage);
+            } else {
+                currentIndex = -1;
+            }
+        } else {
+            --currentIndex;
         }
     }
     
-    private void setTitle(){
-        String title = buildInventoryTitle();
-        try {
-            titleField.set(inventoryField.get(gui), title);
-        } catch(IllegalAccessException e){
-            e.printStackTrace();
+    public void removeAll(){
+        for(Iterator<GuiItem> iterator = this.iterator(); iterator.hasNext(); ){
+            iterator.remove();
         }
     }
     
-    /**
-     * Supprime l'item au slot visé
-     *
-     * @param slot le slot visé
-     */
-    public void removeItem(int slot){
-        gui.setItem(slot, null);
-        items[slot] = null;
-        this.update(slot);
+    public boolean removePage(int page){
+        PagedGui<T> removed = guis.remove(page);
+        if(removed == null){
+            return false;
+        }
+        if(page != 0){
+            PagedGui<T> previous = getPage(page - 1);
+            for(HumanEntity human : new ArrayList<>(removed.getInventory().getViewers())){
+                previous.open(CPlayerManager.getInstance().getConsulatPlayer(human.getUniqueId()));
+            }
+        }
+        PagedGuiRemoveEvent<T> event = new PagedGuiRemoveEvent<>(removed, getData(), page);
+        System.out.println(event);
+        listener.onRemove(event);
+        System.out.println(listener.getClass());
+        currentIndex = (byte)(listener.getLengthMoveableSlot() - 1);
+        return true;
     }
     
-    public int getPage(){
-        return page;
+    @NotNull
+    public T getData(){
+        if(this.data == null){
+            throw new IllegalStateException();
+        }
+        return this.data;
     }
     
-    public void setPage(int page){
-        this.page = page;
+    @NotNull
+    @Override
+    public Iterator<GuiItem> iterator(){
+        return new GuiIterator();
+    }
+    
+    @NotNull
+    public GuiListener<T> getListener(){
+        return listener;
     }
     
     @Override
     public boolean equals(Object o){
         if(this == o) return true;
         if(o == null || getClass() != o.getClass()) return false;
-        Gui<?> gui = (Gui<?>)o;
-        return Objects.equals(key, gui.key) &&
-                listener.equals(gui.listener) &&
-                page == gui.page;
+        Gui<?> pagedGui = (Gui<?>)o;
+        return Objects.equals(data, pagedGui.data) &&
+                listener.equals(pagedGui.listener);
     }
     
     @Override
     public int hashCode(){
-        return Objects.hash(key, listener, page);
+        return Objects.hash(data, listener);
+    }
+    
+    public void open(ConsulatPlayer player){
+        open(player, 0);
+    }
+    
+    public void open(ConsulatPlayer player, int page){
+        getPage(page).open(player);
+    }
+    
+    private class GuiIterator implements Iterator<GuiItem> {
+        
+        private int page = 0;
+        private byte indexSlot = -1;
+        
+        @Override
+        public boolean hasNext(){
+            if(++indexSlot >= listener.getLengthMoveableSlot()){
+                indexSlot = 0;
+                ++page;
+            }
+            return page < getCurrentPage() || indexSlot <= currentIndex;
+        }
+        
+        @Override
+        public GuiItem next(){
+            return getPage(page).getItem(getCurrentSlot(indexSlot));
+        }
+        
+        @Override
+        public void remove(){
+            removeItem(page, getCurrentSlot(indexSlot));
+        }
     }
     
     @Override
-    public Inventory getInventory(){
-        return gui;
-    }
-    
-    public PagedGui<T> getPagedGui(){
-        return pagedGui;
+    protected void finalize(){
+        System.out.println("Deleting paged " + getName());
     }
 }

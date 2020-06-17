@@ -3,15 +3,12 @@ package fr.leconsulat.api.gui.events;
 import fr.leconsulat.api.gui.Gui;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Event appelé lorsqu'un nouveau PagedGui est crée
- */
-public class GuiCreateEvent<T> {
-
+public class GuiRemoveEvent<T> {
+    
     private final T data;
     private final Gui<T> gui;
-
-    public GuiCreateEvent(T data, Gui<T> gui){
+    
+    public GuiRemoveEvent(Gui<T> gui, T data){
         this.data = data;
         this.gui = gui;
     }
@@ -24,4 +21,5 @@ public class GuiCreateEvent<T> {
     public Gui<T> getGui(){
         return gui;
     }
+    
 }

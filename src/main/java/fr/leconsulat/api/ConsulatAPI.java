@@ -4,6 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
+import fr.leconsulat.api.commands.GCCommand;
 import fr.leconsulat.api.commands.PermissionCommand;
 import fr.leconsulat.api.commands.TestCommand;
 import fr.leconsulat.api.database.DatabaseManager;
@@ -11,8 +12,8 @@ import fr.leconsulat.api.database.SaveManager;
 import fr.leconsulat.api.events.EventManager;
 import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
-import fr.leconsulat.api.gui.exemples.TestGui;
 import fr.leconsulat.api.player.CPlayerManager;
+import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.runnable.KeepAlive;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -63,16 +65,22 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         playerManager = new CPlayerManager();
         commandManager = new CommandManager(this);
         guiManager = new GuiManager(this);
-        guiManager.addRootGui("yes", new TestGui());
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
     }
     
+    
     @EventHandler(priority = EventPriority.HIGH)
     public void onPostInit(PostInitEvent event){
         commandManager.addCommand(new PermissionCommand());
         commandManager.addCommand(new TestCommand());
+        commandManager.addCommand(new GCCommand());
+        if(playerManager.getPlayerClass() == ConsulatPlayer.class && ConsulatAPI.getConsulatAPI().isDebug()){
+            for(Player p : Bukkit.getOnlinePlayers()){
+                getServer().getPluginManager().callEvent(new PlayerJoinEvent(p, ""));
+            }
+        }
     }
     
     

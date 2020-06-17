@@ -13,26 +13,24 @@ import org.jetbrains.annotations.NotNull;
 public class GuiClickEvent<T> {
     
     private final PagedGui<T> pagedGui;
-    private final Gui<T> gui;
     private final int slot;
     private final ClickType clickType;
     private final ConsulatPlayer player;
     
-    public GuiClickEvent(PagedGui<T> pagedGui, @NotNull Gui<T> gui, int slot, @NotNull ClickType clickType, @NotNull ConsulatPlayer player){
+    public GuiClickEvent(@NotNull PagedGui<T> pagedGui, int slot, @NotNull ClickType clickType, @NotNull ConsulatPlayer player){
         this.pagedGui = pagedGui;
-        this.gui = gui;
         this.slot = slot;
         this.clickType = clickType;
         this.player = player;
     }
     
     public GuiItem getClickedItem(){
-        return gui.getItem(slot);
+        return pagedGui.getItem(slot);
     }
     
     @NotNull
-    public Gui<T> getGui(){
-        return gui;
+    public PagedGui<T> getPagedGui(){
+        return pagedGui;
     }
     
     public int getSlot(){
@@ -40,11 +38,7 @@ public class GuiClickEvent<T> {
     }
     
     public int getPage(){
-        return gui.getPage();
-    }
-    
-    public void setPage(int page){
-        gui.setPage(page);
+        return pagedGui.getPage();
     }
     
     @NotNull
@@ -53,8 +47,8 @@ public class GuiClickEvent<T> {
     }
     
     @NotNull
-    public T getKey(){
-        return gui.getKey();
+    public T getData(){
+        return getGui().getData();
     }
     
     @NotNull
@@ -62,17 +56,17 @@ public class GuiClickEvent<T> {
         return player;
     }
     
+    public Gui<T> getGui(){
+        return pagedGui.getGui();
+    }
+    
     @Override
     public String toString(){
         return "GuiClickEvent{" +
-                "gui=" + gui +
+                "pagedGui=" + pagedGui +
                 ", slot=" + slot +
                 ", clickType=" + clickType +
                 ", player=" + player +
                 '}';
-    }
-    
-    public PagedGui<T> getPagedGui(){
-        return pagedGui;
     }
 }

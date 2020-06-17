@@ -1,6 +1,7 @@
 package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.gui.Gui;
+import fr.leconsulat.api.gui.PagedGui;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.Cancellable;
 
@@ -10,23 +11,27 @@ import org.bukkit.event.Cancellable;
 public class GuiOpenEvent<T> implements Cancellable {
 
     private final ConsulatPlayer player;
-    private final Gui<T> gui;
-    private final T Key;
+    private final PagedGui<T> pagedGui;
+    private final T data;
     private boolean cancelled;
 
-    public GuiOpenEvent(ConsulatPlayer player, Gui<T> gui, T key){
+    public GuiOpenEvent(ConsulatPlayer player, PagedGui<T> pagedGui, T data){
         this.player = player;
-        this.gui = gui;
-        Key = key;
+        this.pagedGui = pagedGui;
+        this.data = data;
         this.cancelled = false;
     }
     
-    public Gui<T> getGui(){
-        return gui;
+    public PagedGui<T> getPagedGui(){
+        return pagedGui;
     }
     
-    public T getKey(){
-        return Key;
+    public Gui<T> getGui(){
+        return pagedGui.getGui();
+    }
+    
+    public T getData(){
+        return data;
     }
     
     public ConsulatPlayer getPlayer(){

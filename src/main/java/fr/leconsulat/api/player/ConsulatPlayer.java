@@ -2,7 +2,7 @@ package fr.leconsulat.api.player;
 
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.database.Saveable;
-import fr.leconsulat.api.gui.Gui;
+import fr.leconsulat.api.gui.PagedGui;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.NBTUtils;
@@ -30,7 +30,7 @@ public class ConsulatPlayer implements Saveable {
     private boolean initialized = false;
     private CustomRank customRank;
     private String registered;
-    private Gui currentlyOpen;
+    private PagedGui currentlyOpen;
     private boolean vanished;
     
     public ConsulatPlayer(UUID uuid, String name){
@@ -250,11 +250,11 @@ public class ConsulatPlayer implements Saveable {
                 '}';
     }
     
-    public Gui getCurrentlyOpen(){
+    public PagedGui getCurrentlyOpen(){
         return currentlyOpen;
     }
     
-    public void setCurrentlyOpen(Gui gui){
+    public void setCurrentlyOpen(PagedGui gui){
         this.currentlyOpen = gui;
     }
     
@@ -298,24 +298,15 @@ public class ConsulatPlayer implements Saveable {
     private static void setPermissions(UUID uuid, Set<String> permissions){
         try {
             File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
-            Map<String, Tag> player;
+            Map<String, Tag> player = new HashMap<>();
             if(!file.exists()){
                 file.createNewFile();
-                player = new HashMap<>();
-            } else {
-                NBTInputStream is = new NBTInputStream(new FileInputStream(file));
-                player = new HashMap<>(((CompoundTag)is.readTag()).getValue());
-                is.close();
             }
             List<Tag> perms = new ArrayList<>();
             for(String s : permissions){
                 perms.add(new StringTag("", s));
             }
-            if(player.containsKey("Permissions")){
-                player.replace("Permissions", new ListTag("Permissions", StringTag.class, perms));
-            } else {
-                player.put("Permissions", new ListTag("Permissions", StringTag.class, perms));
-            }
+            player.put("Permissions", new ListTag("Permissions", StringTag.class, perms));
             NBTOutputStream os = new NBTOutputStream(new FileOutputStream(file));
             os.writeTag(new CompoundTag("ConsulatPlayer", player));
             os.close();

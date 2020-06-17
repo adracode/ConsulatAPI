@@ -1,12 +1,8 @@
 package fr.leconsulat.api.gui;
 
-import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.events.*;
-import fr.leconsulat.api.player.ConsulatPlayer;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -29,11 +25,8 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     
     /* Identifiant du listener pour comparer facilement */
     private UUID uuid;
-    /* Type de clé utilisé pour identifier les différents guis
-     * (ex: si le type est ConsulatPlayer.class, on aura un gui par joueur) */
-    private Class<T> type = null;
     private final byte line;
-    private PagedGui<T> template;
+    private Template template;
     
     private short modifiers = 0;
     
@@ -45,50 +38,31 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     private byte[] moveableItems;
     
     public GuiListener(int line){
-        this(null, line);
-    }
-    
-    public GuiListener(Class<T> type, int line){
         this.line = (byte)line;
         this.uuid = UUID.randomUUID();
-        if(type != null){
-            this.type = type;
-            this.setUnique(false);
-        }
     }
     
-    public byte getMoveableSlot(int index){
+    public final byte getMoveableSlot(int index){
         return moveableItems[index];
     }
     
-    public byte getMaxMoveableSlot(){
+    public final byte getMaxMoveableSlot(){
         return moveableItems[getLengthMoveableSlot() - 1];
     }
     
-    public int getLengthMoveableSlot(){
+    public final int getLengthMoveableSlot(){
         return moveableItems.length;
     }
     
     /**
      * Ajoute un nouveau gui au listener
      *
-     * @param listener le listener du gui
-     * @param name     le nom affiché en haut du gui
-     * @param items    les différents items du gui
+     * @param name  le nom affiché en haut du gui
+     * @param items les différents items du gui
      * @return le gui ajouté
      */
-    public Gui<T> setTemplate(GuiListener<T> listener, String name, GuiItem... items){
-        Gui<T> gui = new Gui<>(null, listener, name, items);
-        template = new PagedGui<T>(GuiListener.this) {
-            //@formatter:off
-            @Override public void addGui(Gui<T> gui1){ throw new UnsupportedOperationException("Can't add page to template"); }
-            @Override public void addItem(GuiItem item){ throw new UnsupportedOperationException("Can't add item to template"); }
-            @Override public void removeItem(int page, int slot){ throw new UnsupportedOperationException("Can't remove item from template"); }
-            @Override public boolean removeGui(int page){ throw new UnsupportedOperationException("Can't remove gui from template"); }
-            @Override public Gui<T> getGui(int page){ return gui; }
-            //@formatter:on
-        };
-        return gui;
+    public final PagedGui<T> setTemplate(String name, GuiItem... items){
+        return (template = new Template(name, items)).getPage();
     }
     
     /**
@@ -98,15 +72,14 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
      * @return la nouvelle page de gui créée, ou null si l'event a été annulé
      */
     @NotNull
-    public PagedGui<T> create(T key){
-        return create(key, null);
+    public final Gui<T> createGui(T key){
+        return createGui(key, null);
     }
     
     @Override
-    public String toString(){
+    public final String toString(){
         return "GuiListener{" +
                 "uuid=" + uuid +
-                ", type=" + type +
                 ", line=" + line +
                 ", modifiable=" + modifiable +
                 ", unique=" + unique +
@@ -118,54 +91,25 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     }
     
     @NotNull
-    public PagedGui<T> create(T key, Gui<?> father, GuiItem... items){
-        Gui<T> template = getTemplate();
-        Gui<T> gui = template.copy();
-        gui.setKey(key);
-        if(father != null){
-            gui.setFather(father);
-        }
+    public final Gui<T> createGui(T key, Gui<?> father, GuiItem... items){
+        PagedGui<T> template = getTemplate();
+        PagedGui<T> gui = template.copy();
         for(GuiItem item : items){
             gui.setItem(item);
         }
-        PagedGui<T> pagedGui;
-        pagedGui = new PagedGui<>(this);
-        pagedGui.addGui(gui);
+        Gui<T> pagedGui;
+        pagedGui = new Gui<>(this, key);
+        pagedGui.addPage(gui);
+        pagedGui.setFather(father);
         int page = pagedGui.getCurrentPage();
-        PagedGuiCreateEvent<T> mainCreate = new PagedGuiCreateEvent<>(key, pagedGui);
-        onCreateMain(mainCreate);
-        if(mainCreate.isCancelled()){
-            return pagedGui;
-        }
-        GuiCreateEvent<T> event = new GuiCreateEvent<>(gui, key, pagedGui, page);
-        onCreate(event);
+        GuiCreateEvent<T> mainCreate = new GuiCreateEvent<>(key, pagedGui);
+        onCreate(mainCreate);
+        PagedGuiCreateEvent<T> event = new PagedGuiCreateEvent<>(gui, key, page);
+        onPageCreate(event);
         if(event.isCancelled()){
-            pagedGui.removeGui(page);
+            pagedGui.removePage(page);
         }
         return pagedGui;
-    }
-    
-    /**
-     * Supprime un gui du listener
-     *
-     * @param key la clé correspondante au gui
-     */
-    public boolean removeGui(T key){
-        return guis.remove(key) != null;
-    }
-    
-    public boolean removePage(T key, int page){
-        PagedGui<T> gui = this.guis.get(key);
-        if(gui == null){
-            return false;
-        }
-        return gui.removeGui(page);
-    }
-    
-    @Nullable
-    public PagedGui<T> getPagedGui(T key){
-        PagedGui<T> pagedGui = guis.get(key);
-        return pagedGui == null && isAutoCreatePage() ? create(key) : pagedGui;
     }
     
     /**
@@ -174,30 +118,8 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
      * @return le Gui par défaut
      */
     @NotNull
-    public Gui<T> getTemplate(){
-        Gui<T> template = getGui(null);
-        if(template == null){
-            throw new IllegalStateException("No template found");
-        }
-        return template;
-    }
-    
-    @Nullable
-    public Gui<T> getGui(T key){
-        return getGui(key, 0);
-    }
-    
-    @Nullable
-    public Gui<T> getGui(@Nullable T key, int page){
-        PagedGui<T> pagedGui = guis.get(key);
-        if(pagedGui == null){
-            return null;
-        }
-        if(key != null && page == pagedGui.pages() && isAutoCreatePage()){
-            create(key);
-        }
-        //IndexOutOfBoundException est voulue si la page est incorrecte
-        return pagedGui.getGui(page);
+    public final PagedGui<T> getTemplate(){
+        return template.getPage();
     }
     
     /**
@@ -209,7 +131,7 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
      * @param description La description à afficher
      * @return L'item nouvellement crée
      */
-    public GuiItem getItem(String name, int slot, Material material, String... description){
+    protected final GuiItem getItem(String name, int slot, Material material, String... description){
         return new GuiItem(name, (byte)slot, material, Arrays.asList(description));
     }
     
@@ -222,76 +144,19 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
      * @param description La description à afficher
      * @return La tête nouvellement créée
      */
-    public GuiItem getItem(String name, int slot, String player, String... description){
+    protected final GuiItem getItem(String name, int slot, String player, String... description){
         return new GuiItem(name, (byte)slot, player, Arrays.asList(description));
     }
     
-    public GuiItem getItem(String name, int slot, UUID player, String... description){
+    protected final GuiItem getItem(String name, int slot, UUID player, String... description){
         return new GuiItem(name, (byte)slot, player, Arrays.asList(description));
     }
     
-    public GuiItem getItem(GuiItem item, int slot){
+    protected final GuiItem getItem(GuiItem item, int slot){
         return item.clone().setSlot(slot);
     }
     
-    public boolean open(ConsulatPlayer player, T key){
-        return open(player, key, 0);
-    }
-    
-    public boolean open(ConsulatPlayer player, T key, Gui<?> father){
-        return open(player, key, father, 0);
-    }
-    
-    public boolean open(ConsulatPlayer player, T key, int page){
-        return open(player, key, null, page);
-    }
-    
-    /**
-     * Ouvre un gui à un joueur
-     *
-     * @param player le joueur qui doit ouvrir le gui
-     * @param key    la clé correspondante au gui à ouvrir
-     * @return true si le gui a été ouvert
-     */
-    public boolean open(ConsulatPlayer player, T key, Gui<?> father, int page){
-        Gui<T> gui = getGui(key, page);
-        if(gui == null){
-            if(isCreateOnOpen()){
-                gui = create(key, father).getGui(page);
-            } else {
-                return false;
-            }
-        }
-        GuiOpenEvent<T> event = new GuiOpenEvent<>(player, gui, key);
-        onOpen(event);
-        if(event.isCancelled()){
-            return false;
-        }
-        gui.open(player);
-        return true;
-    }
-    
-    void close(GuiCloseEvent<T> e){
-        onClose(e);
-        Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
-            if(e.isCancelled()){
-                open(e.getPlayer(), e.getKey(), e.getGui().getPage());
-                return;
-            }
-            if(e.getPlayer().getPlayer().getOpenInventory().getTitle().equals("Crafting")){
-                e.getPlayer().setCurrentlyOpen(null);
-                if(e.getFather() != null && e.isOpenFatherGui()){
-                    //noinspection unchecked
-                    e.getFather().getListener().open(e.getPlayer(), e.getFather().getKey());
-                }
-            }
-        }, 1L);
-        if(isDestroyOnClose()){
-            removeGui(e.getKey());
-        }
-    }
-    
-    public void setMoveableItemsRange(int from, int to){
+    protected final void setMoveableItemsRange(int from, int to){
         if(from < 0){
             throw new IllegalArgumentException("A slot cannot be below 0");
         }
@@ -307,7 +172,7 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
         }
     }
     
-    public void setMoveableItems(int... slots){
+    protected final void setMoveableItems(int... slots){
         Set<Byte> sorted = new TreeSet<>();
         for(int slot : slots){
             sorted.add((byte)slot);
@@ -325,43 +190,34 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
         }
     }
     
-    protected Map<Object, PagedGui<T>> getGuis(){
-        return Collections.unmodifiableMap(guis);
-    }
-    
-    public int getPages(T key){
-        PagedGui<T> guis = this.guis.get(key);
-        return guis == null ? 0 : guis.pages();
-    }
-    
-    public boolean isModifiable(){
+    public final boolean isModifiable(){
         return modifiable;
     }
     
-    public void setModifiable(boolean modifiable){
+    public final void setModifiable(boolean modifiable){
         this.modifiable = modifiable;
     }
     
-    public boolean isUnique(){
+    public final boolean isUnique(){
         return unique;
     }
     
-    public void setUnique(boolean unique){
+    public final void setUnique(boolean unique){
         this.unique = unique;
     }
     
-    public boolean isCreateOnOpen(){
+    public final boolean isCreateOnOpen(){
         return createOnOpen;
     }
     
-    public void setCreateOnOpen(boolean createOnOpen){
+    public final void setCreateOnOpen(boolean createOnOpen){
         this.createOnOpen = createOnOpen;
     }
     
-    public void onCreateMain(PagedGuiCreateEvent<T> event){
+    public void onCreate(GuiCreateEvent<T> event){
     }
     
-    public void onCreate(GuiCreateEvent<T> event){
+    public void onPageCreate(PagedGuiCreateEvent<T> event){
     }
     
     public void onOpen(GuiOpenEvent<T> event){
@@ -373,8 +229,11 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     public void onClick(GuiClickEvent<T> event){
     }
     
-    public Class<?> getType(){
-        return type;
+    public void onRemove(PagedGuiRemoveEvent<T> event){
+        System.out.println("Oui");
+    }
+    
+    public void onRemove(GuiRemoveEvent<T> event){
     }
     
     protected static final GuiItem highLess = new GuiItem("§4-", (byte)0, Material.RED_CONCRETE);
@@ -390,7 +249,7 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     protected static final GuiItem back = new GuiItem("§cRetour", (byte)0, Material.RED_STAINED_GLASS_PANE);
     
     @Override
-    public boolean equals(Object o){
+    public final boolean equals(Object o){
         if(this == o) return true;
         if(!(o instanceof GuiListener)) return false;
         GuiListener<?> listener = (GuiListener<?>)o;
@@ -398,47 +257,61 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     }
     
     @Override
-    public int hashCode(){
+    public final int hashCode(){
         return uuid.hashCode();
     }
     
     @Override
-    public int compareTo(GuiListener o){
+    public final int compareTo(GuiListener o){
         return uuid.compareTo(o.uuid);
     }
     
-    public boolean isAutoCreatePage(){
+    public final boolean isAutoCreatePage(){
         return autoCreatePage;
     }
     
-    public void setAutoCreatePage(boolean autoCreatePage){
+    public final void setAutoCreatePage(boolean autoCreatePage){
         this.autoCreatePage = autoCreatePage;
     }
     
-    public byte getLine(){
+    public final byte getLine(){
         return line;
     }
     
-    public boolean isDestroyOnClose(){
+    public final boolean isDestroyOnClose(){
         return destroyOnClose;
     }
     
-    public void setDestroyOnClose(boolean destroyOnClose){
+    public final void setDestroyOnClose(boolean destroyOnClose){
         this.destroyOnClose = destroyOnClose;
     }
     
-    public void open(ConsulatPlayer player){
-        open(player, null);
-    }
-    
-    public boolean isNoGuisStocked(){
-        return noGuisStocked;
-    }
-    
-    public void setNoGuisStocked(boolean noGuisStocked){
-        this.noGuisStocked = noGuisStocked;
-        if(noGuisStocked){
-            this.guis = null;
+    private class Template extends Gui<T> {
+        
+        private PagedGui<T> template;
+        
+        public Template(String name, GuiItem... items){
+            super(GuiListener.this);
+            this.template = new PagedGui<>(this, name, items);
         }
+    
+        //@formatter:off
+        @Override public int getCurrentPage(){ return 0; }
+        @Override public int numberOfPages(){ return 1; }
+        @Override public PagedGui<T> getPage(){ return this.template; }
+        @Override public PagedGui<T> getPage(int page){ return getPage(); }
+        @Override @NotNull public GuiListener<T> getListener(){ return GuiListener.this; }
+        
+        @Override @NotNull public PagedGui<T> newPage(){ throw new UnsupportedOperationException(); }
+        @Override public void addPage(PagedGui<T> gui){ throw new UnsupportedOperationException(); }
+        @Override public void addItem(GuiItem item){ throw new UnsupportedOperationException(); }
+        @Override public byte getCurrentSlot(){ throw new UnsupportedOperationException(); }
+        @Override public byte getCurrentSlot(byte slot){ throw new UnsupportedOperationException(); }
+        @Override public void removeItem(int page, int slot){ throw new UnsupportedOperationException(); }
+        @Override public boolean removePage(int page){ throw new UnsupportedOperationException(); }
+        @Override @NotNull public T getData(){ throw new UnsupportedOperationException(); }
+        @Override @NotNull public Iterator<GuiItem> iterator(){ throw new UnsupportedOperationException(); }
+        //@formatter:on
     }
+    
 }

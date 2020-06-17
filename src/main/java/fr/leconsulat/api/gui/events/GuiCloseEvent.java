@@ -1,47 +1,59 @@
 package fr.leconsulat.api.gui.events;
 
 import fr.leconsulat.api.gui.Gui;
+import fr.leconsulat.api.gui.PagedGui;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.event.Cancellable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Event appelé lorsque qu'un Gui est fermé
  */
 public class GuiCloseEvent<T> implements Cancellable {
 
-    private final ConsulatPlayer player;
-    private final Gui<T> gui;
-    private final T key;
-    private final Gui<?> father;
+    @NotNull private final ConsulatPlayer player;
+    @NotNull private final PagedGui<T> pagedGui;
+    @NotNull private final T data;
+    @Nullable private final Gui<?> father;
     private boolean openFatherGui;
     private boolean cancelled;
     
-    public GuiCloseEvent(ConsulatPlayer player, Gui<T> gui, T key, Gui<?> father, boolean openFatherGui){
+    public GuiCloseEvent(@NotNull ConsulatPlayer player,
+                         @NotNull PagedGui<T> pagedGui,
+                         @NotNull T data,
+                         @Nullable Gui<?> father,
+                         boolean openFatherGui){
         this.player = player;
-        this.gui = gui;
-        this.key = key;
+        this.pagedGui = pagedGui;
+        this.data = data;
         this.father = father;
         this.openFatherGui = openFatherGui;
     }
     
-    public Gui<T> getGui(){
-        return gui;
+    @NotNull
+    public PagedGui<T> getPagedGui(){
+        return pagedGui;
     }
     
+    @NotNull
+    public Gui<T> getGui(){
+        return pagedGui.getGui();
+    }
+    
+    @NotNull
     public ConsulatPlayer getPlayer(){
         return player;
     }
     
-    public boolean isOpenFatherGui(){
-        return openFatherGui;
+    @NotNull
+    public T getData(){
+        return data;
     }
     
-    public void setOpenFatherGui(boolean openFatherGui){
-        this.openFatherGui = openFatherGui;
-    }
-    
-    public T getKey(){
-        return key;
+    @Nullable
+    public Gui<?> getFather(){
+        return father;
     }
     
     @Override
@@ -53,8 +65,14 @@ public class GuiCloseEvent<T> implements Cancellable {
     public void setCancelled(boolean cancelled){
         this.cancelled = cancelled;
     }
+ 
     
-    public Gui<?> getFather(){
-        return father;
+    public boolean openFatherGui(){
+        return openFatherGui;
     }
+    
+    public void setOpenFatherGui(boolean openFatherGui){
+        this.openFatherGui = openFatherGui;
+    }
+    
 }
