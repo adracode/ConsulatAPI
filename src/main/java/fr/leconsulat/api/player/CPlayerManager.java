@@ -30,10 +30,10 @@ public class CPlayerManager implements Listener {
     private static CPlayerManager instance;
     private static Method getEntity;
     
-    static {
+    static{
         try {
             getEntity = MinecraftReflection.getMinecraftClass("CommandListenerWrapper").getMethod("h");
-        } catch (NoSuchMethodException var1) {
+        } catch(NoSuchMethodException var1){
             var1.printStackTrace();
         }
         
@@ -156,7 +156,7 @@ public class CPlayerManager implements Listener {
         try {
             Player player = (Player)MinecraftReflection.getBukkitEntity(getEntity.invoke(commandListenerWrapper));
             return player == null ? null : CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());
-        } catch (Exception var2) {
+        } catch(Exception var2){
             var2.printStackTrace();
             return null;
         }
@@ -269,8 +269,8 @@ public class CPlayerManager implements Listener {
         return Optional.of(offline);
     }
     
-    public void fetchOffline(String playerName, Consumer<ConsulatOffline> consumer) {
-        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), ()-> {
+    public void fetchOffline(String playerName, Consumer<ConsulatOffline> consumer){
+        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
             try {
                 PreparedStatement fetch = ConsulatAPI.getDatabase().prepareStatement(
                         "SELECT * FROM players WHERE player_name = ?");
@@ -298,7 +298,7 @@ public class CPlayerManager implements Listener {
                             Rank.byName(rank),
                             resultFetch.getString("registered"));
                 } else {
-                    Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), ()->{
+                    Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
                         consumer.accept(null);
                     });
                     return;
@@ -314,24 +314,30 @@ public class CPlayerManager implements Listener {
                 }
                 resultLastConnection.close();
                 lastConnection.close();
-                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), ()->{
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
                     consumer.accept(consulatOffline);
                 });
             } catch(SQLException e){
                 e.printStackTrace();
-                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), ()->{
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
                     consumer.accept(null);
                 });
             }
         });
     }
     
-    public void setRank(UUID uuid, Rank rank) throws SQLException{
-        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET player_rank = ? WHERE player_uuid = ?");
-        request.setString(1, rank.getRankName());
-        request.setString(2, uuid.toString());
-        request.executeUpdate();
-        request.close();
+    public void setRank(UUID uuid, Rank rank){
+        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+            try {
+                PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET player_rank = ? WHERE player_uuid = ?");
+                request.setString(1, rank.getRankName());
+                request.setString(2, uuid.toString());
+                request.executeUpdate();
+                request.close();
+            } catch(SQLException e){
+                e.printStackTrace();
+            }
+        });
     }
     
     public void setHasCustomRank(UUID uuid, boolean hasCustomRank) throws SQLException{

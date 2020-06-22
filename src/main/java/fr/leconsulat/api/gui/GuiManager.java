@@ -97,7 +97,11 @@ public class GuiManager implements Listener {
             return;
         }
         GuiListener<?> listener = getListener(e.getWhoClicked().getOpenInventory().getTopInventory());
+        boolean isGuiItem = GuiItem.isGuiItem(item);
         if(listener == null){
+            if(isGuiItem){
+                e.setCancelled(true);
+            }
             return;
         }
         if(!listener.isModifiable()){
@@ -105,6 +109,9 @@ public class GuiManager implements Listener {
         }
         IGui<?> gui = getGui(e.getClick() == ClickType.NUMBER_KEY ? e.getWhoClicked().getInventory() : e.getClickedInventory());
         if(gui == null){
+            if(isGuiItem){
+                e.setCancelled(true);
+            }
             return;
         }
         e.setCancelled(true);

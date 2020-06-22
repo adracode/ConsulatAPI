@@ -176,7 +176,7 @@ public class CommandManager implements Listener {
         if(!(command instanceof ConsulatCommand)){
             return;
         }
-        if(!player.hasPower(((ConsulatCommand)command).getRankNeeded())){
+        if(!player.hasPermission(command.getPermission()) && !player.hasPower(((ConsulatCommand)command).getRankNeeded())){
             e.setMessage("/help");
         }
     }

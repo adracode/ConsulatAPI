@@ -10,6 +10,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -31,6 +32,7 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
     private String usage;
     private int argsMin;
     private Rank rankNeeded;
+    private String permission = "";
     
     public ConsulatCommand(String name, String usage, int argsMin, Rank rankNeeded){
         this(name, Collections.emptyList(), usage, argsMin, rankNeeded);
@@ -46,6 +48,17 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
             throw new IllegalStateException("Command Manager is not instantiated");
         }
         commandManager.addCommand(this);
+    }
+    
+    @Nullable
+    @Override
+    public String getPermission(){
+        return permission;
+    }
+    
+    @Override
+    public void setPermission(String permission){
+        this.permission = permission;
     }
     
     @SafeVarargs
@@ -114,7 +127,7 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
         }
         Player bukkitPlayer = (Player)sender;
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(bukkitPlayer.getUniqueId());
-        if(!player.hasPower(rankNeeded)){
+        if(!player.hasPermission(getPermission()) && !player.hasPower(rankNeeded)){
             bukkitPlayer.sendMessage("§cTu n'as pas le power requis.");
             return false;
         }

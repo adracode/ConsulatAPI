@@ -1,5 +1,6 @@
-package fr.leconsulat.api.commands;
+package fr.leconsulat.api.commands.commands;
 
+import fr.leconsulat.api.commands.ConsulatCommand;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
@@ -11,8 +12,9 @@ public class PermissionCommand extends ConsulatCommand {
                 "permission",
                 "oui",
                 3,
-                Rank.DEVELOPPEUR
+                Rank.ADMIN
         );
+        setPermission("consulat.api.command.permission");
     }
     
     @Override

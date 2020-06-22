@@ -96,9 +96,8 @@ public class Arguments {
                 return builder.buildFuture();
             });
         } catch(IllegalAccessException | InvocationTargetException | InstantiationException e){
-            e.printStackTrace();
+            throw new RuntimeException();
         }
-        return null;
     }
     
     public static RequiredArgumentBuilder<Object, ?> player(String show, Collection<UUID> list){

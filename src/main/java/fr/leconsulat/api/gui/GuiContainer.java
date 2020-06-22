@@ -1,13 +1,19 @@
 package fr.leconsulat.api.gui;
 
-import fr.leconsulat.api.gui.events.GuiRemoveEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Cette classe peut être vu comme la racine d'un arbre de Gui.
+ * Elle n'est pas obligatoire pour créer un système de gui, mais
+ * permet de stocker les différentes versions d'un même listener.
+ * @param <T> Le type de donnée utilsé par le GuiListener
+ */
 public abstract class GuiContainer<T> extends GuiListener<T> {
     
+    //Contient les différents guis, accessibles par leur "data"
     private Map<T, Gui<T>> guis = new HashMap<>();
     
     public GuiContainer(int line){
@@ -25,13 +31,18 @@ public abstract class GuiContainer<T> extends GuiListener<T> {
     }
     
     public boolean removeGui(T data){
-        Gui<T> removed = guis.remove(data);
+        Gui<T> removed = guis.get(data);
         if(removed == null){
             return false;
         }
-        GuiRemoveEvent<T> event = new GuiRemoveEvent<>(removed, data);
-        removed.getListener().onRemove(event);
+        removed.remove();
         return true;
+    }
+    
+    @Override
+    void remove(Gui<T> key){
+        this.guis.remove(key.getData());
+        super.remove(key);
     }
     
     @SuppressWarnings("unchecked")

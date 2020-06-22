@@ -34,7 +34,7 @@ public final class UserInput {
     public void open(Player player){
         Location location = player.getLocation();
         location = location.clone();
-        location.setY(location.getBlockY() > 128 ? 1 : 254);
+        location.setY(location.getBlockY() > 10 ? 1 : 255);
         
         Object signNBT = NBTMinecraft.newCompoundTag();
         NBTMinecraft.setCompoundTagString(signNBT, "id", "minecraft:sign");

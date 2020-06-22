@@ -2,6 +2,7 @@ package fr.leconsulat.api.player;
 
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.database.Saveable;
+import fr.leconsulat.api.events.PlayerChangeRankEvent;
 import fr.leconsulat.api.gui.PagedGui;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.FileUtils;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
+@SuppressWarnings({"unused", "BooleanMethodIsAlwaysInverted"})
 public class ConsulatPlayer implements Saveable {
     
     private int id;
@@ -30,7 +32,7 @@ public class ConsulatPlayer implements Saveable {
     private boolean initialized = false;
     private CustomRank customRank;
     private String registered;
-    private PagedGui currentlyOpen;
+    private PagedGui<?> currentlyOpen;
     private boolean vanished;
     
     public ConsulatPlayer(UUID uuid, String name){
@@ -69,7 +71,9 @@ public class ConsulatPlayer implements Saveable {
         return rank;
     }
     
-    public void setRank(Rank rank) throws SQLException{
+    public void setRank(Rank rank){
+        PlayerChangeRankEvent event = new PlayerChangeRankEvent(this, rank);
+        Bukkit.getPluginManager().callEvent(event);
         CPlayerManager.getInstance().setRank(getUUID(), rank);
         this.rank = rank;
     }
@@ -209,7 +213,7 @@ public class ConsulatPlayer implements Saveable {
             case JOUEUR:
             case ADMIN:
                 permissions.addAll(
-                        Arrays.asList("consulat.api.test")
+                        Collections.singletonList("consulat.api.test")
                 );
                 break;
         }
@@ -250,11 +254,11 @@ public class ConsulatPlayer implements Saveable {
                 '}';
     }
     
-    public PagedGui getCurrentlyOpen(){
+    public PagedGui<?> getCurrentlyOpen(){
         return currentlyOpen;
     }
     
-    public void setCurrentlyOpen(PagedGui gui){
+    public void setCurrentlyOpen(PagedGui<?> gui){
         this.currentlyOpen = gui;
     }
     
@@ -300,7 +304,9 @@ public class ConsulatPlayer implements Saveable {
             File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
             Map<String, Tag> player = new HashMap<>();
             if(!file.exists()){
-                file.createNewFile();
+                if(!file.createNewFile()){
+                    throw new IOException("Couldn't create file.");
+                }
             }
             List<Tag> perms = new ArrayList<>();
             for(String s : permissions){

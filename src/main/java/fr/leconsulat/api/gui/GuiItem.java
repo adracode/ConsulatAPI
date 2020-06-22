@@ -22,6 +22,43 @@ public class GuiItem extends ItemStack implements Cloneable {
     private byte slot;
     private Object attachedObject;
     
+    private GuiItem(Material material){
+        super(material);
+        setFlags();
+    }
+    
+    private GuiItem(Material material, String name, List<String> description){
+        this(material);
+        ItemMeta meta = getItemMeta();
+        if(name != null && !name.isEmpty()){
+            meta.setDisplayName(name);
+        }
+        if(description != null && description.size() != 0){
+            meta.setLore(description);
+        }
+        setItemMeta(meta);
+    }
+    
+    private GuiItem(String name, String player, List<String> description){
+        this(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta)getItemMeta();
+        meta.setDisplayName(name);
+        if(description != null){
+            meta.setLore(description);
+        }
+        UUID uuid = CPlayerManager.getInstance().getPlayerUUID(player);
+        if(uuid == null){
+            Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                meta.setOwningPlayer(Bukkit.getOfflinePlayer(player));
+                setItemMeta(meta);
+            });
+        } else {
+            Player bukkitPlayer = Bukkit.getPlayer(uuid);
+            meta.setOwningPlayer(bukkitPlayer == null ? Bukkit.getOfflinePlayer(uuid) : bukkitPlayer);
+        }
+        setItemMeta(meta);
+    }
+    
     public GuiItem(GuiItem item){
         super(item);
         this.permission = item.permission;
@@ -48,45 +85,24 @@ public class GuiItem extends ItemStack implements Cloneable {
         this.slot = slot;
     }
     
-    private GuiItem(Material material){
-        super(material);
-    }
-    
-    private GuiItem(Material material, String name, List<String> description){
-        this(material);
-        ItemMeta meta = getItemMeta();
-        if(name != null && !name.isEmpty()){
-            meta.setDisplayName(name);
-        }
-        if(description != null && description.size() != 0){
-            meta.setLore(description);
-        }
-        setItemMeta(meta);
-    }
-    
     public GuiItem(ItemStack item, int slot){
         super(item);
+        setFlags();
         this.slot = (byte)slot;
     }
     
-    private GuiItem(String name, String player, List<String> description){
-        this(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta)getItemMeta();
-        meta.setDisplayName(name);
-        if(description != null){
-            meta.setLore(description);
+    private void setFlags(){
+        this.addItemFlags(
+                ItemFlag.HIDE_ATTRIBUTES,
+                ItemFlag.HIDE_POTION_EFFECTS
+        );
+    }
+    
+    public static boolean isGuiItem(ItemStack item){
+        if(item == null || item.getType() == Material.AIR){
+            return false;
         }
-        UUID uuid = CPlayerManager.getInstance().getPlayerUUID(player);
-        if(uuid == null){
-            Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-                meta.setOwningPlayer(Bukkit.getOfflinePlayer(player));
-                setItemMeta(meta);
-            });
-        } else {
-            Player bukkitPlayer = Bukkit.getPlayer(uuid);
-            meta.setOwningPlayer(bukkitPlayer == null ? Bukkit.getOfflinePlayer(uuid) : bukkitPlayer);
-        }
-        setItemMeta(meta);
+        return item.hasItemFlag(ItemFlag.HIDE_ATTRIBUTES) && item.hasItemFlag(ItemFlag.HIDE_POTION_EFFECTS);
     }
     
     public GuiItem(String name, UUID uuid, List<String> description){
@@ -101,7 +117,7 @@ public class GuiItem extends ItemStack implements Cloneable {
         setItemMeta(meta);
     }
     
-        public GuiItem setGlowing(boolean b){
+    public GuiItem setGlowing(boolean b){
         ItemMeta meta = getItemMeta();
         if(b){
             meta.addEnchant(Enchantment.ARROW_INFINITE, 0, true);

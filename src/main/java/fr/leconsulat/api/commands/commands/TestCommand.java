@@ -1,5 +1,6 @@
-package fr.leconsulat.api.commands;
+package fr.leconsulat.api.commands.commands;
 
+import fr.leconsulat.api.commands.ConsulatCommand;
 import fr.leconsulat.api.gui.GuiManager;
 import fr.leconsulat.api.gui.exemples.TestGui;
 import fr.leconsulat.api.player.ConsulatPlayer;

@@ -21,12 +21,14 @@ import java.util.*;
  * <p>
  * On implémente un gui par défaut dans un listener dont la clé est null pour avoir une base pour de futures gui
  */
-public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
+@SuppressWarnings("unused")
+public abstract class GuiListener<T> implements Comparable<GuiListener<?>>, Iterable<Gui<T>> {
     
     /* Identifiant du listener pour comparer facilement */
     private UUID uuid;
     private final byte line;
     private Template template;
+    private final Set<Gui<T>> guis = new HashSet<>();
     
     private short modifiers = 0;
     
@@ -76,6 +78,10 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
         return createGui(key, null);
     }
     
+    void remove(Gui<T> key){
+        this.guis.remove(key);
+    }
+    
     @Override
     public final String toString(){
         return "GuiListener{" +
@@ -93,23 +99,24 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     @NotNull
     public final Gui<T> createGui(T key, Gui<?> father, GuiItem... items){
         PagedGui<T> template = getTemplate();
-        PagedGui<T> gui = template.copy();
+        PagedGui<T> pagedGui = template.copy();
         for(GuiItem item : items){
-            gui.setItem(item);
+            pagedGui.setItem(item);
         }
-        Gui<T> pagedGui;
-        pagedGui = new Gui<>(this, key);
-        pagedGui.addPage(gui);
-        pagedGui.setFather(father);
-        int page = pagedGui.getCurrentPage();
-        GuiCreateEvent<T> mainCreate = new GuiCreateEvent<>(key, pagedGui);
+        Gui<T> gui;
+        gui = new Gui<>(this, key);
+        gui.addPage(pagedGui);
+        gui.setFather(father);
+        int page = gui.getCurrentPage();
+        GuiCreateEvent<T> mainCreate = new GuiCreateEvent<>(key, gui);
         onCreate(mainCreate);
-        PagedGuiCreateEvent<T> event = new PagedGuiCreateEvent<>(gui, key, page);
+        PagedGuiCreateEvent<T> event = new PagedGuiCreateEvent<>(pagedGui, key, page);
         onPageCreate(event);
         if(event.isCancelled()){
-            pagedGui.removePage(page);
+            gui.removePage(page);
         }
-        return pagedGui;
+        guis.add(gui);
+        return gui;
     }
     
     /**
@@ -230,7 +237,6 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     }
     
     public void onRemove(PagedGuiRemoveEvent<T> event){
-        System.out.println("Oui");
     }
     
     public void onRemove(GuiRemoveEvent<T> event){
@@ -284,6 +290,10 @@ public abstract class GuiListener<T> implements Comparable<GuiListener<?>> {
     
     public final void setDestroyOnClose(boolean destroyOnClose){
         this.destroyOnClose = destroyOnClose;
+    }
+    
+    public @NotNull Iterator<Gui<T>> iterator(){
+        return guis.iterator();
     }
     
     private class Template extends Gui<T> {

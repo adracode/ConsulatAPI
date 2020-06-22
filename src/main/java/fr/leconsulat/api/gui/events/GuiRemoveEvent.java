@@ -5,17 +5,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class GuiRemoveEvent<T> {
     
-    private final T data;
     private final Gui<T> gui;
     
-    public GuiRemoveEvent(Gui<T> gui, T data){
-        this.data = data;
+    public GuiRemoveEvent(Gui<T> gui){
         this.gui = gui;
     }
     
     @NotNull
     public T getData(){
-        return data;
+        return gui.getData();
     }
     
     public Gui<T> getGui(){

@@ -1,5 +1,6 @@
 package fr.leconsulat.api.gui;
 
+import fr.leconsulat.api.gui.events.GuiRemoveEvent;
 import fr.leconsulat.api.gui.events.PagedGuiCreateEvent;
 import fr.leconsulat.api.gui.events.PagedGuiRemoveEvent;
 import fr.leconsulat.api.player.CPlayerManager;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
 
+//TODO: on destroy
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public class Gui<T> implements Iterable<GuiItem> {
     
@@ -18,8 +20,8 @@ public class Gui<T> implements Iterable<GuiItem> {
     @NotNull private List<PagedGui<T>> guis;
     @NotNull private GuiListener<T> listener;
     @Nullable private Gui<?> father;
-    @Nullable private Map<Object, Gui<?>> children = null;
-    @Nullable private Map<Object, Supplier<Gui<?>>> createChildren = null;
+    @NotNull private Map<Object, Gui<?>> children = Collections.emptyMap();
+    @NotNull private Map<Object, Supplier<Gui<?>>> createChildren = Collections.emptyMap();
     
     private byte currentIndex = -1;
     
@@ -57,7 +59,7 @@ public class Gui<T> implements Iterable<GuiItem> {
     
     @NotNull
     public <A> Gui<A> addChild(@Nullable Object key, @NotNull Gui<A> gui){
-        if(children == null){
+        if(children == Collections.EMPTY_MAP){
             children = new HashMap<>(1);
         }
         gui.setFather(this);
@@ -68,9 +70,9 @@ public class Gui<T> implements Iterable<GuiItem> {
     @SuppressWarnings("unchecked")
     @Nullable
     public <A> Gui<A> getChild(@Nullable Object key){
-        Gui<A> child = null;
-        if(createChildren != null && (children == null || (child = getLegacyChild(key)) == null)){
-            Supplier<Gui<?>> supplier = createChildren.remove(key);
+        Gui<A> child = getLegacyChild(key);
+        if(createChildren != Collections.EMPTY_MAP && (children == Collections.EMPTY_MAP || child == null)){
+            Supplier<Gui<?>> supplier = createChildren.get(key);
             if(supplier != null){
                 addChild(key, child = (Gui<A>)supplier.get());
             }
@@ -81,24 +83,46 @@ public class Gui<T> implements Iterable<GuiItem> {
     @SuppressWarnings("unchecked")
     @Nullable
     public <A> Gui<A> getLegacyChild(@Nullable Object key){
-        if(children == null){
+        if(children == Collections.EMPTY_MAP){
             return null;
         }
         return (Gui<A>)children.get(key);
     }
     
     public void prepareChild(@Nullable Object key, @NotNull Supplier<Gui<?>> supplier){
-        if(createChildren == null){
+        if(createChildren == Collections.EMPTY_MAP){
             createChildren = new HashMap<>();
         }
         createChildren.put(key, supplier);
     }
     
     public boolean removeChild(Object key){
-        if(children == null){
+        if(children == Collections.EMPTY_MAP){
             return false;
         }
-        return children.remove(key) != null;
+        Gui<?> removed = children.remove(key);
+        if(removed != null){
+            removed.remove();
+        }
+        return removed != null;
+    }
+    
+    public boolean removeChild(Gui<?> gui){
+        if(children == Collections.EMPTY_MAP){
+            return false;
+        }
+        Object key = null;
+        for(Map.Entry<Object, Gui<?>> entry : children.entrySet()){
+            if(entry.getValue().equals(gui)){
+                key = entry.getKey();
+                break;
+            }
+        }
+        Gui<?> removed = children.remove(key);
+        if(removed != null){
+            removed.remove();
+        }
+        return removed != null;
     }
     
     @NotNull
@@ -144,6 +168,10 @@ public class Gui<T> implements Iterable<GuiItem> {
             newPage();
         }
         return gui;
+    }
+    
+    public List<PagedGui<T>> getPagedGuis(){
+        return Collections.unmodifiableList(guis);
     }
     
     @NotNull
@@ -227,9 +255,7 @@ public class Gui<T> implements Iterable<GuiItem> {
             }
         }
         PagedGuiRemoveEvent<T> event = new PagedGuiRemoveEvent<>(removed, getData(), page);
-        System.out.println(event);
         listener.onRemove(event);
-        System.out.println(listener.getClass());
         currentIndex = (byte)(listener.getLengthMoveableSlot() - 1);
         return true;
     }
@@ -257,14 +283,19 @@ public class Gui<T> implements Iterable<GuiItem> {
     public boolean equals(Object o){
         if(this == o) return true;
         if(o == null || getClass() != o.getClass()) return false;
-        Gui<?> pagedGui = (Gui<?>)o;
-        return Objects.equals(data, pagedGui.data) &&
-                listener.equals(pagedGui.listener);
+        Gui<?> gui = (Gui<?>)o;
+        return Objects.equals(data, gui.data) &&
+                listener.equals(gui.listener) &&
+                Objects.equals(father, gui.father);
     }
     
     @Override
     public int hashCode(){
-        return Objects.hash(data, listener);
+        return Objects.hash(data, listener, father);
+    }
+    
+    public Collection<Gui<?>> getChildren(){
+        return Collections.unmodifiableCollection(children.values());
     }
     
     public void open(ConsulatPlayer player){
@@ -273,6 +304,16 @@ public class Gui<T> implements Iterable<GuiItem> {
     
     public void open(ConsulatPlayer player, int page){
         getPage(page).open(player);
+    }
+    
+    public void remove(){
+        GuiRemoveEvent<T> event = new GuiRemoveEvent<>(this);
+        getListener().onRemove(event);
+        getListener().remove(this);
+        for(Iterator<Map.Entry<Object, Gui<?>>> iterator = children.entrySet().iterator(); iterator.hasNext(); ){
+            iterator.next().getValue().remove();
+            iterator.remove();
+        }
     }
     
     private class GuiIterator implements Iterator<GuiItem> {

@@ -17,6 +17,15 @@ public interface IGui<T> extends InventoryHolder {
     default void onClose(ConsulatPlayer player){
         final GuiCloseEvent<T> event = new GuiCloseEvent<T>(player, getPagedGui(), getPagedGui().getGui().getData(), getFather(), true);
         getListener().onClose(event);
+        GuiListener<T> listener = getListener();
+        if(listener.isDestroyOnClose()){
+            Gui<T> gui = getPagedGui().getGui();
+            if(gui.hasFather()){
+                gui.getFather().removeChild(gui);
+            } else {
+                gui.remove();
+            }
+        }
         Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
             if(event.isCancelled()){
                 getPagedGui().open(event.getPlayer());

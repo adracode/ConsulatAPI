@@ -297,6 +297,11 @@ public class PagedGui<T> implements IGui {
     public void setName(String name){
         this.name = name;
         setTitle();
+        for(Gui<?> child : getGui().getChildren()){
+            for(PagedGui<?> page : child.getPagedGuis()){
+                page.setTitle();
+            }
+        }
     }
     
     private String buildInventoryTitle(){
