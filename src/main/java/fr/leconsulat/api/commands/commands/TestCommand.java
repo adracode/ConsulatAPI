@@ -1,8 +1,7 @@
 package fr.leconsulat.api.commands.commands;
 
 import fr.leconsulat.api.commands.ConsulatCommand;
-import fr.leconsulat.api.gui.GuiManager;
-import fr.leconsulat.api.gui.exemples.TestGui;
+import fr.leconsulat.api.gui.exemples.ManageExemple;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
 
@@ -10,15 +9,15 @@ import java.util.Collections;
 
 public class TestCommand extends ConsulatCommand {
     
-    private TestGui testGui = new TestGui();
-    
     public TestCommand(){
         super("test", Collections.singletonList("testtest"), "gugyu", 0, Rank.DEVELOPPEUR);
+        new ManageExemple();
     }
     
     @Override
     public void onCommand(ConsulatPlayer player, String[] args){
-        //testGui.getGui(player).open(player);
-        GuiManager.getInstance().userInput(player.getPlayer(), (input)->{}, new String[]{"Test"});
+        ManageExemple.getInstance().getGui(player).open(player);
+        ManageExemple.getInstance().removeGui(player);
+        //GuiManager.getInstance().userInput(player.getPlayer(), (input)->{}, new String[]{"Test"});
     }
 }

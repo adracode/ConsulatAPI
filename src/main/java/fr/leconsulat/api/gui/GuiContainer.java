@@ -1,77 +1,74 @@
 package fr.leconsulat.api.gui;
 
+import fr.leconsulat.api.gui.gui.module.api.Datable;
+import fr.leconsulat.api.gui.gui.module.api.Relationnable;
+import fr.leconsulat.api.gui.gui.template.DataRelatGui;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Cette classe peut être vu comme la racine d'un arbre de Gui.
  * Elle n'est pas obligatoire pour créer un système de gui, mais
  * permet de stocker les différentes versions d'un même listener.
+ *
  * @param <T> Le type de donnée utilsé par le GuiListener
  */
-public abstract class GuiContainer<T> extends GuiListener<T> {
+public abstract class GuiContainer<T> {
     
     //Contient les différents guis, accessibles par leur "data"
-    private Map<T, Gui<T>> guis = new HashMap<>();
+    private Map<T, Datable<T>> guis = new HashMap<>();
     
-    public GuiContainer(int line){
-        super(line);
-    }
+    public abstract Datable<T> createGui(T data);
     
-    public Gui<T> addGui(Gui<T> gui){
+    public Datable<T> addGui(Datable<T> gui){
         guis.put(gui.getData(), gui);
         return gui;
     }
     
-    public Gui<T> getGui(T data){
-        Gui<T> gui = guis.get(data);
-        return gui == null ? addGui(createGui(data)) : gui;
+    @SuppressWarnings("unchecked")
+    public <A extends Datable<T>> @NotNull A getGui(T data){
+        return (A)Objects.requireNonNull(getGui(true, data));
     }
     
     public boolean removeGui(T data){
-        Gui<T> removed = guis.get(data);
-        if(removed == null){
-            return false;
-        }
-        removed.remove();
-        return true;
+        Datable<T> removed = guis.remove(data);
+        return removed != null;
     }
     
-    @Override
-    void remove(Gui<T> key){
+    void remove(@NotNull DataRelatGui<T> key){
         this.guis.remove(key.getData());
-        super.remove(key);
     }
     
     @SuppressWarnings("unchecked")
     @Nullable
-    public <A> Gui<A> getGui(boolean create, T key, Object... path){
-        Gui<?> mainGui = guis.get(key);
+    public <A> Datable<A> getGui(boolean create, T key, Object... path){
+        Datable<?> mainGui = guis.get(key);
         if(mainGui == null){
             if(create){
-                mainGui = getGui(key);
+                mainGui = addGui(createGui(key));
+                mainGui.onCreate();
             } else {
                 return null;
             }
         }
-        if(create){
-            for(Object childKey : path){
-                if(mainGui == null){
-                    break;
+        for(Object childKey : path){
+            if(mainGui.getBaseGui() instanceof Relationnable){
+                if(create){
+                    mainGui = (Datable<?>)((Relationnable)mainGui.getBaseGui()).getChild(childKey);
+                } else {
+                    mainGui = (Datable<?>)((Relationnable)mainGui.getBaseGui()).getLegacyChild(childKey);
+                    if(mainGui == null){
+                        return null;
+                    }
                 }
-                mainGui = mainGui.getChild(childKey);
-            }
-        } else {
-            for(Object childKey : path){
-                if(mainGui == null){
-                    break;
-                }
-                mainGui = mainGui.getLegacyChild(childKey);
             }
         }
-        return (Gui<A>)mainGui;
+        
+        return (Datable<A>)mainGui;
     }
     
 }

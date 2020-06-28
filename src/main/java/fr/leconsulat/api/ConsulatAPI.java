@@ -23,7 +23,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.BufferedWriter;
@@ -42,7 +41,6 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private ProtocolManager protocolManager;
     private CPlayerManager playerManager;
     private DatabaseManager databaseManager;
-    private GuiManager guiManager;
     private CommandManager commandManager;
     private File log;
     private boolean debug = false;
@@ -65,7 +63,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         new EventManager();
         playerManager = new CPlayerManager();
         commandManager = new CommandManager(this);
-        guiManager = new GuiManager(this);
+        new GuiManager(this);
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
@@ -85,7 +83,6 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         }
     }
     
-    
     private void registerEvents(){
         this.getServer().getPluginManager().registerEvents(this, this);
         this.getServer().getPluginManager().registerEvents(playerManager, this);
@@ -93,10 +90,8 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     @Override
     public void onDisable(){
-        if(isDebug()){
-            for(Player player : Bukkit.getOnlinePlayers()){
-                getServer().getPluginManager().callEvent(new PlayerQuitEvent(player, ""));
-            }
+        for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
+            player.onQuit();
         }
         SaveManager.getInstance().removeAll();
         databaseManager.disconnect();

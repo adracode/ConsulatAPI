@@ -388,6 +388,7 @@ public class EventManager implements Listener {
                 case MINECART_HOPPER:
                     event = new PlayerOpenMinecartInventoryEvent(entity, player);
                     break;
+                    //TODO: test
                 case MINECART_FURNACE:
                     if(isCoal(material)){
                         event = new PlayerFillFuelEvent(entity, player);

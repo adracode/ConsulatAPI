@@ -176,7 +176,7 @@ public class GuiItem extends ItemStack implements Cloneable {
         return this;
     }
     
-    GuiItem setSlot(int slot){
+    public GuiItem setSlot(int slot){
         this.slot = (byte)slot;
         return this;
     }

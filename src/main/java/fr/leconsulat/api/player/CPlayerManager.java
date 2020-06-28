@@ -149,7 +149,7 @@ public class CPlayerManager implements Listener {
     
     @EventHandler
     public void onQuit(ConsulatPlayerLeaveEvent event){
-        event.getPlayer().savePermissions();
+        event.getPlayer().onQuit();
     }
     
     public ConsulatPlayer getConsulatPlayerFromContextSource(Object commandListenerWrapper){

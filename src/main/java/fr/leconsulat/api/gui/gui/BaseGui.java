@@ -1,7 +1,11 @@
-package fr.leconsulat.api.gui;
+package fr.leconsulat.api.gui.gui;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
-import fr.leconsulat.api.gui.events.GuiOpenEvent;
+import fr.leconsulat.api.gui.GuiItem;
+import fr.leconsulat.api.gui.event.GuiClickEvent;
+import fr.leconsulat.api.gui.event.GuiCloseEvent;
+import fr.leconsulat.api.gui.event.GuiOpenEvent;
+import fr.leconsulat.api.gui.event.GuiRemoveEvent;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -13,17 +17,9 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
-/**
- * Cette classe est un PagedGui, c'est à dire une page d'un Gui
- * Un gui peut avoir une ou plusieurs pages.
- *
- * @param <T> Ce paramètre sert à spécifier le type
- *            de donnée utilisé
- */
 @SuppressWarnings({"unused", "UnusedReturnValue"})
-public class PagedGui<T> implements IGui {
+public class BaseGui implements IGui {
     
     /* Champs utilisés pour modifier le titre de l'inventaire */
     private static Field inventoryField;
@@ -41,47 +37,46 @@ public class PagedGui<T> implements IGui {
         }
     }
     
+    private static final GuiItem back = new GuiItem("§cRetour", (byte)-1, Material.RED_STAINED_GLASS_PANE);
+    
     //Titre affiché dans l'inventaire
     @NotNull private String name;
-    //Numéro de page
-    private int page = 0;
-    //Le Gui utilisant le PagedGui
-    @NotNull private Gui<T> gui;
     //Inventaire natif de Minecraft
     @NotNull private Inventory inventory;
     //Les différents items contenant dans le gui
     private GuiItem[] items;
+    private int modifiers;
+    
+    public BaseGui(@NotNull String name, int line, GuiItem... items){
+        this(null, name, line, items);
+        setBackButton(true);
+    }
     
     /**
      * Créer un PagedGui
      *
-     * @param gui Le Gui auquel le PagedGui sera attribué
-     * @param name Le nom affiché dans le Gui
+     * @param name  Le nom affiché dans le Gui
      * @param items Les différents items composant le Gui
      */
-    public PagedGui(@NotNull Gui<T> gui, @NotNull String name, GuiItem... items){
-        this.gui = gui;
-        GuiListener<T> listener = getListener();
+    public BaseGui(IGui holder, @NotNull String name, int line, GuiItem... items){
         this.name = name;
-        this.items = new GuiItem[listener.getLine() * 9];
-        this.inventory = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
+        this.items = new GuiItem[line * 9];
+        this.inventory = Bukkit.createInventory(holder == null ? this : holder, line * 9, buildInventoryTitle());
         for(GuiItem item : items){
-            setItem(item);
+            setItem(new GuiItem(item));
         }
     }
     
     /**
      * Constructeur par copie
-     * @param pagedGui Le PagedGui à copier
+     *
+     * @param gui Le PagedGui à copier
      */
-    private PagedGui(@NotNull PagedGui<T> pagedGui){
-        this.name = pagedGui.name;
-        this.page = pagedGui.page;
-        this.gui = pagedGui.gui;
-        GuiListener<T> listener = getListener();
-        this.items = new GuiItem[listener.getLine() * 9];
-        this.inventory = Bukkit.createInventory(this, listener.getLine() * 9, buildInventoryTitle());
-        for(GuiItem item : pagedGui.items){
+    private BaseGui(@NotNull BaseGui gui){
+        this.name = gui.name;
+        this.items = new GuiItem[gui.inventory.getSize()];
+        this.inventory = Bukkit.createInventory(this, gui.inventory.getSize(), buildInventoryTitle());
+        for(GuiItem item : gui.items){
             if(item != null){
                 this.setItem(item.clone());
             }
@@ -90,31 +85,35 @@ public class PagedGui<T> implements IGui {
     
     /**
      * Réalise une copie
+     *
      * @return Le Gui copié
      */
     @NotNull
-    public PagedGui<T> copy(){
-        return new PagedGui<>(this);
+    public BaseGui copy(){
+        return new BaseGui(this);
     }
     
-    @NotNull
-    public Gui<T> getGui(){
-        return gui;
+    @Override
+    public IGui getBaseGui(){
+        return this;
     }
     
-    void setGui(@NotNull Gui<T> gui){
-        this.gui = gui;
+    @Override
+    public int getLine(){
+        return inventory.getSize() / 9;
     }
     
     /**
      * Place des items de "décoration" dans le Gui.
      * Un tel item n'aura pas de nom
-     * @param type Le type de l'item
+     *
+     * @param type  Le type de l'item
      * @param slots Les slots où placer les items
      * @return this
      */
     @NotNull
-    public PagedGui<T> setDeco(@NotNull Material type, int... slots){
+    @Override
+    public BaseGui setDeco(@NotNull Material type, int... slots){
         for(int slot : slots){
             setItem(new GuiItem(" ", (byte)slot, type));
         }
@@ -127,6 +126,7 @@ public class PagedGui<T> implements IGui {
      * @param slot le slot de l'item
      * @param name le nom à mettre
      */
+    @Override
     public void setDisplayName(int slot, @NotNull String name){
         GuiItem item = getItem(slot);
         if(item != null){
@@ -141,6 +141,7 @@ public class PagedGui<T> implements IGui {
      * @param slot        le slot de l'item
      * @param description la description à mettre
      */
+    @Override
     public void setDescription(int slot, @NotNull String... description){
         GuiItem item = getItem(slot);
         if(item != null){
@@ -156,6 +157,7 @@ public class PagedGui<T> implements IGui {
      * @param slot     le slot de l'item
      * @param material le type à mettre
      */
+    @Override
     public void setType(int slot, @NotNull Material material){
         GuiItem item = getItem(slot);
         if(item == null){
@@ -171,6 +173,7 @@ public class PagedGui<T> implements IGui {
      * @param slot le slot de l'item
      * @param glow true pour activé l'effet, false pour le désactivé
      */
+    @Override
     public void setGlowing(int slot, boolean glow){
         GuiItem item = getItem(slot);
         if(item != null){
@@ -179,7 +182,6 @@ public class PagedGui<T> implements IGui {
         }
     }
     
-   
     
     /**
      * Ajouter un item au gui
@@ -188,12 +190,14 @@ public class PagedGui<T> implements IGui {
      * @return le gui où l'item a été ajouté
      */
     @NotNull
-    public PagedGui<T> setItem(@NotNull GuiItem item){
+    @Override
+    public IGui setItem(@NotNull GuiItem item){
         return setItem(item.getSlot(), item);
     }
     
     @NotNull
-    public PagedGui<T> setItem(int slot, @Nullable GuiItem item){
+    @Override
+    public IGui setItem(int slot, @Nullable GuiItem item){
         if(item != null){
             item.setSlot(slot);
         }
@@ -210,11 +214,13 @@ public class PagedGui<T> implements IGui {
      * @param from le slot de l'item à déplacer
      * @param to   le slot où l'item sera ddéplacé
      */
+    @Override
     public void moveItem(int from, int to){
         moveItem(from, this, to);
     }
     
-    public void moveItem(int from, @NotNull PagedGui<T> guiTo, int to){
+    @Override
+    public void moveItem(int from, @NotNull IGui guiTo, int to){
         if(from == to && this.equals(guiTo)){
             return;
         }
@@ -239,24 +245,10 @@ public class PagedGui<T> implements IGui {
      * @param slot le slot visé
      * @return l'item au slot vidé
      */
+    @Override
     @Nullable
     public GuiItem getItem(int slot){
         return items[slot];
-    }
-    
-    @NotNull
-    public GuiListener<T> getListener(){
-        return gui.getListener();
-    }
-    
-    @Override
-    public PagedGui<T> getPagedGui(){
-        return this;
-    }
-    
-    @Override
-    public Gui<?> getFather(){
-        return getGui().hasFather() ? getGui().getFather() : null;
     }
     
     /**
@@ -264,12 +256,9 @@ public class PagedGui<T> implements IGui {
      *
      * @param player le joueur visé
      */
+    @Override
     public void open(@NotNull ConsulatPlayer player){
-        GuiOpenEvent<T> event = new GuiOpenEvent<>(player, this, getGui().getData());
-        getListener().onOpen(event);
-        if(event.isCancelled()){
-            return;
-        }
+        onOpen(new GuiOpenEvent(player));
         player.getPlayer().openInventory(inventory);
         player.setCurrentlyOpen(this);
     }
@@ -284,6 +273,7 @@ public class PagedGui<T> implements IGui {
         inventory.setItem(slot, item);
     }
     
+    @Override
     @NotNull
     public String getName(){
         return name;
@@ -294,25 +284,19 @@ public class PagedGui<T> implements IGui {
      *
      * @param name Le nouveau nom
      */
+    @Override
     public void setName(String name){
         this.name = name;
         setTitle();
-        for(Gui<?> child : getGui().getChildren()){
-            for(PagedGui<?> page : child.getPagedGuis()){
-                page.setTitle();
-            }
-        }
+    }
+
+    @Override
+    public String buildInventoryTitle(){
+        return name;
     }
     
-    private String buildInventoryTitle(){
-        if(!gui.hasFather()){
-            return name;
-        } else {
-            return gui.getFather().getName() + " > " + name;
-        }
-    }
-    
-    void setTitle(){
+    @Override
+    public void setTitle(){
         String title = buildInventoryTitle();
         try {
             titleField.set(inventoryField.get(inventory), title);
@@ -326,32 +310,11 @@ public class PagedGui<T> implements IGui {
      *
      * @param slot le slot visé
      */
+    @Override
     public void removeItem(int slot){
         inventory.setItem(slot, null);
         items[slot] = null;
         this.update(slot);
-    }
-    
-    public int getPage(){
-        return page;
-    }
-    
-    public void setPage(int page){
-        this.page = page;
-    }
-    
-    @Override
-    public boolean equals(Object o){
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
-        PagedGui<?> gui = (PagedGui<?>)o;
-        return this.gui.equals(gui.gui) &&
-                page == gui.page;
-    }
-    
-    @Override
-    public int hashCode(){
-        return Objects.hash(gui, page);
     }
     
     @Override
@@ -360,17 +323,83 @@ public class PagedGui<T> implements IGui {
         return inventory;
     }
     
+    @Override
     @NotNull
     public List<GuiItem> getItems(){
         return Collections.unmodifiableList(Arrays.asList(this.items));
     }
     
     @Override
+    public void onCreate(){
+    
+    }
+    
+    @Override
+    public void onOpen(GuiOpenEvent event){
+    
+    }
+    
+    @Override
+    public void onClose(GuiCloseEvent event){
+    
+    }
+    
+    @Override
+    public void onClick(GuiClickEvent event){
+    
+    }
+    
+    @Override
+    public void onRemove(GuiRemoveEvent event){
+    
+    }
+    
+    @Override
+    public boolean isModifiable(){
+        return (modifiers & 1) == 1;
+    }
+    
+    @Override
+    public void setModifiable(boolean modifiable){
+        if(modifiable){
+            modifiers |= 1;
+        } else {
+            modifiers &= Integer.MAX_VALUE - 1;
+        }
+    }
+    
+    @Override
+    public boolean isDestroyOnClose(){
+        return (modifiers & 2) == 2;
+    }
+    
+    @Override
+    public void setDestroyOnClose(boolean destroyOnClose){
+        if(destroyOnClose){
+            modifiers |= 2;
+        } else {
+            modifiers &= Integer.MAX_VALUE - 2;
+        }
+    }
+    
+    @Override
+    public boolean isBackButton(){
+        return (modifiers & 4) == 4;
+    }
+    
+    @Override
+    public void setBackButton(boolean backButton){
+        if(backButton){
+            modifiers |= 4;
+        } else {
+            modifiers &= Integer.MAX_VALUE - 4;
+        }
+    }
+    
+    @Override
     public String toString(){
         return "PagedGui{" +
                 "name='" + name + '\'' +
-                ", page=" + page +
-                ", gui=" + gui +
                 ", inventory=" + inventory +
                 ", items=" + Arrays.toString(items) +
                 '}';

@@ -12,6 +12,7 @@ public class RankCommand extends ConsulatCommand {
     
     public RankCommand(){
         super("rank", "/rank <Joueur> <Rang>", 2, Rank.RESPONSABLE);
+        setPermission("consulat.api.command.rank");
         RequiredArgumentBuilder<Object, ?> playerRequired = Arguments.playerList("joueur");
         for(Rank rank : Rank.values()){
             playerRequired.then(LiteralArgumentBuilder.literal(rank.getRankName()));
@@ -35,7 +36,7 @@ public class RankCommand extends ConsulatCommand {
             }
             return;
         }
-        if(!sender.hasPower(newRank)){
+        if(!sender.hasPower(newRank) && !sender.hasPermission(getPermission())){
             sender.sendMessage("§cTu ne peux pas ajouter ce grade.");
             return;
         }

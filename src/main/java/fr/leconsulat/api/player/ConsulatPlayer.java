@@ -3,7 +3,7 @@ package fr.leconsulat.api.player;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.database.Saveable;
 import fr.leconsulat.api.events.PlayerChangeRankEvent;
-import fr.leconsulat.api.gui.PagedGui;
+import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.NBTUtils;
@@ -32,7 +32,7 @@ public class ConsulatPlayer implements Saveable {
     private boolean initialized = false;
     private CustomRank customRank;
     private String registered;
-    private PagedGui<?> currentlyOpen;
+    private IGui currentlyOpen;
     private boolean vanished;
     
     public ConsulatPlayer(UUID uuid, String name){
@@ -53,6 +53,10 @@ public class ConsulatPlayer implements Saveable {
         this.customRank = hasCustomRank ? new CustomRank(customRank) : null;
         this.registered = registered;
         this.initialized = true;
+    }
+    
+    public void onQuit(){
+        savePermissions();
     }
     
     public int getId(){
@@ -254,11 +258,11 @@ public class ConsulatPlayer implements Saveable {
                 '}';
     }
     
-    public PagedGui<?> getCurrentlyOpen(){
+    public IGui getCurrentlyOpen(){
         return currentlyOpen;
     }
     
-    public void setCurrentlyOpen(PagedGui<?> gui){
+    public void setCurrentlyOpen(IGui gui){
         this.currentlyOpen = gui;
     }
     
