@@ -4,6 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
+import fr.leconsulat.api.commands.OfflineInventoryCommand;
 import fr.leconsulat.api.commands.commands.GCCommand;
 import fr.leconsulat.api.commands.commands.PermissionCommand;
 import fr.leconsulat.api.commands.commands.RankCommand;
@@ -75,6 +76,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         commandManager.addCommand(new GCCommand());
         commandManager.addCommand(new PermissionCommand());
         commandManager.addCommand(new RankCommand());
+        commandManager.addCommand(new OfflineInventoryCommand());
         commandManager.addCommand(new TestCommand());
         if(playerManager.getPlayerClass() == ConsulatPlayer.class && ConsulatAPI.getConsulatAPI().isDebug()){
             for(Player p : Bukkit.getOnlinePlayers()){

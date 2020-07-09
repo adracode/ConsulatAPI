@@ -15,6 +15,11 @@ public final class DoubleTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public NBTType getType(){
+		return NBTType.DOUBLE;
+	}
+	
 	public long getLong() {
 		return (long)Math.floor(value);
 	}
@@ -43,4 +48,10 @@ public final class DoubleTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public String toString(){
+		return "DoubleTag{" +
+				"value=" + value +
+				'}';
+	}
 }

@@ -19,8 +19,12 @@ public final class ListTag<T extends Tag> implements Tag {
 		this.value = value == null ? new ArrayList<>() : new ArrayList<>(value);
 	}
 	
-	public NBTType getType(){
+	public NBTType getElementType(){
 		return type;
+	}
+	
+	public NBTType getType(){
+		return NBTType.LIST;
 	}
 	
 	public void addTag(T tag){
@@ -33,6 +37,14 @@ public final class ListTag<T extends Tag> implements Tag {
 	@Override
 	public List<T> getValue() {
 		return Collections.unmodifiableList(value);
+	}
+	
+	@Override
+	public String toString(){
+		return "ListTag{" +
+				"type=" + type +
+				", value=" + value +
+				'}';
 	}
 	
 	@Override

@@ -14,6 +14,11 @@ public final class ShortTag implements NumberTag {
 	}
 	
 	@Override
+	public NBTType getType(){
+		return NBTType.SHORT;
+	}
+	
+	@Override
 	public boolean equals(Object o){
 		if(this == o) return true;
 		if(!(o instanceof ShortTag)){
@@ -60,5 +65,12 @@ public final class ShortTag implements NumberTag {
 	@Override
 	public Number getAsNumber(){
 		return value;
+	}
+	
+	@Override
+	public String toString(){
+		return "ShortTag{" +
+				"value=" + value +
+				'}';
 	}
 }

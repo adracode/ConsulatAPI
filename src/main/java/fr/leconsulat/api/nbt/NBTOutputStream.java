@@ -37,7 +37,7 @@ public final class NBTOutputStream implements Closeable {
      * @throws IOException if an I/O error occurs.
      */
     private void writeTag(String name, Tag tag) throws IOException{
-        NBTType type = NBTUtils.getTypeCode(tag.getClass());
+        NBTType type = NBTUtils.getType(tag.getClass());
         byte[] nameBytes = name.getBytes(NBTConstants.CHARSET);
         os.writeByte(type.getId());
         os.writeShort(nameBytes.length);
@@ -55,7 +55,7 @@ public final class NBTOutputStream implements Closeable {
      * @throws IOException if an I/O error occurs.
      */
     private void writeTag(final Tag tag) throws IOException{
-        NBTType type = NBTUtils.getTypeCode(tag.getClass());
+        NBTType type = NBTUtils.getType(tag.getClass());
         switch(type){
             case END:
                 writeEndTag();
@@ -118,7 +118,7 @@ public final class NBTOutputStream implements Closeable {
     private void writeListTag(final ListTag tag) throws IOException{
         List<Tag> tags = tag.getValue();
         int size = tags.size();
-        os.writeByte(tag.getType().getId());
+        os.writeByte(tag.getElementType().getId());
         os.writeInt(size);
 		for(Tag value : tags){
 			writeTag(value);

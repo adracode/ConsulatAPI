@@ -16,6 +16,11 @@ public final class FloatTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public NBTType getType(){
+		return NBTType.FLOAT;
+	}
+	
 	public long getLong() {
 		return (long)value;
 	}
@@ -44,4 +49,10 @@ public final class FloatTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public String toString(){
+		return "FloatTag{" +
+				"value=" + value +
+				'}';
+	}
 }

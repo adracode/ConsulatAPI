@@ -16,6 +16,18 @@ public final class ByteArrayTag implements Tag {
 	}
 	
 	@Override
+	public NBTType getType(){
+		return NBTType.BYTE_ARRAY;
+	}
+	
+	@Override
+	public String toString(){
+		return "ByteArrayTag{" +
+				"value=" + Arrays.toString(value) +
+				'}';
+	}
+	
+	@Override
 	public boolean equals(Object o){
 		if(this == o) return true;
 		if(!(o instanceof ByteArrayTag)) return false;

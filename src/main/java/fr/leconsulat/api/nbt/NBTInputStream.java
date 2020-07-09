@@ -1,10 +1,10 @@
 package fr.leconsulat.api.nbt;
 
+import javafx.util.Pair;
+
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 public final class NBTInputStream implements Closeable {
@@ -31,12 +31,12 @@ public final class NBTInputStream implements Closeable {
     }
     
     public CompoundTag read() throws IOException{
-        return (CompoundTag)readTag(0);
+        return (CompoundTag)readTag(0).getValue();
     }
     
     /**
      * Lis un tag NBT
-     *
+     * <p>
      * Un Tag NBT est composé
      * d'un octet pour le type
      * de deux octets pour la taille du nom
@@ -47,23 +47,21 @@ public final class NBTInputStream implements Closeable {
      * @return The tag that was read.
      * @throws IOException if an I/O error occurs.
      */
-    private Tag readTag(final int depth) throws IOException{
+    private Pair<String, Tag> readTag(final int depth) throws IOException{
         NBTType type = readType();
-        return type != NBTType.END ?
-                readTagPayload(type, readName(), depth) :
-                readTagPayload(type, "", depth);
+        String name = type != NBTType.END ? readName() : "";
+        return new Pair<>(name, readTagPayload(type, depth));
     }
     
     /**
      * Lis la charge utile d'un Tag
      *
      * @param type  The type.
-     * @param name  The name.
      * @param depth The depth.
      * @return The tag.
      * @throws IOException if an I/O error occurs.
      */
-    private Tag readTagPayload(NBTType type, String name, int depth) throws IOException{
+    private Tag readTagPayload(NBTType type, int depth) throws IOException{
         switch(type){
             case END:
                 if(depth == 0){
@@ -95,24 +93,25 @@ public final class NBTInputStream implements Closeable {
                 NBTType childType = readType();
                 List<Tag> tagList = new ArrayList<>();
                 for(int i = 0, length = is.readInt(); i < length; i++){
-                    Tag tag = readTagPayload(childType, "", depth + 1);
+                    Tag tag = readTagPayload(childType, depth + 1);
                     if(tag instanceof EndTag){
                         throw new IOException("[JNBT] TAG_End not permitted in a list.");
                     }
                     tagList.add(tag);
                 }
-                return new ListTag(childType, tagList);
+                return new ListTag<>(childType, tagList);
             case COMPOUND:
-                Map<String, Tag> tagMap = new HashMap<>();
+                CompoundTag compoundTag = new CompoundTag();
                 while(true){
-                    final Tag tag = readTag(depth + 1);
+                    Pair<String, Tag> namedTag = readTag(depth + 1);
+                    Tag tag = namedTag.getValue();
                     if(tag instanceof EndTag){
                         break;
                     } else {
-                        tagMap.put(name, tag);
+                        compoundTag.put(namedTag.getKey(), tag);
                     }
                 }
-                return new CompoundTag(tagMap);
+                return compoundTag;
             case INT_ARRAY:
                 int length = is.readInt();
                 final int[] ints = new int[length];

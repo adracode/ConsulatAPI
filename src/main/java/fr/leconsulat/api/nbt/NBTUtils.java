@@ -87,7 +87,7 @@ public final class NBTUtils {
      * @return The type code.
      * @throws IllegalArgumentException if the tag class is invalid.
      */
-    public static NBTType getTypeCode(final Class<? extends Tag> clazz){
+    public static NBTType getType(final Class<? extends Tag> clazz){
         if(clazz.equals(ByteArrayTag.class)){
             return NBTType.BYTE_ARRAY;
         } else if(clazz.equals(ByteTag.class)){

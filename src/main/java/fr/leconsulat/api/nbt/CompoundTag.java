@@ -44,6 +44,7 @@ public final class CompoundTag implements Tag {
 	private final Map<String, Tag> value;
 
 	public CompoundTag(Map<String, Tag> value) {
+		System.out.println("value.keySet() = " + value.keySet());
 		this.value = new HashMap<>(value);
 	}
 	
@@ -102,7 +103,7 @@ public final class CompoundTag implements Tag {
 	@SuppressWarnings("unchecked")
 	public <T extends Tag> List<T> getList(String name, Class<T> expected){
 		ListTag<T> listTag = ((ListTag<T>)value.get(name));
-		if(listTag.getType().getTagClass() != expected){
+		if(listTag.getElementType().getTagClass() != expected){
 			throw new IllegalArgumentException();
 		}
 		return listTag.getValue();
@@ -155,6 +156,18 @@ public final class CompoundTag implements Tag {
 	@Override
 	public Map<String, Tag> getValue() {
 		return Collections.unmodifiableMap(value);
+	}
+	
+	@Override
+	public NBTType getType(){
+		return NBTType.COMPOUND;
+	}
+	
+	@Override
+	public String toString(){
+		return "CompoundTag{" +
+				"value=" + value +
+				'}';
 	}
 	
 	@Override

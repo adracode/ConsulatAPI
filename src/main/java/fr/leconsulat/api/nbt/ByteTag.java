@@ -13,6 +13,11 @@ public final class ByteTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public NBTType getType(){
+		return NBTType.BYTE;
+	}
+	
 	public long getLong() {
 		return value;
 	}
@@ -41,4 +46,10 @@ public final class ByteTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public String toString(){
+		return "ByteTag{" +
+				"value=" + value +
+				'}';
+	}
 }

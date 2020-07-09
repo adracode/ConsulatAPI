@@ -6,4 +6,6 @@ public interface Tag extends Serializable {
 	
 	Object getValue();
 	
+	NBTType getType();
+	
 }

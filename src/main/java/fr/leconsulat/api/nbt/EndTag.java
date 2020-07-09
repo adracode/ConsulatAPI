@@ -12,4 +12,13 @@ public final class EndTag implements Tag {
         return null;
     }
     
+    @Override
+    public NBTType getType(){
+        return NBTType.END;
+    }
+    
+    @Override
+    public String toString(){
+        return "EndTag";
+    }
 }

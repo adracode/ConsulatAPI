@@ -13,6 +13,11 @@ public final class LongTag implements NumberTag {
 		return value;
 	}
 	
+	@Override
+	public NBTType getType(){
+		return NBTType.LONG;
+	}
+	
 	public long getLong() {
 		return value;
 	}
@@ -39,5 +44,12 @@ public final class LongTag implements NumberTag {
 	
 	public Number getAsNumber() {
 		return value;
+	}
+	
+	@Override
+	public String toString(){
+		return "LongTag{" +
+				"value=" + value +
+				'}';
 	}
 }

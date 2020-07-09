@@ -16,6 +16,18 @@ public final class IntArrayTag implements Tag {
 	}
 	
 	@Override
+	public NBTType getType(){
+		return NBTType.INT_ARRAY;
+	}
+	
+	@Override
+	public String toString(){
+		return "IntArrayTag{" +
+				"value=" + Arrays.toString(value) +
+				'}';
+	}
+	
+	@Override
 	public boolean equals(Object o){
 		if(this == o) {
 			return true;

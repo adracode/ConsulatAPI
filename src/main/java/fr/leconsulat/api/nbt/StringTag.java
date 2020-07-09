@@ -18,6 +18,11 @@ public final class StringTag implements Tag {
 	}
 	
 	@Override
+	public NBTType getType(){
+		return NBTType.STRING;
+	}
+	
+	@Override
 	public String toString(){
 		return "StringTag{" +
 				"value='" + value + '\'' +
