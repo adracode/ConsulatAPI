@@ -35,4 +35,5 @@ public enum  NBTType implements Serializable {
     public Class<? extends Tag> getTagClass(){
         return tagClass;
     }
+    
 }

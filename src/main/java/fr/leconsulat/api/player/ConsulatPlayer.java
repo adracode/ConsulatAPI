@@ -303,7 +303,7 @@ public class ConsulatPlayer implements Saveable {
             CompoundTag player = is.read();
             is.close();
             Set<String> perms = new HashSet<>();
-            List<StringTag> permissions = player.getList("Permissions");
+            List<StringTag> permissions = player.getList("Permissions", StringTag.class);
             for(StringTag t : permissions){
                 perms.add(t.getValue());
             }

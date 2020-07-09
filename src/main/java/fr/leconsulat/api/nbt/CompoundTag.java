@@ -37,10 +37,7 @@ package fr.leconsulat.api.nbt;
 
 //@formatter:on
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class CompoundTag implements Tag {
 	
@@ -94,13 +91,25 @@ public final class CompoundTag implements Tag {
 		put(name, new StringTag(s));
 	}
 	
+	public void putUUID(String name, UUID uuid){
+		putString(name, uuid.toString());
+	}
+	
 	public CompoundTag getCompound(String name){
 		return (CompoundTag)value.get(name);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T extends Tag> List<T> getList(String name){
-		return ((ListTag<T>)value.get(name)).getValue();
+	public <T extends Tag> List<T> getList(String name, Class<T> expected){
+		ListTag<T> listTag = ((ListTag<T>)value.get(name));
+		if(listTag.getType().getTagClass() != expected){
+			throw new IllegalArgumentException();
+		}
+		return listTag.getValue();
+	}
+	
+	public boolean has(String name){
+		return value.containsKey(name);
 	}
 	
 	public byte[] getByteArray(String name){
@@ -137,6 +146,10 @@ public final class CompoundTag implements Tag {
 	
 	public String getString(String name){
 		return ((StringTag)value.get(name)).getValue();
+	}
+	
+	public UUID getUUID(String name){
+		return UUID.fromString(getString(name));
 	}
 	
 	@Override

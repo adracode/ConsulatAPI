@@ -24,6 +24,9 @@ public final class ListTag<T extends Tag> implements Tag {
 	}
 	
 	public void addTag(T tag){
+		if(tag.getClass() != type.getTagClass()){
+			throw new IllegalArgumentException();
+		}
 		value.add(tag);
 	}
 	
