@@ -37,13 +37,15 @@ package org.jnbt;
 
 //@formatter:on
 
+import java.io.Serializable;
+
 /**
  * Represents a single NBT tag.
  *
  * @author Graham Edgecombe
  *
  */
-public abstract class Tag {
+public abstract class Tag implements Serializable {
 	
 	/**
 	 * The name of this tag.

@@ -126,9 +126,10 @@ public class NBTUtils {
         return new CompoundTag(name, map);
     }
     */
+    
     public static <T extends Tag> T getChildTag(Map<String, Tag> items, String key, Class<T> expected) throws IllegalArgumentException{
         if(!items.containsKey(key)){
-            throw new IllegalArgumentException("Schematic file is missing a \"" + key + "\" tag");
+            throw new IllegalArgumentException("Missing \"" + key + "\" tag");
         }
         Tag tag = items.get(key);
         if(!expected.isInstance(tag)){

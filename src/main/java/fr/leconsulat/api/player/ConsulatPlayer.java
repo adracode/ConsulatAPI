@@ -1,21 +1,19 @@
 package fr.leconsulat.api.player;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.channel.Channel;
 import fr.leconsulat.api.database.Saveable;
 import fr.leconsulat.api.events.PlayerChangeRankEvent;
 import fr.leconsulat.api.gui.gui.IGui;
+import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.FileUtils;
-import fr.leconsulat.api.utils.NBTUtils;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.jnbt.*;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
@@ -33,6 +31,7 @@ public class ConsulatPlayer implements Saveable {
     private CustomRank customRank;
     private String registered;
     private IGui currentlyOpen;
+    private Channel currentChannel = null;
     private boolean vanished;
     
     public ConsulatPlayer(UUID uuid, String name){
@@ -266,6 +265,18 @@ public class ConsulatPlayer implements Saveable {
         this.currentlyOpen = gui;
     }
     
+    public Channel getCurrentChannel(){
+        return currentChannel;
+    }
+    
+    public void setCurrentChannel(Channel currentChannel){
+        this.currentChannel = currentChannel;
+    }
+    
+    public String getDisplayName(){
+        return hasCustomRank() ? getCustomRank() : rank.getRankColor() + "[" + rank.getRankName() + "]";
+    }
+    
     public static void addPermission(UUID uuid, String... permission){
         Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
             Set<String> permissions = getPermissions(uuid);
@@ -288,13 +299,13 @@ public class ConsulatPlayer implements Saveable {
             if(!file.exists()){
                 return Collections.emptySet();
             }
-            NBTInputStream is = new NBTInputStream(new FileInputStream(file));
-            Map<String, Tag> player = ((CompoundTag)is.readTag()).getValue();
+            NBTInputStream is = new NBTInputStream(file);
+            CompoundTag player = is.read();
             is.close();
             Set<String> perms = new HashSet<>();
-            List<Tag> permissions = NBTUtils.getChildTag(player, "Permissions", ListTag.class).getValue();
-            for(Tag t : permissions){
-                perms.add(((StringTag)t).getValue());
+            List<StringTag> permissions = player.getList("Permissions");
+            for(StringTag t : permissions){
+                perms.add(t.getValue());
             }
             return perms;
         } catch(IOException e){
@@ -306,19 +317,19 @@ public class ConsulatPlayer implements Saveable {
     private static void setPermissions(UUID uuid, Set<String> permissions){
         try {
             File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
-            Map<String, Tag> player = new HashMap<>();
             if(!file.exists()){
                 if(!file.createNewFile()){
                     throw new IOException("Couldn't create file.");
                 }
             }
-            List<Tag> perms = new ArrayList<>();
+            CompoundTag player = new CompoundTag();
+            ListTag<StringTag> perms = new ListTag<>(NBTType.STRING);
             for(String s : permissions){
-                perms.add(new StringTag("", s));
+                perms.addTag(new StringTag(s));
             }
-            player.put("Permissions", new ListTag("Permissions", StringTag.class, perms));
-            NBTOutputStream os = new NBTOutputStream(new FileOutputStream(file));
-            os.writeTag(new CompoundTag("ConsulatPlayer", player));
+            player.put("Permissions", perms);
+            NBTOutputStream os = new NBTOutputStream(file, player);
+            os.write("ConsulatPlayer");
             os.close();
         } catch(IOException e){
             e.printStackTrace();

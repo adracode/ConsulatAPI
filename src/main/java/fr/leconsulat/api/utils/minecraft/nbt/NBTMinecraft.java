@@ -47,4 +47,6 @@ public class NBTMinecraft {
         }
     }
     
+    private static final Class<?> stringTag = MinecraftReflection.getNBTCompoundClass();
+    
 }

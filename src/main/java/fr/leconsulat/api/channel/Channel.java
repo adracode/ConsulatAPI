@@ -1,6 +1,7 @@
 package fr.leconsulat.api.channel;
 
 import fr.leconsulat.api.player.ConsulatPlayer;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +30,8 @@ public abstract class Channel {
         return name;
     }
     
+    public abstract String format(ConsulatPlayer player, String message);
+    
     public boolean isMember(ConsulatPlayer player){
         return members.contains(player);
     }
@@ -45,9 +48,22 @@ public abstract class Channel {
         return members.isEmpty();
     }
     
+    public void sendMessage(ConsulatPlayer player, String message){
+        String format = format(player, message);
+        for(ConsulatPlayer p : members){
+            p.sendMessage(format);
+        }
+    }
+    
     public void sendMessage(String message){
-        for(ConsulatPlayer player : members){
-            player.sendMessage(message);
+        for(ConsulatPlayer p : members){
+            p.sendMessage(message);
+        }
+    }
+    
+    public void sendMessage(TextComponent... message){
+        for(ConsulatPlayer p : members){
+            p.sendMessage(message);
         }
     }
     
