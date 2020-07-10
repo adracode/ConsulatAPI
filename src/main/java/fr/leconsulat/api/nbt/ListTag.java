@@ -7,8 +7,14 @@ import java.util.List;
 
 public final class ListTag<T extends Tag> implements Tag {
 	
-	private final NBTType type;
+	private static final long serialVersionUID = -5298469483175161595L;
+	
+	private NBTType type;
 	private final List<T> value;
+	
+	public ListTag(){
+		this(null);
+	}
 	
 	public ListTag(NBTType type) {
 		this(type, null);
@@ -28,6 +34,9 @@ public final class ListTag<T extends Tag> implements Tag {
 	}
 	
 	public void addTag(T tag){
+		if(type == null){
+			type = tag.getType();
+		}
 		if(tag.getClass() != type.getTagClass()){
 			throw new IllegalArgumentException();
 		}
@@ -49,7 +58,9 @@ public final class ListTag<T extends Tag> implements Tag {
 	
 	@Override
 	public boolean equals(Object o){
-		if(this == o) return true;
+		if(this == o){
+			return true;
+		}
 		if(!(o instanceof ListTag)){
 			return false;
 		}

@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 public final class IntArrayTag implements Tag {
 	
+	private static final long serialVersionUID = -149645358521606018L;
+	
 	private final int[] value;
 	
 	public IntArrayTag(final int[] value) {
@@ -35,8 +37,7 @@ public final class IntArrayTag implements Tag {
 		if(!(o instanceof IntArrayTag)){
 			return false;
 		}
-		IntArrayTag that = (IntArrayTag)o;
-		return Arrays.equals(value, that.value);
+		return Arrays.equals(value, ((IntArrayTag)o).value);
 	}
 	
 	@Override

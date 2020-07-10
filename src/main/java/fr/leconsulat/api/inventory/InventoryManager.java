@@ -2,13 +2,16 @@ package fr.leconsulat.api.inventory;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.nbt.CompoundTag;
+import fr.leconsulat.api.nbt.ListTag;
 import fr.leconsulat.api.nbt.NBTInputStream;
+import fr.leconsulat.api.nbt.NBTType;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.minecraft.nbt.NBTMinecraft;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,11 +26,15 @@ public class InventoryManager {
     
     private static final Method compoundToItem;
     private static final Method nmsToBukkit;
+    private static final Method itemToCompound;
+    private static final Method bukkitToNMS;
     
     static{
         try {
             compoundToItem = MinecraftReflection.getMinecraftClass("ItemStack").getDeclaredMethod("a", MinecraftReflection.getNBTCompoundClass());
             nmsToBukkit = MinecraftReflection.getCraftBukkitClass("inventory.CraftItemStack").getDeclaredMethod("asBukkitCopy", MinecraftReflection.getItemStackClass());
+            itemToCompound = MinecraftReflection.getMinecraftClass("ItemStack").getDeclaredMethod("save", MinecraftReflection.getNBTCompoundClass());
+            bukkitToNMS = MinecraftReflection.getCraftBukkitClass("inventory.CraftItemStack").getDeclaredMethod("asNMSCopy", ItemStack.class);
         } catch(NoSuchMethodException e){
             e.printStackTrace();
             throw new RuntimeException();
@@ -62,6 +69,43 @@ public class InventoryManager {
             }
             return finalInventory;
         } catch(IOException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public ListTag<CompoundTag> saveInventory(PlayerInventory inventory){
+        ListTag<CompoundTag> listTag = new ListTag<>(NBTType.COMPOUND);
+        try {
+            for(int i = 0; i < inventory.getSize(); ++i){
+                ItemStack itemStack = inventory.getItem(i);
+                if(itemStack != null){
+                    CompoundTag tag = NBTMinecraft.nmsToCompound(
+                            itemToCompound.invoke(bukkitToNMS.invoke(null, itemStack), NBTMinecraft.newCompoundTag()));
+                    tag.putByte("Slot", (byte)i);
+                    listTag.addTag(tag);
+                }
+            }
+            ItemStack[] armor = inventory.getArmorContents();
+            for(int i = 0; i < armor.length; ++i){
+                if(armor[i] != null){
+                    CompoundTag tag = NBTMinecraft.nmsToCompound(
+                            itemToCompound.invoke(bukkitToNMS.invoke(null, armor[i]), NBTMinecraft.newCompoundTag()));
+                    tag.putByte("Slot", (byte)(i + 100));
+                    listTag.addTag(tag);
+                }
+            }
+            ItemStack[] extra = inventory.getExtraContents();
+            for(int i = 0; i < extra.length; ++i){
+                if(extra[i] != null){
+                    CompoundTag tag = NBTMinecraft.nmsToCompound(
+                            itemToCompound.invoke(bukkitToNMS.invoke(null, extra[i]), NBTMinecraft.newCompoundTag()));
+                    tag.putByte("Slot", (byte)(i + 150));
+                    listTag.addTag(tag);
+                }
+            }
+            return listTag;
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
         }
         return null;

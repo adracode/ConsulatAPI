@@ -6,6 +6,8 @@ import java.util.Objects;
 
 public final class StringTag implements Tag {
 	
+	private static final long serialVersionUID = -5605839489199339056L;
+	
 	private final @NotNull String value;
 	
 	public StringTag(@NotNull final String value) {

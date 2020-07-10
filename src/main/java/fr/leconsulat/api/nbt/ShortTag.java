@@ -2,6 +2,8 @@ package fr.leconsulat.api.nbt;
 
 public final class ShortTag implements NumberTag {
 	
+	private static final long serialVersionUID = -9102811619050333732L;
+	
 	private final short value;
 	
 	public ShortTag(final short value) {
@@ -16,20 +18,6 @@ public final class ShortTag implements NumberTag {
 	@Override
 	public NBTType getType(){
 		return NBTType.SHORT;
-	}
-	
-	@Override
-	public boolean equals(Object o){
-		if(this == o) return true;
-		if(!(o instanceof ShortTag)){
-			return false;
-		}
-		return value == ((ShortTag)o).value;
-	}
-	
-	@Override
-	public int hashCode(){
-		return Short.hashCode(value);
 	}
 	
 	@Override
@@ -72,5 +60,21 @@ public final class ShortTag implements NumberTag {
 		return "ShortTag{" +
 				"value=" + value +
 				'}';
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if(this == o){
+			return true;
+		}
+		if(!(o instanceof ShortTag)){
+			return false;
+		}
+		return value == ((ShortTag)o).value;
+	}
+	
+	@Override
+	public int hashCode(){
+		return Short.hashCode(value);
 	}
 }

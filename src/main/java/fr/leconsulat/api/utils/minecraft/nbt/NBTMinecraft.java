@@ -4,6 +4,7 @@ import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.nbt.*;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -16,7 +17,7 @@ public class NBTMinecraft {
     private static Method setCompoundTagInt;
     private static Method setCompoundTagString;
     
-    static {
+    static{
         compoundTagClass = MinecraftReflection.getNBTCompoundClass();
         try {
             setCompoundTagInt = compoundTagClass.getMethod("setInt", String.class, int.class);
@@ -51,53 +52,77 @@ public class NBTMinecraft {
         }
     }
     
-    private static final Constructor<?> newByteTag;
-    private static final Constructor<?> newByteArrayTag;
-    private static final Constructor<?> newCompoundTag;
-    private static final Constructor<?> newDoubleTag;
-    private static final Constructor<?> newFloatTag;
-    private static final Constructor<?> newIntTag;
-    private static final Constructor<?> newIntArrayTag;
-    private static final Constructor<?> newListTag;
-    private static final Constructor<?> newLongTag;
-    private static final Constructor<?> newLongArrayTag;
-    private static final Constructor<?> newShortTag;
-    private static final Constructor<?> newStringTag;
+    private static final Constructor<?>[] tagConstructors;
+    private static final Method[] getTagValues;
     
     private static final Method putInCompound;
     private static final Method putInList;
     
+    private static final Field getCompoundValue;
+    private static final Field getListValue;
+    
+    private static final Method getType;
+    
     static{
         try {
-            newByteTag = MinecraftReflection.getMinecraftClass("NBTTagByte").getConstructor(byte.class);
-            newByteArrayTag = MinecraftReflection.getMinecraftClass("NBTTagByteArray").getConstructor(byte[].class);
-            newCompoundTag = MinecraftReflection.getMinecraftClass("NBTTagCompound").getConstructor();
-            newDoubleTag = MinecraftReflection.getMinecraftClass("NBTTagDouble").getConstructor(double.class);
-            newFloatTag = MinecraftReflection.getMinecraftClass("NBTTagFloat").getConstructor(float.class);
-            newIntTag = MinecraftReflection.getMinecraftClass("NBTTagInt").getConstructor(int.class);
-            newIntArrayTag = MinecraftReflection.getMinecraftClass("NBTTagIntArray").getConstructor(int[].class);
-            newListTag = MinecraftReflection.getMinecraftClass("NBTTagList").getConstructor();
-            newLongTag = MinecraftReflection.getMinecraftClass("NBTTagLong").getConstructor(long.class);
-            newLongArrayTag = MinecraftReflection.getMinecraftClass("NBTTagLongArray").getConstructor(long[].class);
-            newShortTag = MinecraftReflection.getMinecraftClass("NBTTagShort").getConstructor(short.class);
-            newStringTag = MinecraftReflection.getMinecraftClass("NBTTagString").getConstructor(String.class);
+            tagConstructors = new Constructor[]{
+                    MinecraftReflection.getMinecraftClass("NBTTagByte").getConstructor(byte.class),
+                    MinecraftReflection.getMinecraftClass("NBTTagByteArray").getConstructor(byte[].class),
+                    MinecraftReflection.getMinecraftClass("NBTTagCompound").getConstructor(),
+                    MinecraftReflection.getMinecraftClass("NBTTagDouble").getConstructor(double.class),
+                    MinecraftReflection.getMinecraftClass("NBTTagFloat").getConstructor(float.class),
+                    MinecraftReflection.getMinecraftClass("NBTTagInt").getConstructor(int.class),
+                    MinecraftReflection.getMinecraftClass("NBTTagIntArray").getConstructor(int[].class),
+                    MinecraftReflection.getMinecraftClass("NBTTagList").getConstructor(),
+                    MinecraftReflection.getMinecraftClass("NBTTagLong").getConstructor(long.class),
+                    MinecraftReflection.getMinecraftClass("NBTTagLongArray").getConstructor(long[].class),
+                    MinecraftReflection.getMinecraftClass("NBTTagShort").getConstructor(short.class),
+                    MinecraftReflection.getMinecraftClass("NBTTagString").getConstructor(String.class)
+            };
     
-            putInCompound = MinecraftReflection.getMinecraftClass("NBTTagCompound").getDeclaredMethod("set",
-                            String.class, MinecraftReflection.getMinecraftClass("NBTBase"));
-            putInList = MinecraftReflection.getMinecraftClass("NBTTagList").getDeclaredMethod("add",
-                            int.class, MinecraftReflection.getMinecraftClass("NBTBase"));
-        } catch(NoSuchMethodException e){
+            getTagValues = new Method[]{
+                    MinecraftReflection.getMinecraftClass("NBTTagByte").getMethod("asByte"),
+                    MinecraftReflection.getMinecraftClass("NBTTagByteArray").getMethod("getBytes"),
+                    MinecraftReflection.getMinecraftClass("NBTTagDouble").getMethod("asDouble"),
+                    MinecraftReflection.getMinecraftClass("NBTTagFloat").getMethod("asFloat"),
+                    MinecraftReflection.getMinecraftClass("NBTTagInt").getMethod("asInt"),
+                    MinecraftReflection.getMinecraftClass("NBTTagIntArray").getMethod("getInts"),
+                    MinecraftReflection.getMinecraftClass("NBTTagLong").getMethod("asLong"),
+                    MinecraftReflection.getMinecraftClass("NBTTagLongArray").getMethod("getLongs"),
+                    MinecraftReflection.getMinecraftClass("NBTTagShort").getMethod("asShort"),
+                    MinecraftReflection.getMinecraftClass("NBTTagString").getMethod("asString")
+            };
+            
+            putInCompound = MinecraftReflection.getMinecraftClass("NBTTagCompound").getMethod("set",
+                    String.class, MinecraftReflection.getMinecraftClass("NBTBase"));
+            putInList = MinecraftReflection.getMinecraftClass("NBTTagList").getMethod("add",
+                    int.class, MinecraftReflection.getMinecraftClass("NBTBase"));
+            
+            getCompoundValue = MinecraftReflection.getMinecraftClass("NBTTagCompound").getDeclaredField("map");
+            getCompoundValue.setAccessible(true);
+            getListValue = MinecraftReflection.getMinecraftClass("NBTTagList").getDeclaredField("list");
+            getListValue.setAccessible(true);
+    
+            getType = MinecraftReflection.getMinecraftClass("NBTBase").getMethod("getTypeId");
+        } catch(NoSuchMethodException | NoSuchFieldException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
     }
     
-    private static final Class<?> stringTag = MinecraftReflection.getNBTCompoundClass();
-    
     public static Object byteToNMS(ByteTag tag){
         try {
-            return newByteTag.newInstance(tag.getByte());
+            return tagConstructors[0].newInstance(tag.getByte());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static ByteTag nmsToByte(Object tag){
+        try {
+            return new ByteTag((byte)getTagValues[0].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -105,8 +130,17 @@ public class NBTMinecraft {
     
     public static Object byteArrayToNMS(ByteArrayTag tag){
         try {
-            return newByteArrayTag.newInstance((Object)tag.getValue());
+            return tagConstructors[1].newInstance((Object)tag.getValue());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static ByteArrayTag nmsToByteArray(Object tag){
+        try {
+            return new ByteArrayTag((byte[])getTagValues[1].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -114,7 +148,7 @@ public class NBTMinecraft {
     
     public static Object compoundToNMS(CompoundTag tag){
         try {
-            Object compound = newCompoundTag.newInstance();
+            Object compound = tagConstructors[2].newInstance();
             for(Map.Entry<String, Tag> entry : tag.getValue().entrySet()){
                 putInCompound.invoke(compound, entry.getKey(), tagToNMS(entry.getValue()));
             }
@@ -125,10 +159,33 @@ public class NBTMinecraft {
         }
     }
     
+    @SuppressWarnings("unchecked")
+    public static CompoundTag nmsToCompound(Object tag){
+        try {
+            CompoundTag compoundTag = new CompoundTag();
+            for(Map.Entry<String, ?> nbtBase : ((Map<String, ?>)getCompoundValue.get(tag)).entrySet()){
+                compoundTag.put(nbtBase.getKey(), nmsToTag(nbtBase.getValue()));
+            }
+            return compoundTag;
+        } catch(IllegalAccessException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
     public static Object doubleToNMS(DoubleTag tag){
         try {
-            return newDoubleTag.newInstance(tag.getDouble());
+            return tagConstructors[3].newInstance(tag.getDouble());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static DoubleTag nmsToDouble(Object tag){
+        try {
+            return new DoubleTag((double)getTagValues[2].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -136,8 +193,17 @@ public class NBTMinecraft {
     
     public static Object floatToNMS(FloatTag tag){
         try {
-            return newFloatTag.newInstance(tag.getFloat());
+            return tagConstructors[4].newInstance(tag.getFloat());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static FloatTag nmsToFloat(Object tag){
+        try {
+            return new FloatTag((float)getTagValues[3].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -145,8 +211,17 @@ public class NBTMinecraft {
     
     public static Object intToNMS(IntTag tag){
         try {
-            return newIntTag.newInstance(tag.getInt());
+            return tagConstructors[5].newInstance(tag.getInt());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static IntTag nmsToInt(Object tag){
+        try {
+            return new IntTag((int)getTagValues[4].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -154,8 +229,17 @@ public class NBTMinecraft {
     
     public static Object intArrayToNMS(IntArrayTag tag){
         try {
-            return newIntArrayTag.newInstance((Object)tag.getValue());
+            return tagConstructors[6].newInstance((Object)tag.getValue());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static IntArrayTag nmsToIntArray(Object tag){
+        try {
+            return new IntArrayTag((int[])getTagValues[5].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -163,7 +247,7 @@ public class NBTMinecraft {
     
     public static Object listToNMS(ListTag<? extends Tag> tag){
         try {
-            Object list = newListTag.newInstance();
+            Object list = tagConstructors[7].newInstance();
             List<? extends Tag> value = tag.getValue();
             for(int i = 0; i < value.size(); i++){
                 putInList.invoke(list, i, tagToNMS(value.get(i)));
@@ -175,23 +259,51 @@ public class NBTMinecraft {
         }
     }
     
+    public static ListTag<? extends Tag> nmsToList(Object tag){
+        try {
+            ListTag<Tag> listTag = new ListTag<>();
+            for(Object nbtBase : (List<?>)getListValue.get(tag)){
+                Tag addTag = nmsToTag(nbtBase);
+                listTag.addTag(addTag);
+            }
+            return listTag;
+        } catch(IllegalAccessException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
     public static Object longToNMS(LongTag tag){
         try {
-            return newLongTag.newInstance(tag.getLong());
+            return tagConstructors[8].newInstance(tag.getLong());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
     }
     
-    public static Object longArrayToNMS(Tag tag){
-        throw new UnsupportedOperationException();
+    public static LongTag nmsToLong(Object tag){
+        try {
+            return new LongTag((long)getTagValues[6].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
     }
     
     public static Object shortToNMS(ShortTag tag){
         try {
-            return newShortTag.newInstance(tag.getShort());
+            return tagConstructors[10].newInstance(tag.getShort());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static ShortTag nmsToShort(Object tag){
+        try {
+            return new ShortTag((short)getTagValues[8].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -199,8 +311,17 @@ public class NBTMinecraft {
     
     public static Object stringToNMS(StringTag tag){
         try {
-            return newStringTag.newInstance(tag.getValue());
+            return tagConstructors[11].newInstance(tag.getValue());
         } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static StringTag nmsToString(Object tag){
+        try {
+            return new StringTag((String)getTagValues[9].invoke(tag));
+        } catch(IllegalAccessException | InvocationTargetException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -232,7 +353,42 @@ public class NBTMinecraft {
                 return stringToNMS((StringTag)tag);
             default:
                 throw new UnsupportedOperationException();
-                
+            
+        }
+    }
+    
+    public static Tag nmsToTag(Object nbtBase){
+        try {
+            switch((int)(byte)getType.invoke(nbtBase)){
+                case 1:
+                    return nmsToByte(nbtBase);
+                case 7:
+                    return nmsToByteArray(nbtBase);
+                case 10:
+                    return nmsToCompound(nbtBase);
+                case 6:
+                    return nmsToDouble(nbtBase);
+                case 5:
+                    return nmsToFloat(nbtBase);
+                case 3:
+                    return nmsToInt(nbtBase);
+                case 11:
+                    return nmsToIntArray(nbtBase);
+                case 9:
+                    return nmsToList(nbtBase);
+                case 4:
+                    return nmsToLong(nbtBase);
+                case 2:
+                    return nmsToShort(nbtBase);
+                case 8:
+                    return nmsToString(nbtBase);
+                default:
+                    throw new UnsupportedOperationException();
+        
+            }
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+            throw new RuntimeException();
         }
     }
     

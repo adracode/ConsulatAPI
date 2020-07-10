@@ -4,6 +4,8 @@ import fr.leconsulat.api.utils.MathUtils;
 
 public final class DoubleTag implements NumberTag {
 	
+	private static final long serialVersionUID = 8035817030577901095L;
+	
 	private final double value;
 	
 	public DoubleTag(final double value) {
@@ -53,5 +55,21 @@ public final class DoubleTag implements NumberTag {
 		return "DoubleTag{" +
 				"value=" + value +
 				'}';
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if(this == o) {
+			return true;
+		}
+		if(!(o instanceof DoubleTag)) {
+			return false;
+		}
+		return Double.compare(((DoubleTag)o).value, value) == 0;
+	}
+	
+	@Override
+	public int hashCode(){
+		return Double.hashCode(value);
 	}
 }

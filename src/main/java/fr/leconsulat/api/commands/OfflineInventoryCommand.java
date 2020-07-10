@@ -8,12 +8,17 @@ import org.bukkit.Bukkit;
 public class OfflineInventoryCommand extends ConsulatCommand {
     
     public OfflineInventoryCommand(){
-        super("offinv", "/offinv <joueur>", 1, Rank.DEVELOPPEUR);
+        super("offinv", "/offinv <joueur>", 0, Rank.DEVELOPPEUR);
         suggest(false, Arguments.playerList("joueur"));
     }
     
     @Override
     public void onCommand(ConsulatPlayer player, String[] args){
+        if(args.length == 0){
+            System.out.println(
+                    InventoryManager.getInstance().saveInventory(player.getPlayer().getInventory()));
+            return;
+        }
         player.getPlayer().openInventory(InventoryManager.getInstance().getOfflineInventory(Bukkit.getOfflinePlayer(args[0]).getUniqueId()));
     }
 }

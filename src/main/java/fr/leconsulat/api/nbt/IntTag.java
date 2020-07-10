@@ -2,6 +2,8 @@ package fr.leconsulat.api.nbt;
 
 public final class IntTag implements NumberTag {
 	
+	private static final long serialVersionUID = -8716298528684169124L;
+	
 	private final int value;
 	
 	public IntTag(final int value) {
@@ -51,5 +53,21 @@ public final class IntTag implements NumberTag {
 		return "IntTag{" +
 				"value=" + value +
 				'}';
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if(this == o) {
+			return true;
+		}
+		if(!(o instanceof IntTag)) {
+			return false;
+		}
+		return value == ((IntTag)o).value;
+	}
+	
+	@Override
+	public int hashCode(){
+		return Integer.hashCode(value);
 	}
 }

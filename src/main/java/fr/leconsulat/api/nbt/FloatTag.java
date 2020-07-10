@@ -1,9 +1,10 @@
 package fr.leconsulat.api.nbt;
 
-
 import fr.leconsulat.api.utils.MathUtils;
 
 public final class FloatTag implements NumberTag {
+	
+	private static final long serialVersionUID = -872472607273277329L;
 	
 	private final float value;
 	
@@ -54,5 +55,21 @@ public final class FloatTag implements NumberTag {
 		return "FloatTag{" +
 				"value=" + value +
 				'}';
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if(this == o){
+			return true;
+		}
+		if(!(o instanceof FloatTag)) {
+			return false;
+		}
+		return Float.compare(((FloatTag)o).value, value) == 0;
+	}
+	
+	@Override
+	public int hashCode(){
+		return Float.hashCode(value);
 	}
 }

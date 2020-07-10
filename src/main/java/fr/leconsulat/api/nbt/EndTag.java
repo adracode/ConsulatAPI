@@ -4,6 +4,8 @@ public final class EndTag implements Tag {
   
     public static final EndTag TAG = new EndTag();
     
+    private static final long serialVersionUID = -3849379622044400505L;
+    
     private EndTag(){
     }
     
@@ -20,5 +22,15 @@ public final class EndTag implements Tag {
     @Override
     public String toString(){
         return "EndTag";
+    }
+    
+    @Override
+    public boolean equals(Object obj){
+        return obj.getClass() == this.getClass();
+    }
+    
+    @Override
+    public int hashCode(){
+        return -1;
     }
 }
