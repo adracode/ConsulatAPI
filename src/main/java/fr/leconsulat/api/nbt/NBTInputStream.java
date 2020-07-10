@@ -1,7 +1,5 @@
 package fr.leconsulat.api.nbt;
 
-import javafx.util.Pair;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,7 @@ public final class NBTInputStream implements Closeable {
     }
     
     public CompoundTag read() throws IOException{
-        return (CompoundTag)readTag(0).getValue();
+        return (CompoundTag)readTag(0).tag;
     }
     
     /**
@@ -47,10 +45,10 @@ public final class NBTInputStream implements Closeable {
      * @return The tag that was read.
      * @throws IOException if an I/O error occurs.
      */
-    private Pair<String, Tag> readTag(final int depth) throws IOException{
+    private NamedTag readTag(final int depth) throws IOException{
         NBTType type = readType();
         String name = type != NBTType.END ? readName() : "";
-        return new Pair<>(name, readTagPayload(type, depth));
+        return new NamedTag(name, readTagPayload(type, depth));
     }
     
     /**
@@ -103,12 +101,12 @@ public final class NBTInputStream implements Closeable {
             case COMPOUND:
                 CompoundTag compoundTag = new CompoundTag();
                 while(true){
-                    Pair<String, Tag> namedTag = readTag(depth + 1);
-                    Tag tag = namedTag.getValue();
+                    NamedTag namedTag = readTag(depth + 1);
+                    Tag tag = namedTag.tag;
                     if(tag instanceof EndTag){
                         break;
                     } else {
-                        compoundTag.put(namedTag.getKey(), tag);
+                        compoundTag.put(namedTag.name, tag);
                     }
                 }
                 return compoundTag;
@@ -144,4 +142,16 @@ public final class NBTInputStream implements Closeable {
     public void close() throws IOException{
         is.close();
     }
+    
+    private static class NamedTag {
+        
+        private String name;
+        private Tag tag;
+    
+        public NamedTag(String name, Tag tag){
+            this.name = name;
+            this.tag = tag;
+        }
+    }
+    
 }

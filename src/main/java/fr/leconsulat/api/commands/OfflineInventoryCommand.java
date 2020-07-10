@@ -14,11 +14,16 @@ public class OfflineInventoryCommand extends ConsulatCommand {
     
     @Override
     public void onCommand(ConsulatPlayer player, String[] args){
+        InventoryManager inventoryManager = InventoryManager.getInstance();
         if(args.length == 0){
             System.out.println(
-                    InventoryManager.getInstance().saveInventory(player.getPlayer().getInventory()));
+                    inventoryManager.getInventoryAsTag(player.getPlayer().getInventory()));
             return;
         }
-        player.getPlayer().openInventory(InventoryManager.getInstance().getOfflineInventory(Bukkit.getOfflinePlayer(args[0]).getUniqueId()));
+        if(args[0].equalsIgnoreCase("test")){
+            inventoryManager.catchInventory(inventoryManager.sendInventory(player));
+            return;
+        }
+        player.getPlayer().openInventory(inventoryManager.getOfflineInventory(Bukkit.getOfflinePlayer(args[0]).getUniqueId()));
     }
 }
