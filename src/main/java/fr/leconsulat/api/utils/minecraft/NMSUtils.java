@@ -3,6 +3,7 @@ package fr.leconsulat.api.utils.minecraft;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -63,6 +64,37 @@ public class NMSUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    private static final Method compoundToItem;
+    private static final Method nmsToBukkit;
+    
+    static{
+        try {
+            nmsToBukkit = MinecraftReflection.getCraftBukkitClass("inventory.CraftItemStack").getDeclaredMethod("asBukkitCopy", MinecraftReflection.getItemStackClass());
+            compoundToItem = MinecraftReflection.getMinecraftClass("ItemStack").getDeclaredMethod("a", MinecraftReflection.getNBTCompoundClass());
+        } catch(NoSuchMethodException e){
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+    }
+    
+    public static ItemStack nmsToBukkitItem(Object item){
+        try {
+            return (ItemStack)nmsToBukkit.invoke(null, item);
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public static Object compoundToItem(Object tag){
+        try {
+            return compoundToItem.invoke(null, tag);
+        } catch(IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
     }
     
 }

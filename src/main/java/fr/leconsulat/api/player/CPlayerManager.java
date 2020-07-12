@@ -5,7 +5,13 @@ import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
+import fr.leconsulat.api.nbt.CompoundTag;
+import fr.leconsulat.api.nbt.NBTInputStream;
+import fr.leconsulat.api.nbt.NBTOutputStream;
+import fr.leconsulat.api.player.stream.OfflinePlayerInputStream;
+import fr.leconsulat.api.player.stream.PlayerInputStream;
 import fr.leconsulat.api.ranks.Rank;
+import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -15,6 +21,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,13 +44,20 @@ public class CPlayerManager implements Listener {
         } catch(NoSuchMethodException var1){
             var1.printStackTrace();
         }
-        
+    }
+    
+    private final File playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
+    
+    private File getPlayerFile(UUID uuid){
+        return FileUtils.loadFile(playerDataFolder, uuid + ".dat");
     }
     
     private Class<?> playerClass;
     private Constructor<?> playerConstructor;
     private Map<UUID, ConsulatPlayer> players = new HashMap<>();
     private Map<String, UUID> offlinePlayers = new HashMap<>();
+    
+    private Map<UUID, byte[]> pendingPlayer = new HashMap<>();
     
     public CPlayerManager(){
         if(instance != null){
@@ -79,6 +94,41 @@ public class CPlayerManager implements Listener {
         }
     }
     
+    public void loadPlayerData(byte[] data){
+        OfflinePlayerInputStream input = new OfflinePlayerInputStream(data);
+        UUID uuid = input.fetchUUID();
+        ConsulatPlayer player = players.get(uuid);
+        if(player != null){
+            player.sendMessage("§7§oChargement...");
+            new PlayerInputStream(player.getPlayer(), data).readLevel().readInventory().close();
+            player.sendMessage("§7§oChargement terminé !");
+        } else {
+            pendingPlayer.put(uuid, data);
+        }
+        input.close();
+    }
+    
+    public void savePlayerData(byte[] data){
+        try {
+            OfflinePlayerInputStream inputStream = new OfflinePlayerInputStream(data);
+            UUID uuid = inputStream.fetchUUID();
+            File playerFile = getPlayerFile(uuid);
+            NBTInputStream is = new NBTInputStream(playerFile);
+            CompoundTag player = is.read();
+            is.close();
+            float experience = inputStream.fetchLevel();
+            int level = (int)experience;
+            player.putInt("XpLevel", level);
+            player.putFloat("XpP", experience - level);
+            player.put("Inventory", inputStream.fetchInventory());
+            NBTOutputStream os = new NBTOutputStream(playerFile, player);
+            os.write("");
+            os.close();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+    
     private void loadAllPlayers() throws SQLException{
         PreparedStatement load = ConsulatAPI.getDatabase().prepareStatement("SELECT id, player_uuid, player_name FROM players");
         ResultSet all = load.executeQuery();
@@ -104,6 +154,10 @@ public class CPlayerManager implements Listener {
         event.setJoinMessage("");
         CPlayerManager manager = CPlayerManager.getInstance();
         ConsulatPlayer player = manager.addPlayer(event.getPlayer().getUniqueId(), event.getPlayer().getName());
+        byte[] loadData = pendingPlayer.remove(player.getUUID());
+        if(loadData != null){
+            new PlayerInputStream(player.getPlayer(), loadData).readLevel().readInventory().close();
+        }
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " has joined");
         ConsulatAPI consulatAPI = ConsulatAPI.getConsulatAPI();
         String name = event.getPlayer().getName().toLowerCase();

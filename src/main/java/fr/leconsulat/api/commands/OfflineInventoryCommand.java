@@ -2,7 +2,10 @@ package fr.leconsulat.api.commands;
 
 import fr.leconsulat.api.inventory.InventoryManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import fr.leconsulat.api.player.stream.PlayerOutputStream;
 import fr.leconsulat.api.ranks.Rank;
+import fr.leconsulat.api.redis.RedisManager;
+import fr.leconsulat.api.utils.InventoryUtils;
 import org.bukkit.Bukkit;
 
 public class OfflineInventoryCommand extends ConsulatCommand {
@@ -17,11 +20,12 @@ public class OfflineInventoryCommand extends ConsulatCommand {
         InventoryManager inventoryManager = InventoryManager.getInstance();
         if(args.length == 0){
             System.out.println(
-                    inventoryManager.getInventoryAsTag(player.getPlayer().getInventory()));
+                    InventoryUtils.getInventoryAsTag(player.getPlayer().getInventory()));
             return;
         }
-        if(args[0].equalsIgnoreCase("test")){
-            inventoryManager.catchInventory(inventoryManager.sendInventory(player));
+        if(args[0].equalsIgnoreCase("save")){
+            RedisManager.getInstance().getRedis().getTopic("SavePlayerDataSurvie").publish(
+                    new PlayerOutputStream(player.getPlayer()).writeInventory().send());
             return;
         }
         player.getPlayer().openInventory(inventoryManager.getOfflineInventory(Bukkit.getOfflinePlayer(args[0]).getUniqueId()));

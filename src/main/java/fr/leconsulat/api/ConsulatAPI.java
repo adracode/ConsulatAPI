@@ -16,9 +16,11 @@ import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.runnable.KeepAlive;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -54,10 +56,16 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         consulatAPI = this;
         log = new File(this.getDataFolder(), "log.txt");
         saveDefaultConfig();
-        this.debug = getConfig().getBoolean("debug", false);
+        FileConfiguration config = getConfig();
+        this.debug = config.getBoolean("debug", false);
         dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
         databaseManager = new DatabaseManager();
         databaseManager.connect();
+        new RedisManager(
+                config.getString("redis-host"),
+                config.getInt("redis-port"),
+                config.getString("redis-password"),
+                config.getString("redis-client"));
         protocolManager = ProtocolLibrary.getProtocolManager();
         new SaveManager();
         new ChannelManager();
@@ -97,6 +105,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         }
         SaveManager.getInstance().removeAll();
         databaseManager.disconnect();
+        RedisManager.getInstance().getRedis().shutdown();
     }
     
     public boolean isDebug(){

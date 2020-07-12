@@ -24,7 +24,6 @@ repositories {
     maven {
         url "https://libraries.minecraft.net"
     }
-
 }
 
 dependencies {
@@ -34,7 +33,14 @@ dependencies {
     compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "4.4.0"
     compile 'com.mojang:brigadier:1.0.17'
     compile 'org.jetbrains:annotations:16.0.2'
+    compile group: 'org.redisson', name: 'redisson', version: '3.13.2'
 }
+
+/*jar {
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}*/
 
 processResources {
     from(sourceSets.main.resources.srcDirs)  {
