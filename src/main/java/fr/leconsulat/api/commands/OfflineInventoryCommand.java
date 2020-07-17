@@ -25,7 +25,7 @@ public class OfflineInventoryCommand extends ConsulatCommand {
         }
         if(args[0].equalsIgnoreCase("save")){
             RedisManager.getInstance().getRedis().getTopic("SavePlayerDataSurvie").publish(
-                    new PlayerOutputStream(player.getPlayer()).writeInventory().send());
+                    new PlayerOutputStream(player.getPlayer()).writeLevel().writeInventory().send());
             return;
         }
         player.getPlayer().openInventory(inventoryManager.getOfflineInventory(Bukkit.getOfflinePlayer(args[0]).getUniqueId()));

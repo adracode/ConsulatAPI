@@ -1,6 +1,7 @@
 package fr.leconsulat.api.events;
 
 import org.bukkit.Material;
+import org.jetbrains.annotations.NotNull;
 
 public enum PType {
     
@@ -55,7 +56,8 @@ public enum PType {
     PRESSURE_PLATE(PCategory.REDSTONE_INTERACTION),
     FARMLAND(PCategory.OTHER),
     TRIPWIRE(PCategory.REDSTONE_INTERACTION),
-    TURTLE_EGG(PCategory.OTHER);
+    TURTLE_EGG(PCategory.OTHER),
+    NO_INTERACTION(PCategory.OTHER);
     
     private PCategory category;
     
@@ -63,8 +65,7 @@ public enum PType {
         this.category = category;
     }
     
-    public static PType getCategory(Material type){
-        
+    public static @NotNull PType getCategory(Material type){
         switch(type){
             case ACACIA_BUTTON:
             case BIRCH_BUTTON:
@@ -313,7 +314,7 @@ public enum PType {
             case TURTLE_EGG:
                 return TURTLE_EGG;
         }
-        return null;
+        return NO_INTERACTION;
     }
     
 }
