@@ -4,11 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
-import fr.leconsulat.api.commands.OfflineInventoryCommand;
-import fr.leconsulat.api.commands.commands.GCCommand;
-import fr.leconsulat.api.commands.commands.PermissionCommand;
-import fr.leconsulat.api.commands.commands.RankCommand;
-import fr.leconsulat.api.commands.commands.TestCommand;
+import fr.leconsulat.api.commands.commands.*;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
 import fr.leconsulat.api.events.EventManager;
@@ -47,6 +43,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private CommandManager commandManager;
     private File log;
     private boolean debug = false;
+    private boolean development = false;
     
     @Override
     public void onEnable(){
@@ -58,6 +55,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         saveDefaultConfig();
         FileConfiguration config = getConfig();
         this.debug = config.getBoolean("debug", false);
+        this.debug = config.getBoolean("dev", false);
         dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
         databaseManager = new DatabaseManager();
         databaseManager.connect();
@@ -110,6 +108,10 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     public boolean isDebug(){
         return debug;
+    }
+    
+    public boolean isDevelopment(){
+        return development;
     }
     
     public static ConsulatAPI getConsulatAPI(){

@@ -1,5 +1,7 @@
-package fr.leconsulat.api.commands;
+package fr.leconsulat.api.commands.commands;
 
+import fr.leconsulat.api.commands.Arguments;
+import fr.leconsulat.api.commands.ConsulatCommand;
 import fr.leconsulat.api.inventory.InventoryManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.player.stream.PlayerOutputStream;
@@ -11,7 +13,8 @@ import org.bukkit.Bukkit;
 public class OfflineInventoryCommand extends ConsulatCommand {
     
     public OfflineInventoryCommand(){
-        super("offinv", "/offinv <joueur>", 0, Rank.DEVELOPPEUR);
+        super("offinv", "/offinv <joueur>", 0, Rank.ADMIN);
+        setPermission("consulat.api.command.offinv");
         suggest(false, Arguments.playerList("joueur"));
     }
     
