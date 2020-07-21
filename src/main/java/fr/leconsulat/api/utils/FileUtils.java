@@ -47,10 +47,8 @@ public class FileUtils {
         }
     }
     
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static File[] getFiles(File dir){
         if(!dir.exists()){
-            dir.mkdir();
             return new File[0];
         }
         File[] files = dir.listFiles();

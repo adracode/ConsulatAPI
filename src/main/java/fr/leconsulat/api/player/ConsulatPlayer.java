@@ -274,9 +274,10 @@ public class ConsulatPlayer implements Saveable {
     }
     
     public String getDisplayName(){
-        return hasCustomRank() ? getCustomRank() : rank.getRankColor() + "[" + rank.getRankName() + "]";
+        String customRank = getCustomRank();
+        return customRank == null ? rank.getRankColor() + "[" + rank.getRankName() + "]" : customRank;
     }
-    
+
     public static void addPermission(UUID uuid, String... permission){
         Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
             Set<String> permissions = getPermissions(uuid);

@@ -55,7 +55,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         saveDefaultConfig();
         FileConfiguration config = getConfig();
         this.debug = config.getBoolean("debug", false);
-        this.debug = config.getBoolean("dev", false);
+        this.development = config.getBoolean("dev", false);
         dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
         databaseManager = new DatabaseManager();
         databaseManager.connect();
