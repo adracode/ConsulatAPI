@@ -18,7 +18,7 @@ public class PlayerInputStream extends OfflinePlayerInputStream {
         super(data);
         this.player = player;
         UUID uuid = fetchUUID();
-        if(player.getUniqueId() != uuid){
+        if(!player.getUniqueId().equals(uuid)){
             close();
             throw new IllegalArgumentException("Bad player, given " + player.getUniqueId() + ", received " + uuid);
         }

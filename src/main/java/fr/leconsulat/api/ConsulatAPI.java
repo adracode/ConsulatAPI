@@ -2,6 +2,7 @@ package fr.leconsulat.api;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.*;
@@ -44,6 +45,8 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private File log;
     private boolean debug = false;
     private boolean development = false;
+    
+    private int lastTimeTick = 50;
     
     @Override
     public void onEnable(){
@@ -104,6 +107,15 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         SaveManager.getInstance().removeAll();
         databaseManager.disconnect();
         RedisManager.getInstance().getRedis().shutdown();
+    }
+    
+    @EventHandler
+    public void onEndTick(ServerTickEndEvent event){
+        lastTimeTick = (int)event.getTickDuration();
+    }
+    
+    public int getLastTimeTick(){
+        return lastTimeTick;
     }
     
     public boolean isDebug(){
