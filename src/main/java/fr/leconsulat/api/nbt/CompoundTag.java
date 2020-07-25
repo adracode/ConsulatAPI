@@ -69,9 +69,19 @@ public final class CompoundTag implements Tag {
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Deprecated
 	public <T extends Tag> List<T> getList(String name, Class<T> expected){
 		ListTag<T> listTag = ((ListTag<T>)value.get(name));
 		if(listTag.getElementType().getTagClass() != expected){
+			throw new IllegalArgumentException();
+		}
+		return listTag.getValue();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T extends Tag> List<T> getList(String name, NBTType expected){
+		ListTag<T> listTag = ((ListTag<T>)value.get(name));
+		if(listTag.getElementType() != expected){
 			throw new IllegalArgumentException();
 		}
 		return listTag.getValue();

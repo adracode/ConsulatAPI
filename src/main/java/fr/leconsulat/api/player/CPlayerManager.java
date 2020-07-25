@@ -172,7 +172,7 @@ public class CPlayerManager implements Listener {
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " fetched in " + (System.currentTimeMillis() - start) + " ms");
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions...");
                 start = System.currentTimeMillis();
-                player.initPermissions();
+                player.load();
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
                 consulatAPI.getServer().getScheduler().scheduleSyncDelayedTask(consulatAPI, () -> {
                     ConsulatAPI.getConsulatAPI().getServer().getPluginManager().callEvent(

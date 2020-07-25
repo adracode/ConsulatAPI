@@ -4,6 +4,7 @@ import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.nbt.CompoundTag;
 import fr.leconsulat.api.nbt.ListTag;
 import fr.leconsulat.api.nbt.NBTInputStream;
+import fr.leconsulat.api.nbt.NBTType;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.InventoryUtils;
@@ -59,7 +60,7 @@ public class InventoryManager {
             Inventory finalInventory = Bukkit.createInventory(null, 54);
             NBTInputStream inputStream = new NBTInputStream(playerFile);
             CompoundTag player = inputStream.read();
-            List<CompoundTag> inventory = player.getList("Inventory", CompoundTag.class);
+            List<CompoundTag> inventory = player.getList("Inventory", NBTType.COMPOUND);
             for(CompoundTag tag : inventory){
                 int slot = tag.getByte("Slot") & 255;
                 ItemStack itemstack = (ItemStack)nmsToBukkit.invoke(null, compoundToItem.invoke(null, NBTMinecraft.compoundToNMS(tag)));
