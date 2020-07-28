@@ -8,6 +8,7 @@ import fr.leconsulat.api.gui.event.GuiRemoveEvent;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Material;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,4 +102,19 @@ public interface IGui extends InventoryHolder {
     boolean isBackButton();
     
     void setBackButton(boolean backButton);
+    
+    boolean containsFakeItems();
+    
+    IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player);
+    
+    default void setDescriptionPlayer(int slot, ConsulatPlayer player, String... description){
+        GuiItem copy = getItem(slot);
+        if(copy == null){
+            return;
+        }
+        GuiItem fake = copy.clone();
+        fake.setDescription(description);
+        setFakeItem(slot, fake, player);
+    }
+    
 }

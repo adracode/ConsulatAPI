@@ -9,6 +9,7 @@ import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,5 +203,15 @@ public final class PageableGui implements Pageable {
     
     public void setBackButton(boolean backButton){
         gui.setBackButton(backButton);
+    }
+    
+    @Override
+    public boolean containsFakeItems(){
+        return gui.containsFakeItems();
+    }
+    
+    @Override
+    public IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player){
+        return gui.setFakeItem(slot, item, player);
     }
 }

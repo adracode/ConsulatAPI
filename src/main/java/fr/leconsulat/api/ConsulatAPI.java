@@ -11,6 +11,7 @@ import fr.leconsulat.api.database.SaveManager;
 import fr.leconsulat.api.events.EventManager;
 import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
+import fr.leconsulat.api.nms.api.NMS;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.redis.RedisManager;
@@ -38,6 +39,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     private Object dedicatedServer;
     
+    private NMS nms;
     private ProtocolManager protocolManager;
     private CPlayerManager playerManager;
     private DatabaseManager databaseManager;
@@ -59,6 +61,12 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         FileConfiguration config = getConfig();
         this.debug = config.getBoolean("debug", false);
         this.development = config.getBoolean("dev", false);
+        try {
+            String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+            nms = (NMS)Class.forName("fr.leconsulat.api.nms.version." + version + ".NMS_" + version).newInstance();
+        } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e){
+            e.printStackTrace();
+        }
         dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
         databaseManager = new DatabaseManager();
         databaseManager.connect();
@@ -156,5 +164,9 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     public ProtocolManager getProtocolManager(){
         return protocolManager;
+    }
+    
+    public static NMS getNMS(){
+        return getConsulatAPI().nms;
     }
 }

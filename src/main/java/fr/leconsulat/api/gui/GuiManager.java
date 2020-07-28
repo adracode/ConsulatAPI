@@ -3,6 +3,7 @@ package fr.leconsulat.api.gui;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketAdapter;
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
@@ -27,6 +28,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -53,6 +55,32 @@ public class GuiManager implements Listener {
                 }
                 event.setCancelled(true);
                 userInput.processInput(PacketUtils.getArrayFromUpdateSignPacket(event.getPacket().getHandle()));
+            }
+        });
+        ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Server.WINDOW_ITEMS) {
+            @Override
+            public void onPacketSending(PacketEvent event){
+                Inventory top = event.getPlayer().getOpenInventory().getTopInventory();
+                IGui gui = getGui(top);
+                if(gui == null){
+                    return;
+                }
+                if(!gui.containsFakeItems()){
+                    return;
+                }
+                PacketContainer container = event.getPacket();
+                List<ItemStack> items = container.getItemListModifier().read(0);
+                for(GuiItem item : gui.getItems()){
+                    if(item == null){
+                        continue;
+                    }
+                    ItemStack fake = item.getFakeItem(event.getPlayer().getUniqueId());
+                    if(fake == null){
+                        continue;
+                    }
+                    items.set(item.getSlot(), fake);
+                }
+                container.getItemListModifier().write(0, items);
             }
         });
         core.getServer().getPluginManager().registerEvents(this, core);
@@ -140,6 +168,11 @@ public class GuiManager implements Listener {
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
         GuiCloseEvent event = new GuiCloseEvent(player);
         gui.onClose(event);
+        for(GuiItem item : gui.getItems()){
+            if(item != null){
+                item.clearFakeItems(player.getUUID());
+            }
+        }
         Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
             if(event.isCancelled()){
                 gui.open(event.getPlayer());

@@ -11,16 +11,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class GuiItem extends ItemStack implements Cloneable {
     
     private String permission;
     private byte slot;
     private Object attachedObject;
+    private Map<UUID, ItemStack> fakeItems;
     
     private GuiItem(Material material){
         super(material);
@@ -193,6 +191,17 @@ public class GuiItem extends ItemStack implements Cloneable {
         this.attachedObject = attachedObject;
     }
     
+    public ItemStack getFakeItem(UUID uuid){
+        return fakeItems == null ? null : fakeItems.isEmpty() ? null : fakeItems.get(uuid);
+    }
+    
+    public void addFakeItem(UUID uuid, ItemStack item){
+        if(fakeItems == null){
+            fakeItems = new HashMap<>();
+        }
+        fakeItems.put(uuid, item);
+    }
+    
     @Override
     public GuiItem clone(){
         return new GuiItem(this);
@@ -206,5 +215,11 @@ public class GuiItem extends ItemStack implements Cloneable {
                 ", slot=" + slot +
                 ", attachedObject=" + attachedObject +
                 '}';
+    }
+    
+    public void clearFakeItems(UUID uuid){
+        if(fakeItems != null){
+            fakeItems.remove(uuid);
+        }
     }
 }

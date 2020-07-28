@@ -1,6 +1,7 @@
 package fr.leconsulat.api.gui.gui.module.api;
 
 import fr.leconsulat.api.gui.GuiItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,6 @@ public interface MainPage extends Pageable, Iterable<GuiItem> {
     
     List<Pageable> getPages();
     
-    Iterator<GuiItem> iterator();
+    @NotNull Iterator<GuiItem> iterator();
     
 }

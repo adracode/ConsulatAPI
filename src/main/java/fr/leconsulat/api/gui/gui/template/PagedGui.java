@@ -91,6 +91,7 @@ public class PagedGui extends BaseGui implements MainPage {
         return mainPageGui.getPages();
     }
     
+    @NotNull
     @Override
     public Iterator<GuiItem> iterator(){
         return mainPageGui.iterator();

@@ -1,6 +1,7 @@
 package fr.leconsulat.api.gui.gui;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
+import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
@@ -10,6 +11,7 @@ import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +47,16 @@ public class BaseGui implements IGui {
     @NotNull private Inventory inventory;
     //Les différents items contenant dans le gui
     private GuiItem[] items;
+    private boolean containsFakeItems = false;
     private int modifiers;
     
     public BaseGui(@NotNull String name, int line, GuiItem... items){
         this(null, name, line, items);
         setBackButton(true);
+    }
+    
+    public boolean containsFakeItems(){
+        return containsFakeItems;
     }
     
     /**
@@ -206,6 +213,20 @@ public class BaseGui implements IGui {
         return this;
     }
     
+    @Override
+    public IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player){
+        GuiItem it = getItem(slot);
+        if(it == null){
+            return this;
+        }
+        it.addFakeItem(player.getUUID(), item);
+        containsFakeItems = true;
+        if(this.equals(player.getCurrentlyOpen())){
+            ConsulatAPI.getNMS().getPacketNMS().setSlot(player.getPlayer(), slot, item);
+        }
+        return this;
+    }
+    
     /**
      * Déplacer un item
      * <p>
@@ -248,6 +269,9 @@ public class BaseGui implements IGui {
     @Override
     @Nullable
     public GuiItem getItem(int slot){
+        if(slot < 0){
+            return null;
+        }
         return items[slot];
     }
     

@@ -90,6 +90,7 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
         return mainPageGui.getPages();
     }
     
+    @NotNull
     @Override
     public Iterator<GuiItem> iterator(){
         return mainPageGui.iterator();
