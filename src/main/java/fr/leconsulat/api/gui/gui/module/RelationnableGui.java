@@ -97,11 +97,6 @@ public final class RelationnableGui implements Relationnable {
     }
     
     @Override
-    public int getLine(){
-        return gui.getLine();
-    }
-    
-    @Override
     public @NotNull BaseGui setDeco(@NotNull Material type, int... slots){
         return gui.setDeco(type, slots);
     }
@@ -168,6 +163,9 @@ public final class RelationnableGui implements Relationnable {
     @Override
     public void setName(String name){
         gui.setName(name);
+        for(IGui child : children.values()){
+            child.setTitle();
+        }
     }
     
     @Override

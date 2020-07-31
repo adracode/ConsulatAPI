@@ -105,11 +105,6 @@ public class BaseGui implements IGui {
         return this;
     }
     
-    @Override
-    public int getLine(){
-        return inventory.getSize() / 9;
-    }
-    
     /**
      * Place des items de "décoration" dans le Gui.
      * Un tel item n'aura pas de nom
@@ -282,9 +277,11 @@ public class BaseGui implements IGui {
      */
     @Override
     public void open(@NotNull ConsulatPlayer player){
-        onOpen(new GuiOpenEvent(player));
+        GuiOpenEvent event = new GuiOpenEvent(player);
+        onOpen(event);
         player.getPlayer().openInventory(inventory);
         player.setCurrentlyOpen(this);
+        onOpened(event);
     }
     
     /**
@@ -355,11 +352,6 @@ public class BaseGui implements IGui {
     
     @Override
     public void onCreate(){
-    
-    }
-    
-    @Override
-    public void onOpen(GuiOpenEvent event){
     
     }
     

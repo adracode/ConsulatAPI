@@ -20,7 +20,9 @@ public interface IGui extends InventoryHolder {
     
     IGui getBaseGui();
     
-    int getLine();
+    default int getLine(){
+        return getInventory().getSize() / 9;
+    }
     
     @NotNull BaseGui setDeco(@NotNull Material type, int... slots);
     
@@ -58,7 +60,11 @@ public interface IGui extends InventoryHolder {
     
     void onCreate();
     
-    void onOpen(GuiOpenEvent event);
+    default void onOpen(GuiOpenEvent event){
+    }
+    
+    default void onOpened(GuiOpenEvent event){
+    }
     
     void onClose(GuiCloseEvent event);
     

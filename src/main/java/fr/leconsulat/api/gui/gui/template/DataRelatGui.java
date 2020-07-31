@@ -72,6 +72,7 @@ public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnabl
     
     @Override
     public String buildInventoryTitle(){
+        //Peut être appelé avant l'initialisation de relationnableGui
         if(relationnableGui == null){
             return super.buildInventoryTitle();
         }
@@ -92,5 +93,10 @@ public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnabl
     
     @Override
     public void onRemove(GuiRemoveEvent event){
+    }
+    
+    @Override
+    public void setTitle(){
+        super.setTitle();
     }
 }

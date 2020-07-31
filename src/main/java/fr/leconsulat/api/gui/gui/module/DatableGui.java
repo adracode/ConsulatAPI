@@ -37,10 +37,6 @@ public final class DatableGui<T> implements Datable<T> {
         return gui;
     }
     
-    public int getLine(){
-        return gui.getLine();
-    }
-    
     @Override
     public @NotNull BaseGui setDeco(@NotNull Material type, int... slots){
         return gui.setDeco(type, slots);

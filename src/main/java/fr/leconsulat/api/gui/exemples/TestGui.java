@@ -22,8 +22,9 @@ public class TestGui extends DataRelatGui<ConsulatPlayer> {
     }
     
     @Override
-    public void onOpen(GuiOpenEvent event){
+    public void onOpened(GuiOpenEvent event){
         event.getPlayer().sendMessage("Je te vois en fait");
+        setDescriptionPlayer(28, event.getPlayer(), "Oui");
     }
     
     @Override

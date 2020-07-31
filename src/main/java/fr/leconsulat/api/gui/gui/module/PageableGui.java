@@ -79,10 +79,6 @@ public final class PageableGui implements Pageable {
         return gui;
     }
     
-    public int getLine(){
-        return gui.getLine();
-    }
-    
     @Override
     public @NotNull BaseGui setDeco(@NotNull Material type, int... slots){
         return gui.setDeco(type, slots);
