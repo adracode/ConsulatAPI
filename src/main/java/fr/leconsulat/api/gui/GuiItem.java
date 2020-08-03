@@ -15,6 +15,8 @@ import java.util.*;
 
 public class GuiItem extends ItemStack implements Cloneable {
     
+    public static final ItemStack AIR = new ItemStack(Material.AIR);
+    
     private String permission;
     private byte slot;
     private Object attachedObject;
@@ -192,7 +194,7 @@ public class GuiItem extends ItemStack implements Cloneable {
     }
     
     public ItemStack getFakeItem(UUID uuid){
-        return fakeItems == null ? null : fakeItems.isEmpty() ? null : fakeItems.get(uuid);
+        return containsFakeItems() ? fakeItems.get(uuid) : null;
     }
     
     public void addFakeItem(UUID uuid, ItemStack item){
@@ -200,6 +202,13 @@ public class GuiItem extends ItemStack implements Cloneable {
             fakeItems = new HashMap<>();
         }
         fakeItems.put(uuid, item);
+    }
+    
+    public void removeFakeItem(UUID uuid){
+        if(!containsFakeItems()){
+            return;
+        }
+        fakeItems.remove(uuid);
     }
     
     @Override
@@ -221,5 +230,9 @@ public class GuiItem extends ItemStack implements Cloneable {
         if(fakeItems != null){
             fakeItems.remove(uuid);
         }
+    }
+    
+    public boolean containsFakeItems(){
+        return fakeItems != null && !fakeItems.isEmpty();
     }
 }

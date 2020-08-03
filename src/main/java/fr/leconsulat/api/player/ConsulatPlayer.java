@@ -237,11 +237,15 @@ public class ConsulatPlayer implements Saveable {
                 "id=" + id +
                 ", uuid=" + uuid +
                 ", player=" + player +
+                ", permissions=" + permissions +
                 ", name='" + name + '\'' +
                 ", rank=" + rank +
                 ", initialized=" + initialized +
                 ", customRank=" + customRank +
                 ", registered='" + registered + '\'' +
+                ", currentlyOpen=" + currentlyOpen +
+                ", currentChannel=" + currentChannel +
+                ", vanished=" + vanished +
                 '}';
     }
     

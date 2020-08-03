@@ -58,7 +58,8 @@ public interface IGui extends InventoryHolder {
     
     @NotNull List<GuiItem> getItems();
     
-    void onCreate();
+    default void onCreate(){
+    }
     
     default void onOpen(GuiOpenEvent event){
     }
@@ -66,11 +67,14 @@ public interface IGui extends InventoryHolder {
     default void onOpened(GuiOpenEvent event){
     }
     
-    void onClose(GuiCloseEvent event);
+    default void onClose(GuiCloseEvent event){
+    }
     
-    void onClick(GuiClickEvent event);
+    default void onClick(GuiClickEvent event){
+    }
     
-    void onRemove(GuiRemoveEvent event);
+    default void onRemove(GuiRemoveEvent event){
+    }
     
     /**
      * Créer et renvoie un nouvel item

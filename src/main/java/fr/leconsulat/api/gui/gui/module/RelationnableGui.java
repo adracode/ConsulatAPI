@@ -15,9 +15,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class RelationnableGui implements Relationnable {
     
@@ -74,6 +72,11 @@ public final class RelationnableGui implements Relationnable {
             child.onCreate();
         }
         return child;
+    }
+    
+    @Override
+    public Collection<Relationnable> getChildren(){
+        return Collections.unmodifiableCollection(children.values());
     }
     
     @Override

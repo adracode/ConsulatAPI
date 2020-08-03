@@ -13,14 +13,22 @@ public interface Pageable extends IGui {
     
     void setMainPage(MainPage mainPage);
     
-    void onPageCreated(GuiCreateEvent event, Pageable pageGui);
+    default void onPageCreated(GuiCreateEvent event, Pageable pageGui){
+    }
     
-    void onPageClick(GuiClickEvent event, Pageable pageGui);
+    default void onPageClick(GuiClickEvent event, Pageable pageGui){
+    }
     
-    void onPageOpen(GuiOpenEvent event, Pageable pageGui);
+    default void onPageOpen(GuiOpenEvent event, Pageable pageGui){
+    }
     
-    void onPageClose(GuiCloseEvent event, Pageable pageGui);
+    default void onPageOpened(GuiOpenEvent event, Pageable pageGui){
+    }
     
-    void onPageRemoved(GuiRemoveEvent event, Pageable pageGui);
+    default void onPageClose(GuiCloseEvent event, Pageable pageGui){
+    }
+    
+    default void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
+    }
     
 }

@@ -112,9 +112,10 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
             player.onQuit();
         }
+        RedisManager.getInstance().getRedis().shutdown();
         SaveManager.getInstance().removeAll();
         databaseManager.disconnect();
-        RedisManager.getInstance().getRedis().shutdown();
+        
     }
     
     @EventHandler

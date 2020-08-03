@@ -143,6 +143,11 @@ public class PagedGui extends BaseGui implements MainPage {
     }
     
     @Override
+    public void onOpened(GuiOpenEvent event){
+        onPageOpened(event, this);
+    }
+    
+    @Override
     public final void onClose(GuiCloseEvent event){
         onPageClose(event, this);
     }

@@ -1,7 +1,10 @@
 package fr.leconsulat.api.gui.gui.template;
 
 import fr.leconsulat.api.gui.GuiItem;
-import fr.leconsulat.api.gui.event.*;
+import fr.leconsulat.api.gui.event.GuiClickEvent;
+import fr.leconsulat.api.gui.event.GuiCloseEvent;
+import fr.leconsulat.api.gui.event.GuiCreateEvent;
+import fr.leconsulat.api.gui.event.GuiOpenEvent;
 import fr.leconsulat.api.gui.gui.module.MainPageGui;
 import fr.leconsulat.api.gui.gui.module.api.MainPage;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
@@ -118,28 +121,13 @@ public class DataRelatPagedGui<T> extends DataRelatGui<T> implements MainPage {
     }
     
     @Override
-    public void onPageCreated(GuiCreateEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageClick(GuiClickEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageClose(GuiCloseEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
-    }
-    
-    @Override
     public final void onOpen(GuiOpenEvent event){
         onPageOpen(event, this);
+    }
+    
+    @Override
+    public void onOpened(GuiOpenEvent event){
+        onPageOpened(event, this);
     }
     
     @Override

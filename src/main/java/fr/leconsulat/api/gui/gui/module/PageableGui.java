@@ -65,6 +65,11 @@ public final class PageableGui implements Pageable {
     }
     
     @Override
+    public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
+        mainPage.onPageOpened(event, pageGui);
+    }
+    
+    @Override
     public void onPageClose(GuiCloseEvent event, Pageable pageGui){
         mainPage.onPageClose(event, pageGui);
     }

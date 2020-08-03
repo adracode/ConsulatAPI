@@ -224,7 +224,11 @@ public final class MainPageGui implements MainPage {
     @Override
     public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
         gui.onPageOpen(event, pageGui);
+    }
     
+    @Override
+    public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
+        gui.onPageOpened(event, pageGui);
     }
     
     @Override
@@ -370,6 +374,10 @@ public final class MainPageGui implements MainPage {
         onPageOpen(event, this);
     }
     
+    @Override
+    public void onOpened(GuiOpenEvent event){
+        onPageOpened(event, this);
+    }
     @Override
     public void onClose(GuiCloseEvent event){
         onPageClose(event, this);

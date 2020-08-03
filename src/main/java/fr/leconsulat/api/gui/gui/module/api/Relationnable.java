@@ -4,6 +4,8 @@ import fr.leconsulat.api.gui.gui.IGui;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public interface Relationnable extends IGui {
     
     boolean hasFather();
@@ -13,6 +15,8 @@ public interface Relationnable extends IGui {
     Relationnable setFather(@Nullable Relationnable father);
     
     void addChild(@Nullable Object key, @NotNull Relationnable gui);
+    
+    Collection<Relationnable> getChildren();
     
     Relationnable getChild(@Nullable Object key);
     

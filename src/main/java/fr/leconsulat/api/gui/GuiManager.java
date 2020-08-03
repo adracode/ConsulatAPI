@@ -57,6 +57,7 @@ public class GuiManager implements Listener {
                 userInput.processInput(PacketUtils.getArrayFromUpdateSignPacket(event.getPacket().getHandle()));
             }
         });
+        //TODO
         ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Server.WINDOW_ITEMS) {
             @Override
             public void onPacketSending(PacketEvent event){
@@ -90,10 +91,12 @@ public class GuiManager implements Listener {
         return instance;
     }
     
-    public void userInput(Player player, Consumer<String> consumer, String[] defaultText, int... result){
+    public void userInput(ConsulatPlayer player, Consumer<String> consumer, String[] defaultText, int... result){
         UserInput userInput = new UserInput(consumer, defaultText, result);
-        inputs.put(player.getUniqueId(), userInput);
-        userInput.open(player);
+        inputs.put(player.getUUID(), userInput);
+        player.setCurrentlyOpen(null);
+        player.getPlayer().closeInventory();
+        userInput.open(player.getPlayer());
     }
     
     @EventHandler(priority = EventPriority.LOW)
@@ -166,6 +169,9 @@ public class GuiManager implements Listener {
             return;
         }
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
+        if(!gui.equals(player.getCurrentlyOpen())){
+            return;
+        }
         GuiCloseEvent event = new GuiCloseEvent(player);
         gui.onClose(event);
         for(GuiItem item : gui.getItems()){

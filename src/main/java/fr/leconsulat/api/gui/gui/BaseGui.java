@@ -3,10 +3,7 @@ package fr.leconsulat.api.gui.gui;
 import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.GuiItem;
-import fr.leconsulat.api.gui.event.GuiClickEvent;
-import fr.leconsulat.api.gui.event.GuiCloseEvent;
 import fr.leconsulat.api.gui.event.GuiOpenEvent;
-import fr.leconsulat.api.gui.event.GuiRemoveEvent;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -214,6 +211,16 @@ public class BaseGui implements IGui {
         if(it == null){
             return this;
         }
+        if(item == null){
+            it.removeFakeItem(player.getUUID());
+            if(this.equals(player.getCurrentlyOpen())){
+                ConsulatAPI.getNMS().getPacketNMS().setSlot(player.getPlayer(), slot, it);
+            }
+            if(!it.containsFakeItems()){
+                containsFakeItems = false;
+            }
+            return this;
+        }
         it.addFakeItem(player.getUUID(), item);
         containsFakeItems = true;
         if(this.equals(player.getCurrentlyOpen())){
@@ -348,26 +355,6 @@ public class BaseGui implements IGui {
     @NotNull
     public List<GuiItem> getItems(){
         return Collections.unmodifiableList(Arrays.asList(this.items));
-    }
-    
-    @Override
-    public void onCreate(){
-    
-    }
-    
-    @Override
-    public void onClose(GuiCloseEvent event){
-    
-    }
-    
-    @Override
-    public void onClick(GuiClickEvent event){
-    
-    }
-    
-    @Override
-    public void onRemove(GuiRemoveEvent event){
-    
     }
     
     @Override

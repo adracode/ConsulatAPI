@@ -13,6 +13,8 @@ import fr.leconsulat.api.gui.gui.module.api.Relationnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnable {
     
     private DatableGui<T> dataGui;
@@ -48,6 +50,11 @@ public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnabl
     @Override
     public void addChild(Object key, @NotNull Relationnable gui){
         relationnableGui.addChild(key, gui);
+    }
+    
+    @Override
+    public Collection<Relationnable> getChildren(){
+        return relationnableGui.getChildren();
     }
     
     @Override
