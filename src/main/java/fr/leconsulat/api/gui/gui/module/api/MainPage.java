@@ -1,18 +1,26 @@
 package fr.leconsulat.api.gui.gui.module.api;
 
 import fr.leconsulat.api.gui.GuiItem;
+import fr.leconsulat.api.gui.gui.IGui;
+import it.unimi.dsi.fastutil.bytes.ByteIterator;
+import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
 
-public interface MainPage extends Pageable, Iterable<GuiItem> {
+public interface MainPage extends Pageable {
     
     Pageable getPage(int page);
     
     void setDynamicItemsRange(int from, int to);
     
     void setDynamicItems(int... slots);
+    
+    void setTemplateItems(int... slots);
+    
+    ByteIterator getDynamicItems();
     
     void addPage(Pageable gui);
     
@@ -37,5 +45,17 @@ public interface MainPage extends Pageable, Iterable<GuiItem> {
     List<Pageable> getPages();
     
     @NotNull Iterator<GuiItem> iterator();
+    
+    void setDisplayNamePages(int slot, @NotNull String name);
+    
+    void setDescriptionPages(int slot, @NotNull String... description);
+    
+    void setTypePages(int slot, @NotNull Material material);
+    
+    void setGlowingPages(int slot, boolean glow);
+    
+    @NotNull IGui setItemAll(@NotNull GuiItem item);
+    
+    @NotNull IGui setItemAll(int slot, @Nullable GuiItem item);
     
 }

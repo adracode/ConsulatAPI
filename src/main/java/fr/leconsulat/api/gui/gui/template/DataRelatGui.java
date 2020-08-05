@@ -6,6 +6,7 @@ import fr.leconsulat.api.gui.event.GuiCloseEvent;
 import fr.leconsulat.api.gui.event.GuiOpenEvent;
 import fr.leconsulat.api.gui.event.GuiRemoveEvent;
 import fr.leconsulat.api.gui.gui.BaseGui;
+import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.DatableGui;
 import fr.leconsulat.api.gui.gui.module.RelationnableGui;
 import fr.leconsulat.api.gui.gui.module.api.Datable;
@@ -103,7 +104,10 @@ public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnabl
     }
     
     @Override
-    public void setTitle(){
-        super.setTitle();
+    public void setName(String name){
+        super.setName(name);
+        for(IGui child : relationnableGui.getChildren()){
+            child.setTitle();
+        }
     }
 }

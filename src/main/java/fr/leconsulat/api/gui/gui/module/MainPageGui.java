@@ -8,6 +8,8 @@ import fr.leconsulat.api.gui.gui.module.api.MainPage;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import it.unimi.dsi.fastutil.bytes.ByteIterator;
+import it.unimi.dsi.fastutil.bytes.ByteIterators;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
@@ -24,17 +26,10 @@ public final class MainPageGui implements MainPage {
     private final List<Pageable> pages = new ArrayList<>();
     private byte currentIndex = -1;
     private byte[] dynamicItems;
-    private GuiItem[] template;
+    private byte[] templateItems;
     
     public MainPageGui(MainPage gui){
         this.gui = gui;
-        List<GuiItem> items = new ArrayList<>();
-        for(GuiItem item : gui.getItems()){
-            if(item != null){
-                items.add(new GuiItem(item));
-            }
-        }
-        this.template = items.toArray(new GuiItem[0]);
         pages.add(this);
     }
     
@@ -83,6 +78,30 @@ public final class MainPageGui implements MainPage {
     }
     
     @Override
+    public void setTemplateItems(int... slots){
+        Set<Byte> sorted = new TreeSet<>();
+        for(int slot : slots){
+            sorted.add((byte)slot);
+        }
+        if(slots[0] < 0){
+            throw new IllegalArgumentException("A slot cannot be below 0");
+        }
+        if(slots[slots.length - 1] > getLine() * 9 - 1){
+            throw new IllegalArgumentException("A slot cannot be above the maximum slot ");
+        }
+        this.templateItems = new byte[slots.length];
+        int i = -1;
+        for(byte slot : sorted){
+            this.templateItems[++i] = slot;
+        }
+    }
+    
+    @Override
+    public ByteIterator getDynamicItems(){
+        return ByteIterators.wrap(dynamicItems);
+    }
+    
+    @Override
     public void addPage(Pageable gui){
         currentIndex = -1;
         pages.add(gui);
@@ -92,7 +111,14 @@ public final class MainPageGui implements MainPage {
     
     @Override
     public Pageable createPage(){
-        return new PageableGui(this, getName(), getLine(), template);
+        if(templateItems == null || templateItems.length == 0){
+            return new PageableGui(gui, getName(), getLine());
+        }
+        List<GuiItem> items = new ArrayList<>();
+        for(byte templateSlot : templateItems){
+            items.add(getItem(templateSlot));
+        }
+        return new PageableGui(gui, getName(), getLine(), items.toArray(new GuiItem[0]));
     }
     
     @NotNull
@@ -193,6 +219,54 @@ public final class MainPageGui implements MainPage {
     }
     
     @Override
+    public void setDisplayNamePages(int slot, @NotNull String name){
+        for(Pageable page : pages){
+            page.setDisplayName(slot, name);
+        }
+        
+    }
+    
+    @Override
+    public void setDescriptionPages(int slot, @NotNull String... description){
+        for(Pageable page : pages){
+            page.setDescription(slot, description);
+        }
+        
+    }
+    
+    @Override
+    public void setTypePages(int slot, @NotNull Material material){
+        for(Pageable page : pages){
+            page.setType(slot, material);
+        }
+        
+    }
+    
+    @Override
+    public void setGlowingPages(int slot, boolean glow){
+        for(Pageable page : pages){
+            page.setGlowing(slot, glow);
+        }
+        
+    }
+    
+    @Override
+    public @NotNull IGui setItemAll(@NotNull GuiItem item){
+        for(Pageable page : pages){
+            page.setItem(item);
+        }
+        return this;
+    }
+    
+    @Override
+    public @NotNull IGui setItemAll(int slot, @Nullable GuiItem item){
+        for(Pageable page : pages){
+            page.setItem(slot, item);
+        }
+        return this;
+    }
+    
+    @Override
     public int getPage(){
         return 0;
     }
@@ -218,7 +292,7 @@ public final class MainPageGui implements MainPage {
     @Override
     public void onPageClick(GuiClickEvent event, Pageable pageGui){
         gui.onPageClick(event, pageGui);
-    
+        
     }
     
     @Override
@@ -234,7 +308,7 @@ public final class MainPageGui implements MainPage {
     @Override
     public void onPageClose(GuiCloseEvent event, Pageable pageGui){
         gui.onPageClose(event, pageGui);
-    
+        
     }
     
     @Override
@@ -378,6 +452,7 @@ public final class MainPageGui implements MainPage {
     public void onOpened(GuiOpenEvent event){
         onPageOpened(event, this);
     }
+    
     @Override
     public void onClose(GuiCloseEvent event){
         onPageClose(event, this);

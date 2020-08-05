@@ -155,14 +155,31 @@ public class GuiItem extends ItemStack implements Cloneable {
     
     public List<String> getDescription(){
         if(hasItemMeta()){
-            return getItemMeta().getLore();
+            List<String> lore = getItemMeta().getLore();
+            return lore == null ? new ArrayList<>() : lore;
         }
-        return Collections.emptyList();
+        return new ArrayList<>();
+    }
+    
+    public List<String> getDescription(String... add){
+        List<String> description = null;
+        if(hasItemMeta()){
+            description = getItemMeta().getLore();
+        }
+        if(description == null){
+            description = new ArrayList<>();
+        }
+        description.addAll(Arrays.asList(add));
+        return description;
     }
     
     public GuiItem setDescription(String... description){
+        return setDescription(Arrays.asList(description));
+    }
+    
+    public GuiItem setDescription(List<String> description){
         ItemMeta meta = getItemMeta();
-        meta.setLore(Arrays.asList(description));
+        meta.setLore(description);
         setItemMeta(meta);
         return this;
     }
@@ -234,5 +251,17 @@ public class GuiItem extends ItemStack implements Cloneable {
     
     public boolean containsFakeItems(){
         return fakeItems != null && !fakeItems.isEmpty();
+    }
+    
+    public static List<String> getDescription(ItemStack item, String... add){
+        List<String> description = null;
+        if(item.hasItemMeta()){
+            description = item.getItemMeta().getLore();
+        }
+        if(description == null){
+            description = new ArrayList<>();
+        }
+        description.addAll(Arrays.asList(add));
+        return description;
     }
 }

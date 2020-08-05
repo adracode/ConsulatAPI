@@ -34,6 +34,8 @@ public class ConsulatPlayer implements Saveable {
     private IGui currentlyOpen;
     private Channel currentChannel = null;
     private boolean vanished;
+    private int positionInQueue = 0;
+    private boolean disconnectHandled = false;
     
     public ConsulatPlayer(UUID uuid, String name){
         if(uuid == null || name == null){
@@ -269,7 +271,31 @@ public class ConsulatPlayer implements Saveable {
         String customRank = getCustomRank();
         return customRank == null ? rank.getRankColor() + "[" + rank.getRankName() + "]" : customRank;
     }
-
+    
+    public boolean isInQueue(){
+        return positionInQueue > 0;
+    }
+    
+    public int getPositionInQueue(){
+        return positionInQueue;
+    }
+    
+    public void setPositionInQueue(int positionInQueue){
+        this.positionInQueue = positionInQueue;
+    }
+    
+    public int decrementPosition(){
+        return --positionInQueue;
+    }
+    
+    public boolean isDisconnectHandled(){
+        return disconnectHandled;
+    }
+    
+    public void setDisconnectHandled(boolean disconnectHandled){
+        this.disconnectHandled = disconnectHandled;
+    }
+    
     public static void addPermission(UUID uuid, String... permission){
         Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
             try {

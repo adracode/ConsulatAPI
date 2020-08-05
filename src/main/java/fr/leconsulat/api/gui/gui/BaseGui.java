@@ -36,7 +36,7 @@ public class BaseGui implements IGui {
         }
     }
     
-    private static final GuiItem back = new GuiItem("§cRetour", (byte)-1, Material.RED_STAINED_GLASS_PANE);
+    public static final GuiItem BACK = new GuiItem("§cRetour", (byte)-1, Material.RED_STAINED_GLASS_PANE);
     
     //Titre affiché dans l'inventaire
     @NotNull private String name;
@@ -216,8 +216,12 @@ public class BaseGui implements IGui {
             if(this.equals(player.getCurrentlyOpen())){
                 ConsulatAPI.getNMS().getPacketNMS().setSlot(player.getPlayer(), slot, it);
             }
-            if(!it.containsFakeItems()){
-                containsFakeItems = false;
+            containsFakeItems = false;
+            for(GuiItem guiItem : items){
+                if(guiItem != null && guiItem.containsFakeItems()){
+                    containsFakeItems = true;
+                    break;
+                }
             }
             return this;
         }
@@ -287,7 +291,7 @@ public class BaseGui implements IGui {
         GuiOpenEvent event = new GuiOpenEvent(player);
         onOpen(event);
         player.getPlayer().openInventory(inventory);
-        player.setCurrentlyOpen(this);
+        player.setCurrentlyOpen((IGui)inventory.getHolder());
         onOpened(event);
     }
     

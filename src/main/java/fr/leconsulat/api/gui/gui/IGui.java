@@ -118,6 +118,10 @@ public interface IGui extends InventoryHolder {
     IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player);
     
     default void setDescriptionPlayer(int slot, ConsulatPlayer player, String... description){
+        setDescriptionPlayer(slot, player, Arrays.asList(description));
+    }
+    
+    default void setDescriptionPlayer(int slot, ConsulatPlayer player, List<String> description){
         GuiItem copy = getItem(slot);
         if(copy == null){
             return;
@@ -126,5 +130,4 @@ public interface IGui extends InventoryHolder {
         fake.setDescription(description);
         setFakeItem(slot, fake, player);
     }
-    
 }

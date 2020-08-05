@@ -30,8 +30,6 @@ public abstract class Channel {
         return name;
     }
     
-    public abstract String format(ConsulatPlayer player, String message);
-    
     public boolean isMember(ConsulatPlayer player){
         return members.contains(player);
     }
@@ -41,6 +39,9 @@ public abstract class Channel {
     }
     
     public void removePlayer(ConsulatPlayer player){
+        if(this.equals(player.getCurrentChannel())){
+            player.setCurrentChannel(null);
+        }
         members.remove(player);
     }
     
@@ -48,16 +49,24 @@ public abstract class Channel {
         return members.isEmpty();
     }
     
-    public void sendMessage(ConsulatPlayer player, String message){
-        String format = format(player, message);
-        for(ConsulatPlayer p : members){
-            p.sendMessage(format);
+    public void sendMessage(String message, UUID... exclude){
+        if(exclude.length == 0){
+            for(ConsulatPlayer p : members){
+                p.sendMessage(message);
+            }
+            return;
         }
-    }
-    
-    public void sendMessage(String message){
         for(ConsulatPlayer p : members){
-            p.sendMessage(message);
+            boolean send = true;
+            for(UUID uuid : exclude){
+                if(p.getUUID().equals(uuid)){
+                    send = false;
+                    break;
+                }
+            }
+            if(send){
+                p.sendMessage(message);
+            }
         }
     }
     

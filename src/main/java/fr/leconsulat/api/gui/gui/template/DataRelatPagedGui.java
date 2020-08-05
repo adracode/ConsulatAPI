@@ -5,10 +5,14 @@ import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
 import fr.leconsulat.api.gui.event.GuiCreateEvent;
 import fr.leconsulat.api.gui.event.GuiOpenEvent;
+import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.MainPageGui;
 import fr.leconsulat.api.gui.gui.module.api.MainPage;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
+import it.unimi.dsi.fastutil.bytes.ByteIterator;
+import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +40,16 @@ public class DataRelatPagedGui<T> extends DataRelatGui<T> implements MainPage {
     @Override
     public void setDynamicItems(int... slots){
         mainPageGui.setDynamicItems(slots);
+    }
+    
+    @Override
+    public void setTemplateItems(int... slots){
+        mainPageGui.setTemplateItems(slots);
+    }
+    
+    @Override
+    public ByteIterator getDynamicItems(){
+        return mainPageGui.getDynamicItems();
     }
     
     @Override
@@ -138,5 +152,35 @@ public class DataRelatPagedGui<T> extends DataRelatGui<T> implements MainPage {
     @Override
     public final void onClick(GuiClickEvent event){
         onPageClick(event, this);
+    }
+    
+    @Override
+    public void setDisplayNamePages(int slot, @NotNull String name){
+        mainPageGui.setDisplayName(slot, name);
+    }
+    
+    @Override
+    public void setDescriptionPages(int slot, @NotNull String... description){
+        mainPageGui.setDescriptionPages(slot, description);
+    }
+    
+    @Override
+    public void setTypePages(int slot, @NotNull Material material){
+        mainPageGui.setTypePages(slot, material);
+    }
+    
+    @Override
+    public void setGlowingPages(int slot, boolean glow){
+        mainPageGui.setGlowingPages(slot, glow);
+    }
+    
+    @Override
+    public @NotNull IGui setItemAll(@NotNull GuiItem item){
+        return mainPageGui.setItemAll(item);
+    }
+    
+    @Override
+    public @NotNull IGui setItemAll(int slot, @Nullable GuiItem item){
+        return mainPageGui.setItemAll(slot, item);
     }
 }

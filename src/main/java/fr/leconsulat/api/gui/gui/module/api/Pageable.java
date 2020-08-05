@@ -1,9 +1,10 @@
 package fr.leconsulat.api.gui.gui.module.api;
 
+import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.*;
 import fr.leconsulat.api.gui.gui.IGui;
 
-public interface Pageable extends IGui {
+public interface Pageable extends IGui, Iterable<GuiItem> {
     
     int getPage();
     

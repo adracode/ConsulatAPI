@@ -166,9 +166,6 @@ public final class RelationnableGui implements Relationnable {
     @Override
     public void setName(String name){
         gui.setName(name);
-        for(IGui child : children.values()){
-            child.setTitle();
-        }
     }
     
     @Override

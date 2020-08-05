@@ -8,6 +8,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
+import fr.leconsulat.api.gui.gui.BaseGui;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.gui.gui.module.api.Relationnable;
@@ -27,10 +28,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class GuiManager implements Listener {
@@ -57,7 +55,6 @@ public class GuiManager implements Listener {
                 userInput.processInput(PacketUtils.getArrayFromUpdateSignPacket(event.getPacket().getHandle()));
             }
         });
-        //TODO
         ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Server.WINDOW_ITEMS) {
             @Override
             public void onPacketSending(PacketEvent event){
@@ -141,12 +138,17 @@ public class GuiManager implements Listener {
             return;
         }
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getWhoClicked().getUniqueId());
-        if(clickedItem.getSlot() == (clickedInventory.getLine() - 1) * 9 &&
-                clickedItem.getDisplayName().equals("§cRetour") &&
-                clickedInventory instanceof Relationnable &&
-                ((Relationnable)clickedInventory).hasFather()){
-            ((Relationnable)clickedInventory).getFather().open(player);
-            return;
+        if(clickedItem.getSlot() == (clickedInventory.getLine() - 1) * 9 && clickedItem.equals(BaseGui.BACK)){
+            if(clickedInventory instanceof Pageable){
+                clickedInventory = ((Pageable)clickedInventory).getMainPage().getBaseGui();
+            }
+            if(clickedInventory instanceof Relationnable){
+                Relationnable relationnable = (Relationnable)clickedInventory;
+                if(relationnable.hasFather()){
+                    relationnable.getFather().open(player);
+                    return;
+                }
+            }
         }
         clickedInventory.onClick(new GuiClickEvent(e.getSlot(), e.getClick(), player));
     }
@@ -170,6 +172,7 @@ public class GuiManager implements Listener {
         }
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
         if(!gui.equals(player.getCurrentlyOpen())){
+            System.out.println("Nop");
             return;
         }
         GuiCloseEvent event = new GuiCloseEvent(player);
@@ -187,13 +190,17 @@ public class GuiManager implements Listener {
             if(player.getPlayer().getOpenInventory().getTitle().equals("Crafting")){
                 player.setCurrentlyOpen(null);
                 if(event.openFatherGui()){
+                    System.out.println(Arrays.toString(gui.getClass().getClasses()) + " " + Arrays.toString(gui.getClass().getInterfaces()));
                     if(gui instanceof Relationnable && ((Relationnable)gui).hasFather()){
                         ((Relationnable)gui).getFather().open(player);
                     } else if(gui instanceof Pageable){
+                        System.out.println("Pageable");
                         Pageable page = ((Pageable)gui);
                         if(page.getMainPage().getBaseGui() instanceof Relationnable){
+                            System.out.println("MainPage");
                             Relationnable relationnableGui = (Relationnable)page.getMainPage().getBaseGui();
                             if(relationnableGui.hasFather()){
+                                System.out.println("Father");
                                 relationnableGui.getFather().open(player);
                             }
                         }

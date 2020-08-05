@@ -7,12 +7,14 @@ import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.MainPage;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import it.unimi.dsi.fastutil.bytes.ByteIterator;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
 import java.util.List;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
@@ -25,8 +27,15 @@ public final class PageableGui implements Pageable {
     
     PageableGui(MainPage mainPage, String name, int line, GuiItem... items){
         this.mainPage = mainPage;
-        this.gui = new BaseGui(this, name, line, items);
-        this.gui.setName(buildInventoryTitle());
+        this.gui = new BaseGui(this, name, line, items){
+            @Override
+            public String buildInventoryTitle(){
+                return mainPage.buildInventoryTitle();
+            }
+        };
+        if(isBackButton()){
+            setItem((getLine() - 1) * 9, IGui.getItem("§cRetour", -1, Material.RED_STAINED_GLASS_PANE));
+        }
     }
     
     @Override
@@ -77,6 +86,37 @@ public final class PageableGui implements Pageable {
     @Override
     public void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
         mainPage.onPageRemoved(event, pageGui);
+    }
+    
+    @NotNull
+    @Override
+    public Iterator<GuiItem> iterator(){
+        return new GuiIterator();
+    }
+    
+    private class GuiIterator implements Iterator<GuiItem> {
+        
+        private byte slot = -1;
+        private ByteIterator iterator;
+    
+        public GuiIterator(){
+            this.iterator = mainPage.getDynamicItems();
+        }
+    
+        @Override
+        public boolean hasNext(){
+            return iterator.hasNext();
+        }
+        
+        @Override
+        public GuiItem next(){
+            return getItem(slot = iterator.nextByte());
+        }
+        
+        @Override
+        public void remove(){
+            removeItem(slot);
+        }
     }
     
     @Override
@@ -141,7 +181,7 @@ public final class PageableGui implements Pageable {
     
     @Override
     public String buildInventoryTitle(){
-        return mainPage.buildInventoryTitle();
+        return gui.buildInventoryTitle();
     }
     
     @Override
@@ -183,27 +223,27 @@ public final class PageableGui implements Pageable {
     }
     
     public boolean isModifiable(){
-        return gui.isModifiable();
+        return mainPage.isModifiable();
     }
     
     public void setModifiable(boolean modifiable){
-        gui.setModifiable(modifiable);
+        mainPage.setModifiable(modifiable);
     }
     
     public boolean isDestroyOnClose(){
-        return gui.isDestroyOnClose();
+        return mainPage.isDestroyOnClose();
     }
     
     public void setDestroyOnClose(boolean destroyOnClose){
-        gui.setDestroyOnClose(destroyOnClose);
+        mainPage.setDestroyOnClose(destroyOnClose);
     }
     
     public boolean isBackButton(){
-        return gui.isBackButton();
+        return mainPage.isBackButton();
     }
     
     public void setBackButton(boolean backButton){
-        gui.setBackButton(backButton);
+        mainPage.setBackButton(backButton);
     }
     
     @Override
