@@ -159,6 +159,8 @@ public class CPlayerManager implements Listener {
             new PlayerInputStream(player.getPlayer(), loadData).readLevel().readInventory().close();
         }
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " has joined");
+        player.getPlayer().sendTitle("§4Serveur", "§4en développement", 20, 100, 20);
+        player.getPlayer().sendMessage("§cTu es sur un serveur en développement ! Les fonctionnalités présentes peuvent changer à tout moment, et des bugs peuvent être présents.");
         ConsulatAPI consulatAPI = ConsulatAPI.getConsulatAPI();
         String name = event.getPlayer().getName().toLowerCase();
         if(!offlinePlayers.containsKey(name)){
