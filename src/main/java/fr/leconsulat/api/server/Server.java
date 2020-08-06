@@ -2,11 +2,11 @@ package fr.leconsulat.api.server;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.utils.StringUtils;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +28,8 @@ public abstract class Server {
         RedisManager.getInstance().register("Slot" + StringUtils.capitalize(name), int.class,
                 (channel, slot) -> setSlot(slot));
     }
+    
+    public abstract Plugin getPlugin();
     
     public @NotNull String getName(){
         return name;
@@ -100,7 +102,7 @@ public abstract class Server {
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("Connect");
         out.writeUTF(name);
-        player.getPlayer().sendPluginMessage(ConsulatAPI.getConsulatAPI(), "BungeeCord", out.toByteArray());
+        player.getPlayer().sendPluginMessage(getPlugin(), "BungeeCord", out.toByteArray());
     }
     
     public int getPlayersInQueue(){
