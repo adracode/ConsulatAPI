@@ -3,15 +3,19 @@ package fr.leconsulat.api.server;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedList;
 
 public class PlayerQueue implements Iterable<ConsulatPlayer> {
     
-    private final List<ConsulatPlayer> queue = new ArrayList<>();
+    private final Deque<ConsulatPlayer> queue = new LinkedList<>();
     
     public boolean addPlayer(ConsulatPlayer player){
+        if(player == null){
+            return false;
+        }
+        queue.removeIf(playerQueue -> playerQueue == null || playerQueue.equals(player));
         return queue.add(player);
     }
     
@@ -19,15 +23,13 @@ public class PlayerQueue implements Iterable<ConsulatPlayer> {
         if(queue.isEmpty()){
             return null;
         }
-        return queue.remove(0);
-    }
-    
-    public void removePlayer(ConsulatPlayer player){
-        queue.remove(player);
+        ConsulatPlayer player = queue.poll();
+        player.setPositionInQueue(0);
+        return player;
     }
     
     public ConsulatPlayer last(){
-        return queue.isEmpty() ? null : queue.get(queue.size() - 1);
+        return queue.isEmpty() ? null : queue.peekLast();
     }
     
     public boolean isEmpty(){
@@ -45,16 +47,16 @@ public class PlayerQueue implements Iterable<ConsulatPlayer> {
     
     private class PlayerIterator implements Iterator<ConsulatPlayer> {
     
-        private int index = 0;
+        private Iterator<ConsulatPlayer> iterator = queue.iterator();
         
         @Override
         public boolean hasNext(){
-            return index < size();
+            return iterator.hasNext();
         }
     
         @Override
         public ConsulatPlayer next(){
-            return queue.get(index++);
+            return iterator.next();
         }
     }
     

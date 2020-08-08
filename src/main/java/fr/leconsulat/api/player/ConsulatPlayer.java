@@ -1,25 +1,30 @@
 package fr.leconsulat.api.player;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.channel.Channel;
 import fr.leconsulat.api.database.Saveable;
 import fr.leconsulat.api.events.PlayerChangeRankEvent;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.ranks.Rank;
+import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.utils.FileUtils;
+import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.redisson.api.RBucket;
+import org.redisson.api.RFuture;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
-@SuppressWarnings({"unused", "BooleanMethodIsAlwaysInverted"})
+@SuppressWarnings({"unused"})
 public class ConsulatPlayer implements Saveable {
     
     private int id;
@@ -36,6 +41,7 @@ public class ConsulatPlayer implements Saveable {
     private boolean vanished;
     private int positionInQueue = 0;
     private boolean disconnectHandled = false;
+    private boolean inventoryBlocked = true;
     
     public ConsulatPlayer(UUID uuid, String name){
         if(uuid == null || name == null){
@@ -47,6 +53,7 @@ public class ConsulatPlayer implements Saveable {
         if(player == null){
             throw new NullPointerException("Player cannot be null");
         }
+        player.setCanPickupItems(false);
     }
     
     public void initialize(int id, Rank rank, boolean hasCustomRank, String customRank, String registered){
@@ -398,5 +405,42 @@ public class ConsulatPlayer implements Saveable {
         }
         player.put("Permissions", perms);
         return player;
+    }
+    
+    public void sendActionBar(String message){
+        getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+    }
+    
+    public boolean isInventoryBlocked(){
+        return inventoryBlocked;
+    }
+    
+    public void setInventoryBlocked(boolean inventoryBlocked){
+        this.inventoryBlocked = inventoryBlocked;
+        if(!inventoryBlocked){
+            player.setCanPickupItems(true);
+        }
+    }
+    
+    public RFuture<String> getServer(){
+        RBucket<String> server = RedisManager.getInstance().getRedis().getBucket(CPlayerManager.getRedisKey(uuid));
+        return server.getAsync();
+    }
+    
+    private void setServer(ConsulatServer consulatServer){
+        RBucket<String> server = RedisManager.getInstance().getRedis().getBucket(CPlayerManager.getRedisKey(uuid));
+        if(consulatServer == null){
+            server.deleteAsync();
+        } else {
+            server.setAsync(consulatServer.name());
+        }
+    }
+    
+    public void setServer(){
+        setServer(ConsulatAPI.getConsulatAPI().getConsulatServer());
+    }
+    
+    public void disconnected(){
+       setServer(null);
     }
 }

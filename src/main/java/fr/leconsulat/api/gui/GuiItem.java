@@ -221,11 +221,11 @@ public class GuiItem extends ItemStack implements Cloneable {
         fakeItems.put(uuid, item);
     }
     
-    public void removeFakeItem(UUID uuid){
+    public boolean removeFakeItem(UUID uuid){
         if(!containsFakeItems()){
-            return;
+            return false;
         }
-        fakeItems.remove(uuid);
+        return fakeItems.remove(uuid) != null;
     }
     
     @Override

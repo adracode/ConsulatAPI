@@ -9,7 +9,9 @@ import fr.leconsulat.api.ranks.Rank;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_14_R1.command.ServerCommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -32,17 +34,22 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
     private String usage;
     private int argsMin;
     private Rank rankNeeded;
-    private String permission = "";
+    private String permission;
     
-    public ConsulatCommand(String name, String usage, int argsMin, Rank rankNeeded){
-        this(name, Collections.emptyList(), usage, argsMin, rankNeeded);
+    public ConsulatCommand(String server, String name, String usage, int argsMin, Rank rankNeeded){
+        this(server, name, Collections.emptyList(), usage, argsMin, rankNeeded);
     }
     
-    public ConsulatCommand(String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded){
+    public ConsulatCommand(String server, String name, String alias, String usage, int argsMin, Rank rankNeeded){
+        this(server, name, Collections.singletonList(alias), usage, argsMin, rankNeeded);
+    }
+    
+    public ConsulatCommand(String server, String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded){
         super(name, "", usage, aliases);
         this.usage = usage;
         this.argsMin = argsMin;
         this.rankNeeded = rankNeeded;
+        this.permission = server + ".command." + name;
         CommandManager commandManager = CommandManager.getInstance();
         if(commandManager == null){
             throw new IllegalStateException("Command Manager is not instantiated");
@@ -59,6 +66,16 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
     @Override
     public void setPermission(String permission){
         this.permission = permission;
+    }
+    
+    @SafeVarargs
+    protected final void suggest(ArgumentBuilder<Object, ?>... suggestions){
+        suggest(true, suggestions);
+    }
+    
+    @SafeVarargs
+    protected final void suggest(Predicate<Object> predicate, ArgumentBuilder<Object, ?>... suggestions){
+        suggest(true, predicate, suggestions);
     }
     
     @SafeVarargs
@@ -120,22 +137,23 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
     
     //Native execution
     @Override
-    public final boolean execute(CommandSender sender, String alias, String[] args){
-        if(!(sender instanceof Player)){
-            sender.sendMessage("§cIl faut être en jeu pour éxecuter cette commande.");
-            return false;
-        }
-        Player bukkitPlayer = (Player)sender;
-        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(bukkitPlayer.getUniqueId());
-        if(!player.hasPermission(getPermission()) && !player.hasPower(rankNeeded)){
-            bukkitPlayer.sendMessage("§cTu n'as pas le power requis.");
+    public final boolean execute(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args){
+        if(sender instanceof ServerCommandSender && this instanceof ConsoleUsable){
+            if(args.length < argsMin){
+                sender.sendMessage(ChatColor.RED + usage);
+                return false;
+            }
+            ((ConsoleUsable)this).onConsoleUse(sender, args);
+            return true;
+        } else if(!(sender instanceof Player)){
+            sender.sendMessage("§cCette commande ne peut pas être exécutée ici.");
             return false;
         }
         if(args.length < argsMin){
             sender.sendMessage(ChatColor.RED + usage);
             return false;
         }
-        CommandManager.getInstance().execute(sender, alias, args);
+        onCommand(CPlayerManager.getInstance().getConsulatPlayer(((Player)sender).getUniqueId()), args);
         return true;
     }
     

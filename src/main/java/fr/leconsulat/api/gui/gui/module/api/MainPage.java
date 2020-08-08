@@ -58,4 +58,6 @@ public interface MainPage extends Pageable {
     
     @NotNull IGui setItemAll(int slot, @Nullable GuiItem item);
     
+    void setTitle();
+    
 }

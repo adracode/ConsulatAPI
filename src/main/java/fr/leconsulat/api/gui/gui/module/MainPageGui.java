@@ -2,33 +2,29 @@ package fr.leconsulat.api.gui.gui.module;
 
 import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.*;
-import fr.leconsulat.api.gui.gui.BaseGui;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.MainPage;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.player.CPlayerManager;
-import fr.leconsulat.api.player.ConsulatPlayer;
 import it.unimi.dsi.fastutil.bytes.ByteIterator;
 import it.unimi.dsi.fastutil.bytes.ByteIterators;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class MainPageGui implements MainPage {
+public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage {
     
-    private final MainPage gui;
+    private final Gui gui;
     
     private final List<Pageable> pages = new ArrayList<>();
     private byte currentIndex = -1;
     private byte[] dynamicItems;
     private byte[] templateItems;
     
-    public MainPageGui(MainPage gui){
+    public MainPageGui(Gui gui){
         this.gui = gui;
         pages.add(this);
     }
@@ -46,7 +42,7 @@ public final class MainPageGui implements MainPage {
         if(from < 0){
             throw new IllegalArgumentException("A slot cannot be below 0");
         }
-        if(to > getLine() * 9 - 1){
+        if(to > gui.getLine() * 9 - 1){
             throw new IllegalArgumentException("A slot cannot be above the maximum slot ");
         }
         if(from > to){
@@ -67,7 +63,7 @@ public final class MainPageGui implements MainPage {
         if(slots[0] < 0){
             throw new IllegalArgumentException("A slot cannot be below 0");
         }
-        if(slots[slots.length - 1] > getLine() * 9 - 1){
+        if(slots[slots.length - 1] > gui.getLine() * 9 - 1){
             throw new IllegalArgumentException("A slot cannot be above the maximum slot ");
         }
         this.dynamicItems = new byte[slots.length];
@@ -86,7 +82,7 @@ public final class MainPageGui implements MainPage {
         if(slots[0] < 0){
             throw new IllegalArgumentException("A slot cannot be below 0");
         }
-        if(slots[slots.length - 1] > getLine() * 9 - 1){
+        if(slots[slots.length - 1] > gui.getLine() * 9 - 1){
             throw new IllegalArgumentException("A slot cannot be above the maximum slot ");
         }
         this.templateItems = new byte[slots.length];
@@ -106,43 +102,42 @@ public final class MainPageGui implements MainPage {
         currentIndex = -1;
         pages.add(gui);
         gui.setPage(getCurrentPage());
-        gui.setMainPage(this);
     }
     
     @Override
     public Pageable createPage(){
         if(templateItems == null || templateItems.length == 0){
-            return new PageableGui(gui, getName(), getLine());
+            return new PageableGui(gui, gui.getName(), gui.getLine());
         }
         List<GuiItem> items = new ArrayList<>();
         for(byte templateSlot : templateItems){
-            items.add(getItem(templateSlot));
+            items.add(gui.getItem(templateSlot));
         }
-        return new PageableGui(gui, getName(), getLine(), items.toArray(new GuiItem[0]));
+        return new PageableGui(gui, gui.getName(), gui.getLine(), items.toArray(new GuiItem[0]));
     }
     
     @NotNull
     public Pageable newPage(){
         Pageable pageGui = createPage();
         addPage(pageGui);
-        gui.onPageCreated(new GuiCreateEvent(gui), pageGui);
+        onPageCreated(new GuiCreateEvent(gui), pageGui);
         return pageGui;
     }
     
     @Override
     public void removePage(int page){
-        IGui removed = pages.remove(page);
+        Pageable removed = pages.remove(page);
         if(removed == null){
             return;
         }
         if(page != 0){
             Pageable previous = getPage(page - 1);
-            for(HumanEntity human : new ArrayList<>(removed.getInventory().getViewers())){
-                previous.open(CPlayerManager.getInstance().getConsulatPlayer(human.getUniqueId()));
+            for(HumanEntity human : new ArrayList<>(removed.getGui().getInventory().getViewers())){
+                previous.getGui().open(CPlayerManager.getInstance().getConsulatPlayer(human.getUniqueId()));
             }
         }
         GuiRemoveEvent event = new GuiRemoveEvent();
-        onRemove(event);
+        gui.onRemove(event);
         currentIndex = (byte)(dynamicItems.length - 1);
     }
     
@@ -176,18 +171,18 @@ public final class MainPageGui implements MainPage {
         } else {
             gui = getPage(getCurrentPage());
         }
-        gui.setItem(getCurrentSlot(), item);
+        gui.getGui().setItem(getCurrentSlot(), item);
     }
     
     @Override
     public void removeItem(int page, int slot){
         Pageable gui = getPage(page);
-        gui.removeItem(slot);
+        gui.getGui().removeItem(slot);
         int currentPage = getCurrentPage();
         byte currentSlot = getCurrentSlot();
         if(slot != currentSlot || currentPage != page){
             Pageable lastGui = getPage(currentPage);
-            lastGui.moveItem(currentSlot, gui, slot);
+            lastGui.getGui().moveItem(currentSlot, gui.getGui(), slot);
         }
         if(currentIndex <= 0){
             if(currentPage > 0){
@@ -221,15 +216,14 @@ public final class MainPageGui implements MainPage {
     @Override
     public void setDisplayNamePages(int slot, @NotNull String name){
         for(Pageable page : pages){
-            page.setDisplayName(slot, name);
+            page.getGui().setDisplayName(slot, name);
         }
-        
     }
     
     @Override
     public void setDescriptionPages(int slot, @NotNull String... description){
         for(Pageable page : pages){
-            page.setDescription(slot, description);
+            page.getGui().setDescription(slot, description);
         }
         
     }
@@ -237,7 +231,7 @@ public final class MainPageGui implements MainPage {
     @Override
     public void setTypePages(int slot, @NotNull Material material){
         for(Pageable page : pages){
-            page.setType(slot, material);
+            page.getGui().setType(slot, material);
         }
         
     }
@@ -245,7 +239,7 @@ public final class MainPageGui implements MainPage {
     @Override
     public void setGlowingPages(int slot, boolean glow){
         for(Pageable page : pages){
-            page.setGlowing(slot, glow);
+            page.getGui().setGlowing(slot, glow);
         }
         
     }
@@ -253,17 +247,24 @@ public final class MainPageGui implements MainPage {
     @Override
     public @NotNull IGui setItemAll(@NotNull GuiItem item){
         for(Pageable page : pages){
-            page.setItem(item);
+            page.getGui().setItem(item);
         }
-        return this;
+        return gui;
     }
     
     @Override
     public @NotNull IGui setItemAll(int slot, @Nullable GuiItem item){
         for(Pageable page : pages){
-            page.setItem(slot, item);
+            page.getGui().setItem(slot, item);
         }
-        return this;
+        return gui;
+    }
+    
+    @Override
+    public void setTitle(){
+        for(int i = 1; i < pages.size(); i++){
+            pages.get(i).getGui().setTitle();
+        }
     }
     
     @Override
@@ -281,7 +282,8 @@ public final class MainPageGui implements MainPage {
     }
     
     @Override
-    public void setMainPage(MainPage mainPage){
+    public IGui getGui(){
+        return gui;
     }
     
     @Override
@@ -292,7 +294,6 @@ public final class MainPageGui implements MainPage {
     @Override
     public void onPageClick(GuiClickEvent event, Pageable pageGui){
         gui.onPageClick(event, pageGui);
-        
     }
     
     @Override
@@ -332,179 +333,12 @@ public final class MainPageGui implements MainPage {
         
         @Override
         public GuiItem next(){
-            return getPage(page).getItem(dynamicItems[indexSlot]);
+            return getPage(page).getGui().getItem(dynamicItems[indexSlot]);
         }
         
         @Override
         public void remove(){
             removeItem(page, dynamicItems[indexSlot]);
         }
-    }
-    
-    @Override
-    public IGui getBaseGui(){
-        return gui;
-    }
-    
-    @Override
-    public @NotNull BaseGui setDeco(@NotNull Material type, int... slots){
-        return gui.setDeco(type, slots);
-    }
-    
-    @Override
-    public void setDisplayName(int slot, @NotNull String name){
-        gui.setDisplayName(slot, name);
-    }
-    
-    @Override
-    public void setDescription(int slot, @NotNull String... description){
-        gui.setDescription(slot, description);
-    }
-    
-    @Override
-    public void setType(int slot, @NotNull Material material){
-        gui.setType(slot, material);
-    }
-    
-    @Override
-    public void setGlowing(int slot, boolean glow){
-        gui.setGlowing(slot, glow);
-    }
-    
-    @Override
-    @NotNull
-    public IGui setItem(@NotNull GuiItem item){
-        return gui.setItem(item);
-    }
-    
-    @Override
-    @NotNull
-    public IGui setItem(int slot, @Nullable GuiItem item){
-        return gui.setItem(slot, item);
-    }
-    
-    @Override
-    public void moveItem(int from, int to){
-        gui.moveItem(from, to);
-    }
-    
-    @Override
-    public void moveItem(int from, @NotNull IGui guiTo, int to){
-        gui.moveItem(from, guiTo, to);
-    }
-    
-    @Override
-    public @Nullable GuiItem getItem(int slot){
-        return gui.getItem(slot);
-    }
-    
-    @Override
-    public void open(@NotNull ConsulatPlayer player){
-        gui.open(player);
-    }
-    
-    @Override
-    public @NotNull String getName(){
-        return gui.getName();
-    }
-    
-    @Override
-    public void setName(String name){
-        gui.setName(name);
-    }
-    
-    @Override
-    public String buildInventoryTitle(){
-        return gui.buildInventoryTitle();
-    }
-    
-    @Override
-    public void setTitle(){
-        gui.setTitle();
-    }
-    
-    @Override
-    public void removeItem(int slot){
-        gui.removeItem(slot);
-    }
-    
-    @Override
-    public @NotNull Inventory getInventory(){
-        return gui.getInventory();
-    }
-    
-    @Override
-    public @NotNull List<GuiItem> getItems(){
-        return gui.getItems();
-    }
-    
-    @Override
-    public void onCreate(){
-        gui.onCreate();
-    }
-    
-    @Override
-    public void onOpen(GuiOpenEvent event){
-        onPageOpen(event, this);
-    }
-    
-    @Override
-    public void onOpened(GuiOpenEvent event){
-        onPageOpened(event, this);
-    }
-    
-    @Override
-    public void onClose(GuiCloseEvent event){
-        onPageClose(event, this);
-    }
-    
-    @Override
-    public void onClick(GuiClickEvent event){
-        onPageClick(event, this);
-    }
-    
-    @Override
-    public void onRemove(GuiRemoveEvent event){
-        gui.onRemove(event);
-    }
-    
-    @Override
-    public boolean isModifiable(){
-        return gui.isModifiable();
-    }
-    
-    @Override
-    public void setModifiable(boolean modifiable){
-        gui.setModifiable(modifiable);
-    }
-    
-    @Override
-    public boolean isDestroyOnClose(){
-        return gui.isDestroyOnClose();
-    }
-    
-    @Override
-    public void setDestroyOnClose(boolean destroyOnClose){
-        gui.setDestroyOnClose(destroyOnClose);
-    }
-    
-    @Override
-    public boolean isBackButton(){
-        return gui.isBackButton();
-    }
-    
-    @Override
-    public void setBackButton(boolean backButton){
-        gui.setBackButton(backButton);
-    }
-    
-    @Override
-    public boolean containsFakeItems(){
-        return gui.containsFakeItems();
-    }
-    
-    @Override
-    public IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player){
-        return gui.setFakeItem(slot, item, player);
     }
 }

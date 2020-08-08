@@ -1,5 +1,6 @@
 package fr.leconsulat.api.gui;
 
+import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.Datable;
 import fr.leconsulat.api.gui.gui.module.api.Relationnable;
 import fr.leconsulat.api.gui.gui.template.DataRelatGui;
@@ -29,9 +30,8 @@ public abstract class GuiContainer<T> {
         return gui;
     }
     
-    @SuppressWarnings("unchecked")
-    public <A extends Datable<T>> @NotNull A getGui(T data){
-        return (A)Objects.requireNonNull(getGui(true, data));
+    public @NotNull IGui getGui(T data){
+        return Objects.requireNonNull(getGui(true, data));
     }
     
     public boolean removeGui(T data){
@@ -43,32 +43,33 @@ public abstract class GuiContainer<T> {
         this.guis.remove(key.getData());
     }
     
-    @SuppressWarnings("unchecked")
     @Nullable
-    public <A> Datable<A> getGui(boolean create, T key, Object... path){
-        Datable<?> mainGui = guis.get(key);
-        if(mainGui == null){
+    public IGui getGui(boolean create, T key, Object... path){
+        Datable<?> gui = guis.get(key);
+        if(gui == null){
             if(create){
-                mainGui = addGui(createGui(key));
-                mainGui.onCreate();
+                gui = addGui(createGui(key));
+                gui.getGui().onCreate();
             } else {
                 return null;
             }
         }
         for(Object childKey : path){
-            if(mainGui.getBaseGui() instanceof Relationnable){
+            if(gui.getGui() instanceof Relationnable){
                 if(create){
-                    mainGui = (Datable<?>)((Relationnable)mainGui.getBaseGui()).getChild(childKey);
+                    gui = (Datable<?>)((Relationnable)gui.getGui()).getChild(childKey);
                 } else {
-                    mainGui = (Datable<?>)((Relationnable)mainGui.getBaseGui()).getLegacyChild(childKey);
-                    if(mainGui == null){
+                    gui = (Datable<?>)((Relationnable)gui.getGui()).getLegacyChild(childKey);
+                    if(gui == null){
                         return null;
                     }
                 }
             }
         }
-        
-        return (Datable<A>)mainGui;
+        if(gui == null){
+            return null;
+        }
+        return gui.getGui();
     }
     
 }

@@ -109,4 +109,8 @@ public class ObjectUtils {
         }
         return array;
     }
+    
+    public static String toString(Object object){
+        return object.getClass().getName() + "@" + Integer.toHexString(object.hashCode());
+    }
 }

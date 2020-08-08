@@ -1,10 +1,6 @@
 package fr.leconsulat.api.gui.gui.template;
 
 import fr.leconsulat.api.gui.GuiItem;
-import fr.leconsulat.api.gui.event.GuiClickEvent;
-import fr.leconsulat.api.gui.event.GuiCloseEvent;
-import fr.leconsulat.api.gui.event.GuiOpenEvent;
-import fr.leconsulat.api.gui.event.GuiRemoveEvent;
 import fr.leconsulat.api.gui.gui.BaseGui;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.DatableGui;
@@ -18,18 +14,23 @@ import java.util.Collection;
 
 public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnable {
     
-    private DatableGui<T> dataGui;
-    private RelationnableGui relationnableGui;
+    private DatableGui<DataRelatGui<T>, T> dataGui;
+    private RelationnableGui<DataRelatGui<T>> relationnableGui;
     
     public DataRelatGui(T data, @NotNull String name, int line, GuiItem... items){
         super(name, line, items);
-        this.relationnableGui = new RelationnableGui(this);
+        this.relationnableGui = new RelationnableGui<>(this);
         this.dataGui = new DatableGui<>(this, data);
     }
     
     @Override
     public T getData(){
         return dataGui.getData();
+    }
+    
+    @Override
+    public IGui getGui(){
+        return this;
     }
     
     @Override
@@ -79,35 +80,20 @@ public class DataRelatGui<T> extends BaseGui implements Datable<T>, Relationnabl
     }
     
     @Override
-    public String buildInventoryTitle(){
+    public void setTitle(){
+        super.setTitle();
+        if(relationnableGui != null){
+            relationnableGui.setTitle();
+        }
+    }
+    
+    @Override
+    public String buildInventoryTitle(String title){
         //Peut être appelé avant l'initialisation de relationnableGui
         if(relationnableGui == null){
-            return super.buildInventoryTitle();
+            return super.buildInventoryTitle(title);
         }
-        return relationnableGui.buildInventoryTitle();
+        return relationnableGui.buildInventoryTitle(title);
     }
     
-    @Override
-    public void onOpen(GuiOpenEvent event){
-    }
-    
-    @Override
-    public void onClose(GuiCloseEvent event){
-    }
-    
-    @Override
-    public void onClick(GuiClickEvent event){
-    }
-    
-    @Override
-    public void onRemove(GuiRemoveEvent event){
-    }
-    
-    @Override
-    public void setName(String name){
-        super.setName(name);
-        for(IGui child : relationnableGui.getChildren()){
-            child.setTitle();
-        }
-    }
 }

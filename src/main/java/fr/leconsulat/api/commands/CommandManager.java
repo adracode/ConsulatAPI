@@ -15,9 +15,7 @@ import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.command.SimpleCommandMap;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -50,7 +48,7 @@ public class CommandManager implements Listener {
             return;
         }
         instance = this;
-        core.getServer().getPluginManager().registerEvents(this, core);
+        Bukkit.getPluginManager().registerEvents(this, core);
         SimpleCommandMap commandMap = (SimpleCommandMap)ReflectionUtils.getDeclaredField(Bukkit.getServer(), "commandMap");
         if(commandMap == null){
             ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Couldn't find Map Command");
@@ -83,7 +81,7 @@ public class CommandManager implements Listener {
     }
     
     @SuppressWarnings("unchecked")
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPostInit(PostInitEvent e){
         ConsulatAPI core = ConsulatAPI.getConsulatAPI();
         vanillaDispatcher = (CommandDispatcher<?>)ReflectionUtils.getDeclaredField(ReflectionUtils.getDeclaredField(core.getDedicatedServer().getClass().getSuperclass(), "vanillaCommandDispatcher", core.getDedicatedServer()), "b");
@@ -158,7 +156,7 @@ public class CommandManager implements Listener {
             if(!(command instanceof ConsulatCommand)){
                 continue;
             }
-            if(!player.hasPower(((ConsulatCommand)command).getRankNeeded())){
+            if(!player.hasPermission(command.getPermission()) && !player.hasPower(((ConsulatCommand)command).getRankNeeded())){
                 iterator.remove();
             }
         }
@@ -180,23 +178,6 @@ public class CommandManager implements Listener {
             e.setMessage("/help");
         }
     }
-
-    /*@EventHandler(priority = EventPriority.HIGHEST)
-    public void onServerCommand(ServerCommandEvent e){
-        Command command = bukkitCommands.get(e.getCommand().replaceFirst("/", "").split(" ")[0].toLowerCase());
-        if(!(command instanceof ConsoleUsable)){
-            e.setCommand("help");
-        }
-    }*/
-    
-    public void execute(CommandSender sender, String alias, String[] args){
-        Command cmd = commands.get(alias);
-        if(cmd instanceof ConsulatCommand){
-            ConsulatCommand command = (ConsulatCommand)cmd;
-            ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(((Player)sender).getUniqueId());
-            command.onCommand(player, args);
-        }
-    }
     
     public Command getCommand(String command){
         return commands.get(command);
@@ -210,7 +191,6 @@ public class CommandManager implements Listener {
         return instance;
     }
     
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public void suggest(LiteralArgumentBuilder<?> suggestion){
         suggest(suggestion, false);
     }

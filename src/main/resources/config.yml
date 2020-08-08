@@ -11,3 +11,4 @@ redis-client: default
 player: fr.amisoz.consulatcore.players.SurvivalPlayer
 debug: false
 dev: false
+server-name: none

@@ -10,9 +10,11 @@ import fr.leconsulat.api.ranks.Rank;
 
 public class RankCommand extends ConsulatCommand {
     
+    private final String bypassRank;
+    
     public RankCommand(){
-        super("rank", "/rank <Joueur> <Rang>", 2, Rank.RESPONSABLE);
-        setPermission("consulat.api.command.rank");
+        super("consulat.api","rank", "/rank <Joueur> <Rang>", 2, Rank.RESPONSABLE);
+        bypassRank = getPermission() + ".bypass-rank";
         RequiredArgumentBuilder<Object, ?> playerRequired = Arguments.playerList("joueur");
         for(Rank rank : Rank.values()){
             playerRequired.then(LiteralArgumentBuilder.literal(rank.getRankName()));
@@ -36,7 +38,7 @@ public class RankCommand extends ConsulatCommand {
             }
             return;
         }
-        if(!sender.hasPower(newRank) && !sender.hasPermission(getPermission())){
+        if(!sender.hasPower(newRank) && !sender.hasPermission(bypassRank)){
             sender.sendMessage("§cTu ne peux pas ajouter ce grade.");
             return;
         }

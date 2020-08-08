@@ -6,35 +6,24 @@ import fr.leconsulat.api.gui.gui.BaseGui;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.MainPage;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
-import fr.leconsulat.api.player.ConsulatPlayer;
+import fr.leconsulat.api.gui.gui.module.api.Relationnable;
 import it.unimi.dsi.fastutil.bytes.ByteIterator;
-import org.bukkit.Material;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
-import java.util.List;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public final class PageableGui implements Pageable {
     
     private int page;
     private MainPage mainPage;
-    
-    private IGui gui;
+    private Page gui;
     
     PageableGui(MainPage mainPage, String name, int line, GuiItem... items){
         this.mainPage = mainPage;
-        this.gui = new BaseGui(this, name, line, items){
-            @Override
-            public String buildInventoryTitle(){
-                return mainPage.buildInventoryTitle();
-            }
-        };
-        if(isBackButton()){
-            setItem((getLine() - 1) * 9, IGui.getItem("§cRetour", -1, Material.RED_STAINED_GLASS_PANE));
+        this.gui = new Page(name, line, items);
+        if(mainPage instanceof Relationnable && ((Relationnable)mainPage).hasFather() && gui.isBackButton()){
+            gui.setItem((gui.getLine() - 1) * 9, BaseGui.BACK.clone());
         }
     }
     
@@ -54,8 +43,8 @@ public final class PageableGui implements Pageable {
     }
     
     @Override
-    public void setMainPage(MainPage mainPage){
-        this.mainPage = mainPage;
+    public IGui getGui(){
+        return gui;
     }
     
     @Override
@@ -110,100 +99,13 @@ public final class PageableGui implements Pageable {
         
         @Override
         public GuiItem next(){
-            return getItem(slot = iterator.nextByte());
+            return gui.getItem(slot = iterator.nextByte());
         }
         
         @Override
         public void remove(){
-            removeItem(slot);
+            gui.removeItem(slot);
         }
-    }
-    
-    @Override
-    public IGui getBaseGui(){
-        return gui;
-    }
-    
-    @Override
-    public @NotNull BaseGui setDeco(@NotNull Material type, int... slots){
-        return gui.setDeco(type, slots);
-    }
-    
-    public void setDisplayName(int slot, @NotNull String name){
-        gui.setDisplayName(slot, name);
-    }
-    
-    public void setDescription(int slot, @NotNull String... description){
-        gui.setDescription(slot, description);
-    }
-    
-    public void setType(int slot, @NotNull Material material){
-        gui.setType(slot, material);
-    }
-    
-    public void setGlowing(int slot, boolean glow){
-        gui.setGlowing(slot, glow);
-    }
-    
-    @NotNull
-    public IGui setItem(@NotNull GuiItem item){
-        return gui.setItem(item);
-    }
-    
-    @NotNull
-    public IGui setItem(int slot, @Nullable GuiItem item){
-        return gui.setItem(slot, item);
-    }
-    
-    public void moveItem(int from, int to){
-        gui.moveItem(from, to);
-    }
-    
-    public void moveItem(int from, @NotNull IGui guiTo, int to){
-        gui.moveItem(from, guiTo, to);
-    }
-    
-    public @Nullable GuiItem getItem(int slot){
-        return gui.getItem(slot);
-    }
-    
-    public void open(@NotNull ConsulatPlayer player){
-        gui.open(player);
-    }
-    
-    public @NotNull String getName(){
-        return gui.getName();
-    }
-    
-    public void setName(String name){
-        gui.setName(name);
-    }
-    
-    @Override
-    public String buildInventoryTitle(){
-        return gui.buildInventoryTitle();
-    }
-    
-    @Override
-    public void setTitle(){
-        gui.setTitle();
-    }
-    
-    public void removeItem(int slot){
-        gui.removeItem(slot);
-    }
-    
-    public @NotNull Inventory getInventory(){
-        return gui.getInventory();
-    }
-    
-    public @NotNull List<GuiItem> getItems(){
-        return gui.getItems();
-    }
-    
-    @Override
-    public final void onCreate(){
-    
     }
     
     public final void onOpen(GuiOpenEvent event){
@@ -218,41 +120,64 @@ public final class PageableGui implements Pageable {
         onPageClick(event, this);
     }
     
-    public void onRemove(GuiRemoveEvent event){
-        mainPage.onRemove(event);
-    }
+    public class Page extends BaseGui implements Pageable {
     
-    public boolean isModifiable(){
-        return mainPage.isModifiable();
-    }
+        public Page(@NotNull String name, int line, GuiItem... items){
+            super(name, line, items);
+        }
     
-    public void setModifiable(boolean modifiable){
-        mainPage.setModifiable(modifiable);
-    }
+        @Override
+        public int getPage(){
+            return PageableGui.this.getPage();
+        }
     
-    public boolean isDestroyOnClose(){
-        return mainPage.isDestroyOnClose();
-    }
+        @Override
+        public void setPage(int page){
+            PageableGui.this.setPage(page);
+        }
     
-    public void setDestroyOnClose(boolean destroyOnClose){
-        mainPage.setDestroyOnClose(destroyOnClose);
-    }
+        @Override
+        public MainPage getMainPage(){
+            return PageableGui.this.getMainPage();
+        }
     
-    public boolean isBackButton(){
-        return mainPage.isBackButton();
-    }
+        @Override
+        public IGui getGui(){
+            return PageableGui.this.getGui();
+        }
     
-    public void setBackButton(boolean backButton){
-        mainPage.setBackButton(backButton);
-    }
+        @NotNull
+        @Override
+        public Iterator<GuiItem> iterator(){
+            return PageableGui.this.iterator();
+        }
     
-    @Override
-    public boolean containsFakeItems(){
-        return gui.containsFakeItems();
-    }
+        @Override
+        public void onOpen(GuiOpenEvent event){
+            PageableGui.this.onPageOpen(event, this);
+        }
     
-    @Override
-    public IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player){
-        return gui.setFakeItem(slot, item, player);
+        @Override
+        public void onOpened(GuiOpenEvent event){
+            PageableGui.this.onPageOpened(event, this);
+        }
+    
+        @Override
+        public void onClose(GuiCloseEvent event){
+            PageableGui.this.onPageClose(event, this);
+        }
+    
+        @Override
+        public void onClick(GuiClickEvent event){
+            PageableGui.this.onPageClick(event, this);
+        }
+    
+        @Override
+        public String buildInventoryTitle(String title){
+            if(mainPage instanceof Relationnable){
+                return ((Relationnable)mainPage).buildInventoryTitle(title);
+            }
+            return super.buildInventoryTitle(title);
+        }
     }
 }

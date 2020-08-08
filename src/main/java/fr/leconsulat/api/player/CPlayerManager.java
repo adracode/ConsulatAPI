@@ -2,6 +2,7 @@ package fr.leconsulat.api.player;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
@@ -18,8 +19,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.*;
+import org.redisson.api.RFuture;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +32,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -46,6 +49,13 @@ public class CPlayerManager implements Listener {
         }
     }
     
+    //Fait une action avec l'ancien serveur
+    private BiConsumer<ConsulatPlayer, ConsulatServer> onJoin;
+    
+    public static String getRedisKey(UUID uuid){
+        return "player:" + uuid;
+    }
+    
     private final File playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
     
     private File getPlayerFile(UUID uuid){
@@ -54,10 +64,10 @@ public class CPlayerManager implements Listener {
     
     private Class<?> playerClass;
     private Constructor<?> playerConstructor;
-    private Map<UUID, ConsulatPlayer> players = new HashMap<>();
-    private Map<String, UUID> offlinePlayers = new HashMap<>();
+    private final Map<UUID, ConsulatPlayer> players = new HashMap<>();
+    private final Map<String, UUID> offlinePlayers = new HashMap<>();
     
-    private Map<UUID, byte[]> pendingPlayer = new HashMap<>();
+    private final Map<UUID, byte[]> pendingPlayer = new HashMap<>();
     
     public CPlayerManager(){
         if(instance != null){
@@ -97,15 +107,19 @@ public class CPlayerManager implements Listener {
     public void loadPlayerData(byte[] data){
         OfflinePlayerInputStream input = new OfflinePlayerInputStream(data);
         UUID uuid = input.fetchUUID();
-        ConsulatPlayer player = players.get(uuid);
-        if(player != null){
-            player.sendMessage("§7§oChargement...");
-            new PlayerInputStream(player.getPlayer(), data).readLevel().readInventory().close();
-            player.sendMessage("§7§oChargement terminé !");
-        } else {
-            pendingPlayer.put(uuid, data);
+        synchronized(players){
+            ConsulatPlayer player = players.get(uuid);
+            if(player != null){
+                if(player.isInventoryBlocked()){
+                    new PlayerInputStream(player.getPlayer(), data).readLevel().readInventory().close();
+                    player.setInventoryBlocked(false);
+                    player.sendMessage("§7Inventaire chargé.");
+                }
+            } else {
+                pendingPlayer.put(uuid, data);
+            }
+            input.close();
         }
-        input.close();
     }
     
     public void savePlayerData(byte[] data){
@@ -152,15 +166,26 @@ public class CPlayerManager implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
         event.setJoinMessage("");
-        CPlayerManager manager = CPlayerManager.getInstance();
-        ConsulatPlayer player = manager.addPlayer(event.getPlayer().getUniqueId(), event.getPlayer().getName());
+        ConsulatPlayer player = addPlayer(event.getPlayer().getUniqueId(), event.getPlayer().getName());
+        RFuture<String> server = player.getServer();
         byte[] loadData = pendingPlayer.remove(player.getUUID());
         if(loadData != null){
             new PlayerInputStream(player.getPlayer(), loadData).readLevel().readInventory().close();
+            player.setInventoryBlocked(false);
+        }
+        server.thenRun(player::setServer);
+        if(onJoin != null){
+            server.onComplete((oldServer, exception) -> {
+                ConsulatServer consulatServer = oldServer == null ? ConsulatServer.UNKNOWN : ConsulatServer.valueOf(oldServer);
+                onJoin.accept(player, consulatServer);
+                player.setServer();
+            });
         }
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " has joined");
-        player.getPlayer().sendTitle("§4Serveur", "§4en développement", 20, 100, 20);
-        player.getPlayer().sendMessage("§cTu es sur un serveur en développement ! Les fonctionnalités présentes peuvent changer à tout moment, et des bugs peuvent être présents.");
+        if(ConsulatAPI.getConsulatAPI().isDevelopment()){
+            player.getPlayer().sendTitle("§4Serveur", "§4en développement", 20, 100, 20);
+            player.getPlayer().sendMessage("§cTu es sur un serveur en développement ! Les fonctionnalités présentes peuvent changer à tout moment, et des bugs peuvent être présents.");
+        }
         ConsulatAPI consulatAPI = ConsulatAPI.getConsulatAPI();
         String name = event.getPlayer().getName().toLowerCase();
         if(!offlinePlayers.containsKey(name)){
@@ -170,21 +195,17 @@ public class CPlayerManager implements Listener {
             try {
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Fetching player...");
                 long start = System.currentTimeMillis();
-                manager.fetchPlayer(player);
+                fetchPlayer(player);
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " fetched in " + (System.currentTimeMillis() - start) + " ms");
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions...");
                 start = System.currentTimeMillis();
                 player.load();
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
-                consulatAPI.getServer().getScheduler().scheduleSyncDelayedTask(consulatAPI, () -> {
-                    ConsulatAPI.getConsulatAPI().getServer().getPluginManager().callEvent(
-                            new ConsulatPlayerLoadedEvent(player)
-                    );
-                });
+                Bukkit.getScheduler().runTask(consulatAPI,
+                        () -> Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLoadedEvent(player)));
             } catch(SQLException e){
-                Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
-                    event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage());
-                });
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () ->
+                        event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage()));
                 e.printStackTrace();
             }
         });
@@ -205,7 +226,52 @@ public class CPlayerManager implements Listener {
     
     @EventHandler
     public void onQuit(ConsulatPlayerLeaveEvent event){
-        event.getPlayer().onQuit();
+        ConsulatPlayer player = event.getPlayer();
+        player.onQuit();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
+            player.getServer().onComplete((serverStr, exception) -> {
+                ConsulatServer server = ConsulatServer.valueOf(serverStr);
+                if(server == ConsulatAPI.getConsulatAPI().getConsulatServer() && Bukkit.getPlayer(player.getUUID()) == null){
+                    player.disconnected();
+                }
+            });
+        }, 20);
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void blockInventory(InventoryClickEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getWhoClicked().getUniqueId());
+        if(player != null && player.isInventoryBlocked()){
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void blockInventory(PlayerDropItemEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player != null && player.isInventoryBlocked()){
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void blockInventory(PlayerInteractEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player != null && player.isInventoryBlocked()){
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void blockInventory(PlayerInteractAtEntityEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player != null && player.isInventoryBlocked()){
+            event.setCancelled(true);
+        }
+    }
+    
+    public void onJoin(BiConsumer<ConsulatPlayer, ConsulatServer> onJoin){
+        this.onJoin = onJoin;
     }
     
     public ConsulatPlayer getConsulatPlayerFromContextSource(Object commandListenerWrapper){
@@ -251,7 +317,9 @@ public class CPlayerManager implements Listener {
             } catch(InstantiationException | IllegalAccessException | InvocationTargetException e){
                 e.printStackTrace();
             }
-            players.put(uuid, player);
+            synchronized(players){
+                players.put(uuid, player);
+            }
         }
         return player;
     }

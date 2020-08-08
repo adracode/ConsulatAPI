@@ -23,9 +23,9 @@ public abstract class Server {
     public Server(@NotNull String name, boolean queue){
         this.name = Objects.requireNonNull(name);
         this.queue = queue ? new PlayerQueue() : null;
-        RedisManager.getInstance().register("Player" + StringUtils.capitalize(name), int.class,
+        RedisManager.getInstance().register("Player" + StringUtils.capitalize(name), Integer.class,
                 (channel, players) -> setPlayers(players));
-        RedisManager.getInstance().register("Slot" + StringUtils.capitalize(name), int.class,
+        RedisManager.getInstance().register("Slot" + StringUtils.capitalize(name), Integer.class,
                 (channel, slot) -> setSlot(slot));
     }
     
@@ -53,8 +53,8 @@ public abstract class Server {
             connectPlayer(player);
             int queueSize = queue.size();
             for(ConsulatPlayer queuePlayer : queue){
-                queuePlayer.sendMessage("§aTu es dans la queue: " +
-                        queuePlayer.decrementPosition() + " / " + queueSize);
+                queuePlayer.sendActionBar("§aTu es dans la queue: " +
+                        queuePlayer.decrementPosition() + "/" + queueSize);
             }
         }
     }
@@ -92,8 +92,8 @@ public abstract class Server {
             connectPlayer(player);
             return ConnectResult.CONNECT;
         }
-        player.setPositionInQueue(queue.isEmpty() ? 1 : queue.last().getPositionInQueue() + 1);
         queue.addPlayer(player);
+        player.setPositionInQueue(queue.isEmpty() ? 1 : queue.last().getPositionInQueue() + 1);
         return ConnectResult.IN_QUEUE;
     }
     

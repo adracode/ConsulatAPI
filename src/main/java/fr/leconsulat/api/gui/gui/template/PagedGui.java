@@ -1,7 +1,10 @@
 package fr.leconsulat.api.gui.gui.template;
 
 import fr.leconsulat.api.gui.GuiItem;
-import fr.leconsulat.api.gui.event.*;
+import fr.leconsulat.api.gui.event.GuiClickEvent;
+import fr.leconsulat.api.gui.event.GuiCloseEvent;
+import fr.leconsulat.api.gui.event.GuiCreateEvent;
+import fr.leconsulat.api.gui.event.GuiOpenEvent;
 import fr.leconsulat.api.gui.gui.BaseGui;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.MainPageGui;
@@ -17,11 +20,11 @@ import java.util.List;
 
 public class PagedGui extends BaseGui implements MainPage {
     
-    private MainPageGui mainPageGui;
+    private MainPageGui<PagedGui> mainPageGui;
     
     public PagedGui(@NotNull String name, int line, GuiItem... items){
         super(name, line, items);
-        this.mainPageGui = new MainPageGui(this);
+        this.mainPageGui = new MainPageGui<>(this);
         this.mainPageGui.onPageCreated(new GuiCreateEvent(this), mainPageGui);
     }
     
@@ -113,7 +116,7 @@ public class PagedGui extends BaseGui implements MainPage {
     
     @Override
     public void setDisplayNamePages(int slot, @NotNull String name){
-        mainPageGui.setDisplayName(slot, name);
+        mainPageGui.setDisplayNamePages(slot, name);
     }
     
     @Override
@@ -156,29 +159,10 @@ public class PagedGui extends BaseGui implements MainPage {
         return mainPageGui.getMainPage();
     }
     
-    @Override
-    public void setMainPage(MainPage mainPage){
-        mainPageGui.setMainPage(mainPage);
-    }
     
     @Override
-    public void onPageCreated(GuiCreateEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageClick(GuiClickEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageClose(GuiCloseEvent event, Pageable pageGui){
-    }
-    
-    @Override
-    public void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
+    public IGui getGui(){
+        return this;
     }
     
     @Override
@@ -187,7 +171,7 @@ public class PagedGui extends BaseGui implements MainPage {
     }
     
     @Override
-    public void onOpened(GuiOpenEvent event){
+    public final void onOpened(GuiOpenEvent event){
         onPageOpened(event, this);
     }
     
@@ -199,5 +183,11 @@ public class PagedGui extends BaseGui implements MainPage {
     @Override
     public final void onClick(GuiClickEvent event){
         onPageClick(event, this);
+    }
+    
+    @Override
+    public void setTitle(){
+        super.setTitle();
+        mainPageGui.setTitle();
     }
 }

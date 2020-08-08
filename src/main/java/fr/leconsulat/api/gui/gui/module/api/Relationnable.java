@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public interface Relationnable extends IGui {
+public interface Relationnable {
     
     boolean hasFather();
     
@@ -25,5 +25,11 @@ public interface Relationnable extends IGui {
     @Nullable Relationnable getLegacyChild(@Nullable Object key);
     
     void removeChild(@Nullable Object key);
+    
+    IGui getGui();
+    
+    void setTitle();
+    
+    String buildInventoryTitle(String title);
     
 }

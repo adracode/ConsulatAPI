@@ -7,8 +7,7 @@ import fr.leconsulat.api.ranks.Rank;
 public class GCCommand extends ConsulatCommand {
     
     public GCCommand(){
-        super("gc", "/gc", 0, Rank.ADMIN);
-        setPermission("consulat.api.command.gc");
+        super("consulat.api","gc", "/gc", 0, Rank.ADMIN);
     }
     
     

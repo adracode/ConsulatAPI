@@ -36,7 +36,7 @@ public class TestGui extends DataRelatGui<ConsulatPlayer> {
     public void onClick(GuiClickEvent event){
         event.getPlayer().sendMessage("" + event.getSlot());
         if(event.getSlot() == 10){
-            getChild(0).open(event.getPlayer());
+            getChild(0).getGui().open(event.getPlayer());
         }
     }
     

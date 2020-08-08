@@ -5,7 +5,10 @@ import com.comphenix.protocol.ProtocolManager;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
-import fr.leconsulat.api.commands.commands.*;
+import fr.leconsulat.api.commands.commands.ADebugCommand;
+import fr.leconsulat.api.commands.commands.GCCommand;
+import fr.leconsulat.api.commands.commands.OfflineInventoryCommand;
+import fr.leconsulat.api.commands.commands.RankCommand;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
 import fr.leconsulat.api.events.EventManager;
@@ -16,6 +19,7 @@ import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.runnable.KeepAlive;
+import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -25,12 +29,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.redisson.api.RTopic;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class ConsulatAPI extends JavaPlugin implements Listener {
@@ -38,6 +45,11 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private static ConsulatAPI consulatAPI;
     
     private Object dedicatedServer;
+    
+    private File playerDataFolder;
+    
+    private ConsulatServer server;
+    private RTopic debugChannel;
     
     private NMS nms;
     private ProtocolManager protocolManager;
@@ -61,6 +73,9 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         FileConfiguration config = getConfig();
         this.debug = config.getBoolean("debug", false);
         this.development = config.getBoolean("dev", false);
+        this.server = ConsulatServer.valueOf(config.getString("server-name", "unknown").toUpperCase());
+        log(Level.INFO, "Loading in server " + server);
+        playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
         try {
             String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
             nms = (NMS)Class.forName("fr.leconsulat.api.nms.version." + version + ".NMS_" + version).newInstance();
@@ -70,11 +85,12 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         dedicatedServer = ReflectionUtils.getDeclaredField(Bukkit.getServer(), "console");
         databaseManager = new DatabaseManager();
         databaseManager.connect();
-        new RedisManager(
+        RedisManager redisManager = new RedisManager(
                 config.getString("redis-host"),
                 config.getInt("redis-port"),
                 config.getString("redis-password"),
                 config.getString("redis-client"));
+        debugChannel = redisManager.getRedis().getTopic("Debug");
         protocolManager = ProtocolLibrary.getProtocolManager();
         new SaveManager();
         new ChannelManager();
@@ -91,10 +107,9 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onPostInit(PostInitEvent event){
         commandManager.addCommand(new GCCommand());
-        commandManager.addCommand(new PermissionCommand());
         commandManager.addCommand(new RankCommand());
         commandManager.addCommand(new OfflineInventoryCommand());
-        commandManager.addCommand(new TestCommand());
+        commandManager.addCommand(new ADebugCommand());
         if(playerManager.getPlayerClass() == ConsulatPlayer.class && ConsulatAPI.getConsulatAPI().isDebug()){
             for(Player p : Bukkit.getOnlinePlayers()){
                 getServer().getPluginManager().callEvent(new PlayerJoinEvent(p, ""));
@@ -170,4 +185,24 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     public static NMS getNMS(){
         return getConsulatAPI().nms;
     }
+    
+    @NotNull
+    public ConsulatServer getConsulatServer(){
+        return server;
+    }
+    
+    public void setServer(ConsulatServer server){
+        if(server == ConsulatServer.UNKNOWN){
+            this.server = server;
+        }
+    }
+    
+    public void debug(String debugMessage){
+        debugChannel.publishAsync(debugMessage);
+    }
+    
+    public File getPlayerFile(UUID uuid){
+        return FileUtils.loadFile(playerDataFolder, uuid + ".dat");
+    }
+    
 }

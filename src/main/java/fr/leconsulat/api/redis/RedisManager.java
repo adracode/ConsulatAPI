@@ -26,8 +26,8 @@ public class RedisManager {
         client = Redisson.create(redisConfig);
     }
     
-    public <M> void register(String channel, Class<M> c, MessageListener<? extends M> messageListener){
-        RedisManager.getInstance().getRedis().getTopic(channel).addListener(c, messageListener);
+    public <M> int register(String channel, Class<M> c, MessageListener<? extends M> messageListener){
+        return RedisManager.getInstance().getRedis().getTopic(channel).addListener(c, messageListener);
     }
     
     public RedissonClient getRedis(){

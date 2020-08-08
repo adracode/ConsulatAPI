@@ -19,11 +19,11 @@ import java.util.List;
 
 public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     
-    private MainPageGui mainPageGui;
+    private MainPageGui<DataPagedGui<T>> mainPageGui;
     
     public DataPagedGui(T data, @NotNull String name, int line, GuiItem... items){
         super(data, name, line, items);
-        this.mainPageGui = new MainPageGui(this);
+        this.mainPageGui = new MainPageGui<>(this);
         this.mainPageGui.onPageCreated(new GuiCreateEvent(this), mainPageGui);
     }
     
@@ -128,10 +128,6 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
         return mainPageGui.getMainPage();
     }
     
-    @Override
-    public void setMainPage(MainPage mainPage){
-        mainPageGui.setMainPage(mainPage);
-    }
     
     @Override
     public final void onOpen(GuiOpenEvent event){
@@ -139,7 +135,7 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     }
     
     @Override
-    public void onOpened(GuiOpenEvent event){
+    public final void onOpened(GuiOpenEvent event){
         onPageOpened(event, this);
     }
     
@@ -155,7 +151,7 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     
     @Override
     public void setDisplayNamePages(int slot, @NotNull String name){
-        mainPageGui.setDisplayName(slot, name);
+        mainPageGui.setDisplayNamePages(slot, name);
     }
     
     @Override
@@ -181,5 +177,11 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     @Override
     public @NotNull IGui setItemAll(int slot, @Nullable GuiItem item){
         return mainPageGui.setItemAll(slot, item);
+    }
+    
+    @Override
+    public void setTitle(){
+        super.setTitle();
+        mainPageGui.setTitle();
     }
 }

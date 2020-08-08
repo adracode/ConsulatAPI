@@ -2,6 +2,7 @@ package fr.leconsulat.api.gui.gui.template;
 
 import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.gui.BaseGui;
+import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.Datable;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,5 +18,10 @@ public class DataGui<T> extends BaseGui implements Datable<T> {
     @Override
     public T getData(){
         return data;
+    }
+    
+    @Override
+    public IGui getGui(){
+        return this;
     }
 }

@@ -4,7 +4,7 @@ import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.*;
 import fr.leconsulat.api.gui.gui.IGui;
 
-public interface Pageable extends IGui, Iterable<GuiItem> {
+public interface Pageable extends Iterable<GuiItem> {
     
     int getPage();
     
@@ -12,7 +12,7 @@ public interface Pageable extends IGui, Iterable<GuiItem> {
     
     MainPage getMainPage();
     
-    void setMainPage(MainPage mainPage);
+    IGui getGui();
     
     default void onPageCreated(GuiCreateEvent event, Pageable pageGui){
     }
@@ -31,5 +31,4 @@ public interface Pageable extends IGui, Iterable<GuiItem> {
     
     default void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
     }
-    
 }

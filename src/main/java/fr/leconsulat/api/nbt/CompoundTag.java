@@ -87,6 +87,15 @@ public final class CompoundTag implements Tag {
 		return listTag.getValue();
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <T extends Tag> ListTag<T> getListTag(String name, NBTType expected){
+		ListTag<T> listTag = ((ListTag<T>)value.get(name));
+		if(listTag.getElementType() != expected){
+			throw new IllegalArgumentException();
+		}
+		return listTag;
+	}
+	
 	public byte[] getByteArray(String name){
 		return ((ByteArrayTag)value.get(name)).getValue();
 	}

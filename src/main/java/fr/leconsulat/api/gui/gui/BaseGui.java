@@ -65,7 +65,7 @@ public class BaseGui implements IGui {
     public BaseGui(IGui holder, @NotNull String name, int line, GuiItem... items){
         this.name = name;
         this.items = new GuiItem[line * 9];
-        this.inventory = Bukkit.createInventory(holder == null ? this : holder, line * 9, buildInventoryTitle());
+        this.inventory = Bukkit.createInventory(holder == null ? this : holder, line * 9, buildInventoryTitle(name));
         for(GuiItem item : items){
             setItem(new GuiItem(item));
         }
@@ -79,7 +79,7 @@ public class BaseGui implements IGui {
     private BaseGui(@NotNull BaseGui gui){
         this.name = gui.name;
         this.items = new GuiItem[gui.inventory.getSize()];
-        this.inventory = Bukkit.createInventory(this, gui.inventory.getSize(), buildInventoryTitle());
+        this.inventory = Bukkit.createInventory(this, gui.inventory.getSize(), buildInventoryTitle(name));
         for(GuiItem item : gui.items){
             if(item != null){
                 this.setItem(item.clone());
@@ -110,9 +110,8 @@ public class BaseGui implements IGui {
      * @param slots Les slots où placer les items
      * @return this
      */
-    @NotNull
     @Override
-    public BaseGui setDeco(@NotNull Material type, int... slots){
+    public @NotNull IGui setDeco(@NotNull Material type, int... slots){
         for(int slot : slots){
             setItem(new GuiItem(" ", (byte)slot, type));
         }
@@ -212,7 +211,9 @@ public class BaseGui implements IGui {
             return this;
         }
         if(item == null){
-            it.removeFakeItem(player.getUUID());
+            if(!it.removeFakeItem(player.getUUID())){
+                return this;
+            }
             if(this.equals(player.getCurrentlyOpen())){
                 ConsulatAPI.getNMS().getPacketNMS().setSlot(player.getPlayer(), slot, it);
             }
@@ -323,13 +324,13 @@ public class BaseGui implements IGui {
     }
 
     @Override
-    public String buildInventoryTitle(){
-        return name;
+    public String buildInventoryTitle(String title){
+        return title;
     }
     
     @Override
     public void setTitle(){
-        String title = buildInventoryTitle();
+        String title = buildInventoryTitle(name);
         try {
             titleField.set(inventoryField.get(inventory), title);
         } catch(IllegalAccessException e){

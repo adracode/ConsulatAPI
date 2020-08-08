@@ -1,10 +1,13 @@
 package fr.leconsulat.api.utils;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
+import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.utils.minecraft.NMSUtils;
 import fr.leconsulat.api.utils.minecraft.nbt.NBTMinecraft;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -12,27 +15,26 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.UUID;
 
 public class InventoryUtils {
     
     private static final Method itemToCompound;
     private static final Method bukkitToNMS;
+    private static final Method compoundToItem;
+    private static final Method nmsToBukkit;
     
     static{
         try {
             itemToCompound = MinecraftReflection.getMinecraftClass("ItemStack").getDeclaredMethod("save", MinecraftReflection.getNBTCompoundClass());
             bukkitToNMS = MinecraftReflection.getCraftBukkitClass("inventory.CraftItemStack").getDeclaredMethod("asNMSCopy", ItemStack.class);
+            compoundToItem = MinecraftReflection.getMinecraftClass("ItemStack").getDeclaredMethod("a", MinecraftReflection.getNBTCompoundClass());
+            nmsToBukkit = MinecraftReflection.getCraftBukkitClass("inventory.CraftItemStack").getDeclaredMethod("asBukkitCopy", MinecraftReflection.getItemStackClass());
         } catch(NoSuchMethodException e){
             e.printStackTrace();
             throw new RuntimeException();
         }
-    }
-    
-    private static final File playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
-   
-    private static File getPlayerFile(UUID uuid){
-        return FileUtils.loadFile(playerDataFolder, uuid + ".dat");
     }
     
     public static ListTag<CompoundTag> getInventoryAsTag(PlayerInventory inventory){
@@ -72,9 +74,46 @@ public class InventoryUtils {
         return null;
     }
     
+    public static List<CompoundTag> readInventoryFromFile(UUID uuid){
+        File playerFile = ConsulatAPI.getConsulatAPI().getPlayerFile(uuid);
+        try {
+            return new NBTInputStream(playerFile).read().getList("Inventory", NBTType.COMPOUND);
+        } catch(IOException  e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public static Inventory getOfflineInventory(UUID uuid){
+        File playerFile = ConsulatAPI.getConsulatAPI().getPlayerFile(uuid);
+        try {
+            Inventory finalInventory = Bukkit.createInventory(null, 54);
+            NBTInputStream inputStream = new NBTInputStream(playerFile);
+            CompoundTag player = inputStream.read();
+            List<CompoundTag> inventory = player.getList("Inventory", NBTType.COMPOUND);
+            for(CompoundTag tag : inventory){
+                int slot = tag.getByte("Slot") & 255;
+                ItemStack itemstack = (ItemStack)nmsToBukkit.invoke(null, compoundToItem.invoke(null, NBTMinecraft.compoundToNMS(tag)));
+                if(itemstack.getType() != Material.AIR){
+                    if(slot < finalInventory.getSize()){
+                        finalInventory.setItem(slot, itemstack);
+                    } else if(slot >= 100 && slot < 4 + 100){
+                        finalInventory.setItem(slot - 100 + 36, itemstack);
+                    } else if(slot >= 150 && slot < 1 + 150){
+                        finalInventory.setItem(slot - 150 + 45, itemstack);
+                    }
+                }
+            }
+            return finalInventory;
+        } catch(IOException | IllegalAccessException | InvocationTargetException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     public static void writeInventoryToFile(UUID uuid, ListTag<CompoundTag> tag){
         try {
-            File playerFile = getPlayerFile(uuid);
+            File playerFile = ConsulatAPI.getConsulatAPI().getPlayerFile(uuid);
             NBTInputStream is = new NBTInputStream(playerFile);
             CompoundTag player = is.read();
             is.close();
