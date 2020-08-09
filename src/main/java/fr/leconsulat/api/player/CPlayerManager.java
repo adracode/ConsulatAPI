@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 public class CPlayerManager implements Listener {
@@ -51,6 +52,7 @@ public class CPlayerManager implements Listener {
     
     //Fait une action avec l'ancien serveur
     private BiConsumer<ConsulatPlayer, ConsulatServer> onJoin;
+    private Function<Rank, Set<String>> rankPermission;
     
     public static String getRedisKey(UUID uuid){
         return "player:" + uuid;
@@ -486,5 +488,14 @@ public class CPlayerManager implements Listener {
     
     public Class<?> getPlayerClass(){
         return playerClass;
+    }
+    
+    public Set<String> getRankPermissions(Rank rank){
+        Set<String> permissions = rankPermission == null ? new HashSet<>() : rankPermission.apply(rank);
+        return permissions;
+    }
+    
+    public void setRankPermission(Function<Rank, Set<String>> rankPermission){
+        this.rankPermission = rankPermission;
     }
 }

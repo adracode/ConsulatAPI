@@ -4,6 +4,6 @@ public interface NMS {
     
     Packet getPacketNMS();
     
-    Inventory getInventoryNMS();
+    Item getItemNMS();
     
 }

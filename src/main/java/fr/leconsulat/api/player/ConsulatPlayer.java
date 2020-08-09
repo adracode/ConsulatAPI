@@ -11,6 +11,7 @@ import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.utils.FileUtils;
 import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -168,7 +169,7 @@ public class ConsulatPlayer implements Saveable {
         getPlayer().sendMessage(message);
     }
     
-    public void sendMessage(TextComponent... message){
+    public void sendMessage(BaseComponent... message){
         getPlayer().spigot().sendMessage(message);
     }
     
@@ -206,22 +207,6 @@ public class ConsulatPlayer implements Saveable {
     
     public void removePermission(String permission){
         this.permissions.remove(permission);
-    }
-    
-    //TODO
-    private Set<String> getRankPermissions(){
-        Set<String> permissions = new HashSet<>();
-        switch(rank){
-            case INVITE:
-                return Collections.emptySet();
-            case JOUEUR:
-            case ADMIN:
-                permissions.addAll(
-                        Collections.singletonList("consulat.api.test")
-                );
-                break;
-        }
-        return permissions;
     }
     
     @Override
@@ -366,7 +351,7 @@ public class ConsulatPlayer implements Saveable {
             is.close();
             loadNBT(playerTag);
             if(permissions.isEmpty()){
-                permissions.addAll(getRankPermissions());
+                permissions.addAll(CPlayerManager.getInstance().getRankPermissions(rank));
             }
         } catch(IOException e){
             e.printStackTrace();

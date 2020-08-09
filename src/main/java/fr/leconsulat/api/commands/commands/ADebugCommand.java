@@ -70,7 +70,8 @@ public class ADebugCommand extends ConsulatCommand {
                         })),
                 LiteralArgumentBuilder.literal("blockinventory")
                         .then(Arguments.playerList("joueur")
-                                .then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool())))
+                                .then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
+                LiteralArgumentBuilder.literal("item")
         );
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(uuid);
         if(player != null){
@@ -188,6 +189,9 @@ public class ADebugCommand extends ConsulatCommand {
                         return;
                     }
                     target.setInventoryBlocked(Boolean.parseBoolean(args[2]));
+                    break;
+                case "item":
+                    sender.sendMessage(ConsulatAPI.getNMS().getItemNMS().getItemNameId(sender.getPlayer().getInventory().getItemInMainHand()));
                     break;
             }
         }

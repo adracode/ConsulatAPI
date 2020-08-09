@@ -2,12 +2,14 @@ package fr.leconsulat.api.channel;
 
 import fr.leconsulat.api.player.ConsulatPlayer;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
-public abstract class Channel {
+public abstract class Channel implements Iterable<ConsulatPlayer> {
     
     private final UUID id;
     private final String name;
@@ -76,10 +78,35 @@ public abstract class Channel {
         }
     }
     
+    
+    @Override
+    public @NotNull Iterator<ConsulatPlayer> iterator(){
+        return new PlayerIterator();
+    }
+    
+    private class PlayerIterator implements Iterator<ConsulatPlayer> {
+    
+        private final Iterator<ConsulatPlayer> iterator = members.iterator();
+    
+        @Override
+        public boolean hasNext(){
+            return iterator.hasNext();
+        }
+    
+        @Override
+        public ConsulatPlayer next(){
+            return iterator.next();
+        }
+    }
+    
     @Override
     public boolean equals(Object o){
-        if(this == o) return true;
-        if(!(o instanceof Channel)) return false;
+        if(this == o){
+            return true;
+        }
+        if(!(o instanceof Channel)){
+            return false;
+        }
         return id.equals(((Channel)o).id);
     }
     

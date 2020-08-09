@@ -8,7 +8,7 @@ redis-port: 6379
 redis-password: default
 redis-client: default
 
-player: fr.amisoz.consulatcore.players.SurvivalPlayer
+player: fr.leconsulat.api.player.ConsulatPlayer
 debug: false
 dev: false
-server-name: none
+server-name: unknown

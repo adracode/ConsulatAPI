@@ -36,20 +36,20 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
     private Rank rankNeeded;
     private String permission;
     
-    public ConsulatCommand(String server, String name, String usage, int argsMin, Rank rankNeeded){
-        this(server, name, Collections.emptyList(), usage, argsMin, rankNeeded);
+    public ConsulatCommand(String plugin, String name, String usage, int argsMin, Rank rankNeeded){
+        this(plugin, name, Collections.emptyList(), usage, argsMin, rankNeeded);
     }
     
-    public ConsulatCommand(String server, String name, String alias, String usage, int argsMin, Rank rankNeeded){
-        this(server, name, Collections.singletonList(alias), usage, argsMin, rankNeeded);
+    public ConsulatCommand(String plugin, String name, String alias, String usage, int argsMin, Rank rankNeeded){
+        this(plugin, name, Collections.singletonList(alias), usage, argsMin, rankNeeded);
     }
     
-    public ConsulatCommand(String server, String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded){
+    public ConsulatCommand(String plugin, String name, List<String> aliases, String usage, int argsMin, Rank rankNeeded){
         super(name, "", usage, aliases);
         this.usage = usage;
         this.argsMin = argsMin;
         this.rankNeeded = rankNeeded;
-        this.permission = server + ".command." + name;
+        this.permission = plugin + ".command." + name;
         CommandManager commandManager = CommandManager.getInstance();
         if(commandManager == null){
             throw new IllegalStateException("Command Manager is not instantiated");
@@ -57,9 +57,8 @@ public abstract class ConsulatCommand extends Command implements Comparable<Cons
         commandManager.addCommand(this);
     }
     
-    @Nullable
     @Override
-    public String getPermission(){
+    public @Nullable String getPermission(){
         return permission;
     }
     
