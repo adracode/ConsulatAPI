@@ -20,46 +20,6 @@ import java.util.UUID;
 
 public interface IGui extends InventoryHolder {
     
-    IGui getBaseGui();
-    
-    default int getLine(){
-        return getInventory().getSize() / 9;
-    }
-    
-    @NotNull IGui setDeco(@NotNull Material type, int... slots);
-    
-    void setDisplayName(int slot, @NotNull String name);
-    
-    void setDescription(int slot, @NotNull String... description);
-    
-    void setType(int slot, @NotNull Material material);
-    
-    void setGlowing(int slot, boolean glow);
-    
-    @NotNull IGui setItem(@NotNull GuiItem item);
-    
-    @NotNull IGui setItem(int slot, @Nullable GuiItem item);
-    
-    void moveItem(int from, int to);
-    
-    void moveItem(int from, @NotNull IGui guiTo, int to);
-    
-    @Nullable GuiItem getItem(int slot);
-    
-    void open(@NotNull ConsulatPlayer player);
-    
-    @NotNull String getName();
-    
-    void setName(String name);
-    
-    String buildInventoryTitle(String title);
-    
-    void setTitle();
-    
-    void removeItem(int slot);
-    
-    @NotNull List<GuiItem> getItems();
-    
     default void refresh(ConsulatPlayer player){
         if(player == null){
             return;
@@ -97,6 +57,80 @@ public interface IGui extends InventoryHolder {
     default void onRemove(GuiRemoveEvent event){
     }
     
+    default IGui removeFakeItem(int slot, ConsulatPlayer player){
+        return setFakeItem(slot, null, player);
+    }
+    
+    default void setDescriptionPlayer(int slot, ConsulatPlayer player, String... description){
+        setDescriptionPlayer(slot, player, Arrays.asList(description));
+    }
+    
+    default void setDescriptionPlayer(int slot, ConsulatPlayer player, List<String> description){
+        GuiItem copy = getItem(slot);
+        if(copy == null){
+            return;
+        }
+        GuiItem fake = copy.clone();
+        fake.setDescription(description);
+        setFakeItem(slot, fake, player);
+    }
+    
+    IGui getBaseGui();
+    
+    @NotNull IGui setDeco(@NotNull Material type, int... slots);
+    
+    void setDisplayName(int slot, @NotNull String name);
+    
+    void setDescription(int slot, @NotNull String... description);
+    
+    void setType(int slot, @NotNull Material material);
+    
+    void setGlowing(int slot, boolean glow);
+    
+    @NotNull IGui setItem(@NotNull GuiItem item);
+    
+    @NotNull IGui setItem(int slot, @Nullable GuiItem item);
+    
+    void moveItem(int from, int to);
+    
+    void moveItem(int from, @NotNull IGui guiTo, int to);
+    
+    @Nullable GuiItem getItem(int slot);
+    
+    void open(@NotNull ConsulatPlayer player);
+    
+    @NotNull String getName();
+    
+    void setName(String name);
+    
+    String buildInventoryTitle(String title);
+    
+    void setTitle();
+    
+    void removeItem(int slot);
+    
+    @NotNull List<GuiItem> getItems();
+    
+    boolean isModifiable();
+    
+    void setModifiable(boolean modifiable);
+    
+    boolean isDestroyOnClose();
+    
+    void setDestroyOnClose(boolean destroyOnClose);
+    
+    boolean isBackButton();
+    
+    void setBackButton(boolean backButton);
+    
+    boolean containsFakeItems();
+    
+    IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player);
+    
+    default int getLine(){
+        return getInventory().getSize() / 9;
+    }
+    
     /**
      * Créer et renvoie un nouvel item
      *
@@ -120,40 +154,6 @@ public interface IGui extends InventoryHolder {
     
     static GuiItem getItem(GuiItem item, int slot){
         return item.clone().setSlot(slot);
-    }
-    
-    boolean isModifiable();
-    
-    void setModifiable(boolean modifiable);
-    
-    boolean isDestroyOnClose();
-    
-    void setDestroyOnClose(boolean destroyOnClose);
-    
-    boolean isBackButton();
-    
-    void setBackButton(boolean backButton);
-    
-    boolean containsFakeItems();
-    
-    IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player);
-    
-    default IGui removeFakeItem(int slot, ConsulatPlayer player){
-        return setFakeItem(slot, null, player);
-    }
-    
-    default void setDescriptionPlayer(int slot, ConsulatPlayer player, String... description){
-        setDescriptionPlayer(slot, player, Arrays.asList(description));
-    }
-    
-    default void setDescriptionPlayer(int slot, ConsulatPlayer player, List<String> description){
-        GuiItem copy = getItem(slot);
-        if(copy == null){
-            return;
-        }
-        GuiItem fake = copy.clone();
-        fake.setDescription(description);
-        setFakeItem(slot, fake, player);
     }
     
 }

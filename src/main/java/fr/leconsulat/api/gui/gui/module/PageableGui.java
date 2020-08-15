@@ -23,8 +23,20 @@ public final class PageableGui implements Pageable {
         this.mainPage = mainPage;
         this.gui = new Page(name, line, items);
         if(mainPage instanceof Relationnable && ((Relationnable)mainPage).hasFather() && gui.isBackButton()){
-            gui.setItem((gui.getLine() - 1) * 9, BaseGui.BACK.clone());
+            gui.setItem((gui.getLine() - 1) * 9, GuiItem.BACK.clone());
         }
+    }
+    
+    public final void onOpen(GuiOpenEvent event){
+        onPageOpen(event, this);
+    }
+    
+    public final void onClose(GuiCloseEvent event){
+        onPageClose(event, this);
+    }
+    
+    public final void onClick(GuiClickEvent event){
+        onPageClick(event, this);
     }
     
     @Override
@@ -87,11 +99,11 @@ public final class PageableGui implements Pageable {
         
         private byte slot = -1;
         private ByteIterator iterator;
-    
+        
         public GuiIterator(){
             this.iterator = mainPage.getDynamicItems();
         }
-    
+        
         @Override
         public boolean hasNext(){
             return iterator.hasNext();
@@ -108,70 +120,58 @@ public final class PageableGui implements Pageable {
         }
     }
     
-    public final void onOpen(GuiOpenEvent event){
-        onPageOpen(event, this);
-    }
-    
-    public final void onClose(GuiCloseEvent event){
-        onPageClose(event, this);
-    }
-    
-    public final void onClick(GuiClickEvent event){
-        onPageClick(event, this);
-    }
-    
     public class Page extends BaseGui implements Pageable {
-    
+        
         public Page(@NotNull String name, int line, GuiItem... items){
             super(name, line, items);
         }
-    
+        
         @Override
         public int getPage(){
             return PageableGui.this.getPage();
         }
-    
+        
         @Override
         public void setPage(int page){
             PageableGui.this.setPage(page);
         }
-    
+        
         @Override
         public MainPage getMainPage(){
             return PageableGui.this.getMainPage();
         }
-    
+        
         @Override
         public IGui getGui(){
             return PageableGui.this.getGui();
         }
-    
+        
         @NotNull
         @Override
         public Iterator<GuiItem> iterator(){
             return PageableGui.this.iterator();
         }
-    
+        
         @Override
         public void onOpen(GuiOpenEvent event){
             PageableGui.this.onPageOpen(event, this);
         }
-    
+        
         @Override
         public void onOpened(GuiOpenEvent event){
             PageableGui.this.onPageOpened(event, this);
         }
-    
+        
         @Override
         public void onClose(GuiCloseEvent event){
             PageableGui.this.onPageClose(event, this);
         }
-    
+        
         @Override
         public void onClick(GuiClickEvent event){
             PageableGui.this.onPageClick(event, this);
         }
-    
+        
         @Override
         public String buildInventoryTitle(String title){
             if(mainPage instanceof Relationnable){

@@ -15,76 +15,76 @@ import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
-import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.redis.RedisManager;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.redisson.api.RBucket;
 
 import java.util.UUID;
 
 public class ADebugCommand extends ConsulatCommand {
-    
-    private UUID uuid = UUID.fromString("43da311c-d869-4e88-9b78-f1d4fc193ed4");
-    private Object2IntMap<String> sub = new Object2IntOpenHashMap<>(1);
-    
+
+    public static final @NotNull UUID UUID_PERMISSION = UUID.fromString("43da311c-d869-4e88-9b78-f1d4fc193ed4");
+    private final @NotNull Object2IntMap<String> sub = new Object2IntOpenHashMap<>(1);
+
     public ADebugCommand(){
-        super("consulat.api", "adebug", "", 0, Rank.ADMIN);
-        suggest(listener -> {
+        super(ConsulatAPI.getConsulatAPI(), "adebug");
+        setDescription("Commande de débug").setUsage("/adebug...").suggest(listener -> {
                     ConsulatPlayer player = getConsulatPlayer(listener);
-                    return player != null && player.getUUID().equals(uuid);
+                    return player != null && player.getUUID().equals(UUID_PERMISSION);
                 },
-                LiteralArgumentBuilder.literal("redis")
-                        .then(LiteralArgumentBuilder.literal("sub")
-                                .then(Arguments.word("channel")))
-                        .then(LiteralArgumentBuilder.literal("pub")
-                                .then(Arguments.word("channel")
-                                        .then(RequiredArgumentBuilder.argument("message", StringArgumentType.greedyString()))))
-                        .then(LiteralArgumentBuilder.literal("pubint")
-                                .then(Arguments.word("channel")
-                                        .then(RequiredArgumentBuilder.argument("message", IntegerArgumentType.integer()))))
-                        .then(LiteralArgumentBuilder.literal("get")
-                                .then(Arguments.word("key"))),
-                LiteralArgumentBuilder.literal("permission")
-                        .then(LiteralArgumentBuilder.literal("has")
-                                .then(Arguments.playerList("joueur")
-                                        .then(Arguments.word("permission"))))
-                        .then(LiteralArgumentBuilder.literal("add")
-                                .then(Arguments.playerList("joueur")
-                                        .then(Arguments.word("permission"))))
-                        .then(LiteralArgumentBuilder.literal("remove")
-                                .then(Arguments.playerList("joueur")
-                                        .then(Arguments.word("permission")))),
-                LiteralArgumentBuilder.literal("guipage")
-                        .then(RequiredArgumentBuilder.argument("tick", IntegerArgumentType.integer(0))
-                                .then(RequiredArgumentBuilder.argument("items", IntegerArgumentType.integer(0)))),
-                LiteralArgumentBuilder.literal("config")
-                        .then(Arguments.word("server").suggests((context, builder) -> {
+                LiteralArgumentBuilder.literal("redis").
+                        then(LiteralArgumentBuilder.literal("sub").
+                                then(Arguments.word("channel"))).
+                        then(LiteralArgumentBuilder.literal("pub").
+                                then(Arguments.word("channel").
+                                then(RequiredArgumentBuilder.argument("message", StringArgumentType.greedyString())))).
+                        then(LiteralArgumentBuilder.literal("pubint").
+                                then(Arguments.word("channel").
+                                        then(RequiredArgumentBuilder.argument("message", IntegerArgumentType.integer())))).
+                        then(LiteralArgumentBuilder.literal("get").
+                                then(Arguments.word("key"))),
+                LiteralArgumentBuilder.literal("permission").
+                        then(LiteralArgumentBuilder.literal("has").
+                                then(Arguments.playerList("joueur").
+                                        then(Arguments.word("permission")))).
+                        then(LiteralArgumentBuilder.literal("add").
+                                then(Arguments.playerList("joueur").
+                                        then(Arguments.word("permission")))).
+                        then(LiteralArgumentBuilder.literal("remove").
+                                then(Arguments.playerList("joueur").
+                                        then(Arguments.word("permission")))),
+                LiteralArgumentBuilder.literal("guipage").
+                        then(RequiredArgumentBuilder.argument("tick", IntegerArgumentType.integer(0)).
+                                then(RequiredArgumentBuilder.argument("items", IntegerArgumentType.integer(0)))),
+                LiteralArgumentBuilder.literal("config").
+                        then(Arguments.word("server").suggests((context, builder) -> {
                             for(ConsulatServer server : ConsulatServer.values()){
                                 builder.suggest(server.name());
                             }
                             return builder.buildFuture();
                         })),
-                LiteralArgumentBuilder.literal("blockinventory")
-                        .then(Arguments.playerList("joueur")
-                                .then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
+                LiteralArgumentBuilder.literal("blockinventory").
+                        then(Arguments.playerList("joueur").
+                                then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
                 LiteralArgumentBuilder.literal("item")
         );
-        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(uuid);
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(UUID_PERMISSION);
         if(player != null){
             player.addPermission(getPermission());
         } else {
-            ConsulatPlayer.addPermission(uuid, getPermission());
+            ConsulatPlayer.addPermission(UUID_PERMISSION, getPermission());
         }
         new ManageExemple();
     }
-    
+
     @Override
-    public void onCommand(ConsulatPlayer sender, String[] args){
-        if(!sender.getUUID().equals(uuid)){
+    public void onCommand(@NotNull ConsulatPlayer sender, @NotNull String[] args){
+        if(!sender.getUUID().equals(UUID_PERMISSION)){
             return;
         }
         if(args.length > 0){
@@ -104,15 +104,19 @@ public class ADebugCommand extends ConsulatCommand {
                                                 p.sendMessage("[" + channel + "] " + object);
                                             }
                                         }));
+                                sender.sendMessage("§aSub.");
                                 break;
                             case "unsub":
                                 RedisManager.getInstance().getRedis().getTopic(args[2]).removeListener(sub.getInt(args[2]));
+                                sender.sendMessage("§aUnsub.");
                                 break;
                             case "pub":
                                 RedisManager.getInstance().getRedis().getTopic(args[2]).publishAsync(StringUtils.join(args, ' ', 3, args.length));
+                                sender.sendMessage("§aPub.");
                                 break;
                             case "pubint":
                                 RedisManager.getInstance().getRedis().getTopic(args[2]).publishAsync(Integer.parseInt(StringUtils.join(args, ' ', 3, args.length)));
+                                sender.sendMessage("§aPub.");
                                 break;
                             case "get":
                                 RBucket<?> get = RedisManager.getInstance().getRedis().getBucket(args[2]);
@@ -143,7 +147,11 @@ public class ADebugCommand extends ConsulatCommand {
                                 sender.sendMessage("§cIl a déjà la permission");
                                 return;
                             }
-                            target.addPermission(args[3]);
+                            if(args[3].contains(".command.")){
+                                target.addCommandPermission(args[3]);
+                            } else {
+                                target.addPermission(args[3]);
+                            }
                             sender.sendMessage("§aPermission donnée");
                             break;
                         case "remove":
@@ -151,7 +159,11 @@ public class ADebugCommand extends ConsulatCommand {
                                 sender.sendMessage("§cIl n'a pas la permission");
                                 return;
                             }
-                            target.removePermission(args[3]);
+                            if(args[3].contains(".command.")){
+                                target.removeCommandPermission(args[3]);
+                            } else {
+                                target.removePermission(args[3]);
+                            }
                             sender.sendMessage("§aIl n'a plus la permission");
                             break;
                     }
@@ -167,6 +179,8 @@ public class ADebugCommand extends ConsulatCommand {
                             for(int i = 0, size = Integer.parseInt(args[2]); i < size; ++i){
                                 ((Pageable)open).getMainPage().addItem(new GuiItem("Test", (byte)-1, "adracode", null));
                             }
+                        } else {
+                            sender.sendMessage("§cPas une page.");
                         }
                     }, Integer.parseInt(args[1]));
                     break;
@@ -177,6 +191,7 @@ public class ADebugCommand extends ConsulatCommand {
                             api.setServer(ConsulatServer.valueOf(args[1].toUpperCase()));
                             api.getConfig().set("server-name", args[1]);
                             api.saveConfig();
+                            sender.sendMessage("§aNom serveur changé..");
                         }
                     }
                     break;
@@ -191,7 +206,7 @@ public class ADebugCommand extends ConsulatCommand {
                     target.setInventoryBlocked(Boolean.parseBoolean(args[2]));
                     break;
                 case "item":
-                    sender.sendMessage(ConsulatAPI.getNMS().getItemNMS().getItemNameId(sender.getPlayer().getInventory().getItemInMainHand()));
+                    sender.sendMessage(ConsulatAPI.getNMS().getItem().getItemNameId(sender.getPlayer().getInventory().getItemInMainHand()));
                     break;
             }
         }

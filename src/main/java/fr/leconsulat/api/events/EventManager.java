@@ -24,16 +24,16 @@ public class EventManager implements Listener {
     
     public static EventManager instance;
     
-    public EventManager(){
+    static{
+        new EventManager();
+    }
+    
+    private EventManager(){
         if(instance != null){
             return;
         }
         instance = this;
         Bukkit.getServer().getPluginManager().registerEvents(this, ConsulatAPI.getConsulatAPI());
-    }
-    
-    private boolean noInteraction(Player player){
-        return player.isSneaking() && (player.getInventory().getItemInMainHand().getType() != Material.AIR || player.getInventory().getItemInOffHand().getType() != Material.AIR);
     }
     
     @EventHandler
@@ -233,46 +233,6 @@ public class EventManager implements Listener {
                     }
                 }
                 break;
-        }
-    }
-    
-    private void onItemUse(PlayerInteractEvent event, Player player, Block clickedBlock){
-        if(event.getItem() != null){
-            PlayerPlaceItemEvent playerPlaceItemEvent = null;
-            switch(event.getItem().getType()){
-                case ARMOR_STAND:
-                    playerPlaceItemEvent = new PlayerPlaceArmorStandEvent(player, clickedBlock.getLocation(), event.getItem());
-                    break;
-                case BIRCH_BOAT:
-                case ACACIA_BOAT:
-                case DARK_OAK_BOAT:
-                case JUNGLE_BOAT:
-                case OAK_BOAT:
-                case SPRUCE_BOAT:
-                    playerPlaceItemEvent = new PlayerPlaceBoatEvent(player, clickedBlock.getLocation(), event.getItem());
-                    break;
-                case END_CRYSTAL:
-                    playerPlaceItemEvent = new PlayerPlaceEndCrystalEvent(player, clickedBlock.getLocation(), event.getItem());
-                    break;
-                case MINECART:
-                case CHEST_MINECART:
-                case FURNACE_MINECART:
-                case TNT_MINECART:
-                case HOPPER_MINECART:
-                case COMMAND_BLOCK_MINECART:
-                    playerPlaceItemEvent = new PlayerPlaceMinecartEvent(player, clickedBlock.getLocation(), event.getItem());
-                    break;
-                default:
-                    if(isSpawnEgg(event.getMaterial())){
-                        playerPlaceItemEvent = new PlayerSpawnEntityEvent(player, clickedBlock.getLocation(), event.getItem());
-                    }
-            }
-            if(playerPlaceItemEvent != null){
-                Bukkit.getPluginManager().callEvent(playerPlaceItemEvent);
-                if(playerPlaceItemEvent.isCancelled()){
-                    event.setCancelled(true);
-                }
-            }
         }
     }
     
@@ -530,6 +490,50 @@ public class EventManager implements Listener {
         }
     }
     
+    private boolean noInteraction(Player player){
+        return player.isSneaking() && (player.getInventory().getItemInMainHand().getType() != Material.AIR || player.getInventory().getItemInOffHand().getType() != Material.AIR);
+    }
+    
+    private void onItemUse(PlayerInteractEvent event, Player player, Block clickedBlock){
+        if(event.getItem() != null){
+            PlayerPlaceItemEvent playerPlaceItemEvent = null;
+            switch(event.getItem().getType()){
+                case ARMOR_STAND:
+                    playerPlaceItemEvent = new PlayerPlaceArmorStandEvent(player, clickedBlock.getLocation(), event.getItem());
+                    break;
+                case BIRCH_BOAT:
+                case ACACIA_BOAT:
+                case DARK_OAK_BOAT:
+                case JUNGLE_BOAT:
+                case OAK_BOAT:
+                case SPRUCE_BOAT:
+                    playerPlaceItemEvent = new PlayerPlaceBoatEvent(player, clickedBlock.getLocation(), event.getItem());
+                    break;
+                case END_CRYSTAL:
+                    playerPlaceItemEvent = new PlayerPlaceEndCrystalEvent(player, clickedBlock.getLocation(), event.getItem());
+                    break;
+                case MINECART:
+                case CHEST_MINECART:
+                case FURNACE_MINECART:
+                case TNT_MINECART:
+                case HOPPER_MINECART:
+                case COMMAND_BLOCK_MINECART:
+                    playerPlaceItemEvent = new PlayerPlaceMinecartEvent(player, clickedBlock.getLocation(), event.getItem());
+                    break;
+                default:
+                    if(isSpawnEgg(event.getMaterial())){
+                        playerPlaceItemEvent = new PlayerSpawnEntityEvent(player, clickedBlock.getLocation(), event.getItem());
+                    }
+            }
+            if(playerPlaceItemEvent != null){
+                Bukkit.getPluginManager().callEvent(playerPlaceItemEvent);
+                if(playerPlaceItemEvent.isCancelled()){
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+    
     private boolean isSpawnEgg(Material material){
         switch(material){
             case BAT_SPAWN_EGG:
@@ -746,4 +750,7 @@ public class EventManager implements Listener {
         return null;
     }
     
+    public static EventManager getInstance(){
+        return instance;
+    }
 }

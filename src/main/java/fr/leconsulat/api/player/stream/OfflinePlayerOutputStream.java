@@ -2,6 +2,7 @@ package fr.leconsulat.api.player.stream;
 
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.nbt.CompoundTag;
+import fr.leconsulat.api.nbt.ListTag;
 import fr.leconsulat.api.nbt.NBTInputStream;
 import fr.leconsulat.api.nbt.NBTType;
 
@@ -37,7 +38,7 @@ public class OfflinePlayerOutputStream {
     
     public OfflinePlayerOutputStream writeInventory(){
         try {
-            os.writeObject(player.getListTag("Inventory", NBTType.COMPOUND));
+            os.writeObject(player.has("Inventory") ? player.getListTag("Inventory", NBTType.COMPOUND) : new ListTag<>(NBTType.COMPOUND));
         } catch(IOException e){
             e.printStackTrace();
         }

@@ -10,17 +10,19 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class GuiItem extends ItemStack implements Cloneable {
     
     public static final ItemStack AIR = new ItemStack(Material.AIR);
+    public static final GuiItem BACK = new GuiItem("§cRetour", (byte)-1, Material.RED_STAINED_GLASS_PANE);
     
-    private String permission;
     private byte slot;
-    private Object attachedObject;
-    private Map<UUID, ItemStack> fakeItems;
+    private @Nullable Object attachedObject;
+    private @Nullable Map<UUID, ItemStack> fakeItems;
     
     private GuiItem(Material material){
         super(material);
@@ -61,7 +63,6 @@ public class GuiItem extends ItemStack implements Cloneable {
     
     public GuiItem(GuiItem item){
         super(item);
-        this.permission = item.permission;
         this.slot = item.slot;
         this.attachedObject = item.attachedObject;
     }
@@ -91,20 +92,6 @@ public class GuiItem extends ItemStack implements Cloneable {
         this.slot = (byte)slot;
     }
     
-    private void setFlags(){
-        this.addItemFlags(
-                ItemFlag.HIDE_ATTRIBUTES,
-                ItemFlag.HIDE_POTION_EFFECTS
-        );
-    }
-    
-    public static boolean isGuiItem(ItemStack item){
-        if(item == null || item.getType() == Material.AIR){
-            return false;
-        }
-        return item.hasItemFlag(ItemFlag.HIDE_ATTRIBUTES) && item.hasItemFlag(ItemFlag.HIDE_POTION_EFFECTS);
-    }
-    
     public GuiItem(String name, UUID uuid, List<String> description){
         this(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta)getItemMeta();
@@ -117,22 +104,64 @@ public class GuiItem extends ItemStack implements Cloneable {
         setItemMeta(meta);
     }
     
-    public GuiItem setGlowing(boolean b){
-        ItemMeta meta = getItemMeta();
-        if(b){
-            meta.addEnchant(Enchantment.ARROW_INFINITE, 0, true);
-            if(!meta.hasItemFlag(ItemFlag.HIDE_ENCHANTS)){
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            }
-        } else {
-            meta.removeEnchant(Enchantment.ARROW_INFINITE);
+    public List<String> getDescription(String... add){
+        List<String> description = null;
+        if(hasItemMeta()){
+            description = getItemMeta().getLore();
         }
-        setItemMeta(meta);
-        return this;
+        if(description == null){
+            description = new ArrayList<>();
+        }
+        description.addAll(Arrays.asList(add));
+        return description;
+    }
+    
+    public GuiItem get(byte slot){
+        return new GuiItem(this).setSlot(slot);
+    }
+    
+    public ItemStack getFakeItem(UUID uuid){
+        return containsFakeItems() ? fakeItems.get(uuid) : null;
+    }
+    
+    public void addFakeItem(UUID uuid, ItemStack item){
+        if(fakeItems == null){
+            fakeItems = new HashMap<>();
+        }
+        fakeItems.put(uuid, item);
+    }
+    
+    public boolean removeFakeItem(UUID uuid){
+        if(!containsFakeItems()){
+            return false;
+        }
+        return fakeItems.remove(uuid) != null;
+    }
+    
+    public void clearFakeItems(UUID uuid){
+        if(fakeItems != null){
+            fakeItems.remove(uuid);
+        }
+    }
+    
+    public boolean containsFakeItems(){
+        return fakeItems != null && !fakeItems.isEmpty();
+    }
+    
+    private void setFlags(){
+        this.addItemFlags(
+                ItemFlag.HIDE_ATTRIBUTES,
+                ItemFlag.HIDE_POTION_EFFECTS
+        );
     }
     
     public byte getSlot(){
         return slot;
+    }
+    
+    public GuiItem setSlot(int slot){
+        this.slot = (byte)slot;
+        return this;
     }
     
     public String getDisplayName(){
@@ -161,18 +190,6 @@ public class GuiItem extends ItemStack implements Cloneable {
         return new ArrayList<>();
     }
     
-    public List<String> getDescription(String... add){
-        List<String> description = null;
-        if(hasItemMeta()){
-            description = getItemMeta().getLore();
-        }
-        if(description == null){
-            description = new ArrayList<>();
-        }
-        description.addAll(Arrays.asList(add));
-        return description;
-    }
-    
     public GuiItem setDescription(String... description){
         return setDescription(Arrays.asList(description));
     }
@@ -184,48 +201,35 @@ public class GuiItem extends ItemStack implements Cloneable {
         return this;
     }
     
-    public String getPermission(){
-        return permission;
+    public @NotNull Object getAttachedObject(){
+        return Objects.requireNonNull(attachedObject, "attachedObject");
     }
     
-    public GuiItem setPermission(String permission){
-        this.permission = permission;
-        return this;
-    }
-    
-    public GuiItem setSlot(int slot){
-        this.slot = (byte)slot;
-        return this;
-    }
-    
-    public GuiItem get(byte slot){
-        return new GuiItem(this).setSlot(slot);
-    }
-    
-    public Object getAttachedObject(){
-        return attachedObject;
-    }
-    
-    public void setAttachedObject(Object attachedObject){
+    public void setAttachedObject(@NotNull Object attachedObject){
         this.attachedObject = attachedObject;
     }
     
-    public ItemStack getFakeItem(UUID uuid){
-        return containsFakeItems() ? fakeItems.get(uuid) : null;
+    public GuiItem setGlowing(boolean b){
+        ItemMeta meta = getItemMeta();
+        if(b){
+            meta.addEnchant(Enchantment.ARROW_INFINITE, 0, true);
+            if(!meta.hasItemFlag(ItemFlag.HIDE_ENCHANTS)){
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            }
+        } else {
+            meta.removeEnchant(Enchantment.ARROW_INFINITE);
+        }
+        setItemMeta(meta);
+        return this;
     }
     
-    public void addFakeItem(UUID uuid, ItemStack item){
-        if(fakeItems == null){
-            fakeItems = new HashMap<>();
-        }
-        fakeItems.put(uuid, item);
-    }
-    
-    public boolean removeFakeItem(UUID uuid){
-        if(!containsFakeItems()){
-            return false;
-        }
-        return fakeItems.remove(uuid) != null;
+    @Override
+    public String toString(){
+        return "GuiItem{" +
+                super.toString() +
+                ", slot=" + slot +
+                ", attachedObject=" + attachedObject +
+                '}';
     }
     
     @Override
@@ -233,24 +237,11 @@ public class GuiItem extends ItemStack implements Cloneable {
         return new GuiItem(this);
     }
     
-    @Override
-    public String toString(){
-        return "GuiItem{" +
-                super.toString() +
-                ", permission='" + permission + '\'' +
-                ", slot=" + slot +
-                ", attachedObject=" + attachedObject +
-                '}';
-    }
-    
-    public void clearFakeItems(UUID uuid){
-        if(fakeItems != null){
-            fakeItems.remove(uuid);
+    public static boolean isGuiItem(ItemStack item){
+        if(item == null || item.getType() == Material.AIR){
+            return false;
         }
-    }
-    
-    public boolean containsFakeItems(){
-        return fakeItems != null && !fakeItems.isEmpty();
+        return item.hasItemFlag(ItemFlag.HIDE_ATTRIBUTES) && item.hasItemFlag(ItemFlag.HIDE_POTION_EFFECTS);
     }
     
     public static List<String> getDescription(ItemStack item, String... add){

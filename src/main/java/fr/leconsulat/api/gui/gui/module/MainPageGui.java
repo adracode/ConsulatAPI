@@ -29,6 +29,14 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         pages.add(this);
     }
     
+    @NotNull
+    public Pageable newPage(){
+        Pageable pageGui = createPage();
+        addPage(pageGui);
+        onPageCreated(new GuiCreateEvent(gui), pageGui);
+        return pageGui;
+    }
+    
     @Override
     public Pageable getPage(int page){
         if(page == pages.size()){
@@ -52,9 +60,7 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         for(byte i = (byte)from; i < to; i++){
             dynamicItems[i - from] = i;
         }
-    }
-    
-    @Override
+    }    @Override
     public final void setDynamicItems(int... slots){
         Set<Byte> sorted = new TreeSet<>();
         for(int slot : slots){
@@ -74,6 +80,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     }
     
     @Override
+    public int getPage(){
+        return 0;
+    }    @Override
     public void setTemplateItems(int... slots){
         Set<Byte> sorted = new TreeSet<>();
         for(int slot : slots){
@@ -93,11 +102,16 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     }
     
     @Override
+    public void setPage(int page){
+    }    @Override
     public ByteIterator getDynamicItems(){
         return ByteIterators.wrap(dynamicItems);
     }
     
     @Override
+    public MainPage getMainPage(){
+        return this;
+    }    @Override
     public void addPage(Pageable gui){
         currentIndex = -1;
         pages.add(gui);
@@ -105,6 +119,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     }
     
     @Override
+    public IGui getGui(){
+        return gui;
+    }    @Override
     public Pageable createPage(){
         if(templateItems == null || templateItems.length == 0){
             return new PageableGui(gui, gui.getName(), gui.getLine());
@@ -116,15 +133,15 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         return new PageableGui(gui, gui.getName(), gui.getLine(), items.toArray(new GuiItem[0]));
     }
     
-    @NotNull
-    public Pageable newPage(){
-        Pageable pageGui = createPage();
-        addPage(pageGui);
-        onPageCreated(new GuiCreateEvent(gui), pageGui);
-        return pageGui;
+    @Override
+    public void onPageCreated(GuiCreateEvent event, Pageable pageGui){
+        gui.onPageCreated(event, pageGui);
     }
     
     @Override
+    public void onPageClick(GuiClickEvent event, Pageable pageGui){
+        gui.onPageClick(event, pageGui);
+    }    @Override
     public void removePage(int page){
         Pageable removed = pages.remove(page);
         if(removed == null){
@@ -142,26 +159,62 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     }
     
     @Override
+    public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
+        gui.onPageOpen(event, pageGui);
+    }    @Override
     public int numberOfPages(){
         return pages.size();
     }
     
     @Override
+    public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
+        gui.onPageOpened(event, pageGui);
+    }    @Override
     public int getCurrentPage(){
         return numberOfPages() - 1;
     }
     
     @Override
+    public void onPageClose(GuiCloseEvent event, Pageable pageGui){
+        gui.onPageClose(event, pageGui);
+        
+    }    @Override
     public final int getItemsNumber(){
         return currentIndex + 1 + getCurrentPage() * dynamicItems.length;
     }
     
     @Override
+    public void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
+        gui.onPageRemoved(event, pageGui);
+    }    @Override
     public byte getCurrentSlot(){
         return dynamicItems[currentIndex];
     }
     
-    @Override
+    private class GuiIterator implements Iterator<GuiItem> {
+        
+        private int page = 0;
+        private byte indexSlot = -1;
+        
+        @Override
+        public boolean hasNext(){
+            if(++indexSlot >= dynamicItems.length){
+                indexSlot = 0;
+                ++page;
+            }
+            return page < getCurrentPage() || indexSlot <= currentIndex;
+        }
+        
+        @Override
+        public GuiItem next(){
+            return getPage(page).getGui().getItem(dynamicItems[indexSlot]);
+        }
+        
+        @Override
+        public void remove(){
+            removeItem(page, dynamicItems[indexSlot]);
+        }
+    }    @Override
     public void addItem(GuiItem item){
         int length = dynamicItems.length;
         Pageable gui;
@@ -267,78 +320,25 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         }
     }
     
-    @Override
-    public int getPage(){
-        return 0;
-    }
+
     
-    @Override
-    public void setPage(int page){
-    }
+
     
-    @Override
-    public MainPage getMainPage(){
-        return this;
-    }
+
     
-    @Override
-    public IGui getGui(){
-        return gui;
-    }
+
     
-    @Override
-    public void onPageCreated(GuiCreateEvent event, Pageable pageGui){
-        gui.onPageCreated(event, pageGui);
-    }
+
     
-    @Override
-    public void onPageClick(GuiClickEvent event, Pageable pageGui){
-        gui.onPageClick(event, pageGui);
-    }
+
     
-    @Override
-    public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
-        gui.onPageOpen(event, pageGui);
-    }
+
     
-    @Override
-    public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
-        gui.onPageOpened(event, pageGui);
-    }
+
     
-    @Override
-    public void onPageClose(GuiCloseEvent event, Pageable pageGui){
-        gui.onPageClose(event, pageGui);
-        
-    }
+
     
-    @Override
-    public void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
-        gui.onPageRemoved(event, pageGui);
-    }
+
     
-    private class GuiIterator implements Iterator<GuiItem> {
-        
-        private int page = 0;
-        private byte indexSlot = -1;
-        
-        @Override
-        public boolean hasNext(){
-            if(++indexSlot >= dynamicItems.length){
-                indexSlot = 0;
-                ++page;
-            }
-            return page < getCurrentPage() || indexSlot <= currentIndex;
-        }
-        
-        @Override
-        public GuiItem next(){
-            return getPage(page).getGui().getItem(dynamicItems[indexSlot]);
-        }
-        
-        @Override
-        public void remove(){
-            removeItem(page, dynamicItems[indexSlot]);
-        }
-    }
+
 }

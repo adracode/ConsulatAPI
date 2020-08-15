@@ -19,11 +19,11 @@ import java.util.List;
 
 @SuppressWarnings({"unused", "UnusedReturnValue"})
 public class BaseGui implements IGui {
-    
+
     /* Champs utilisés pour modifier le titre de l'inventaire */
     private static Field inventoryField;
     private static Field titleField;
-    
+
     /* Initialise les champs ci dessus */
     static{
         try {
@@ -35,9 +35,7 @@ public class BaseGui implements IGui {
             e.printStackTrace();
         }
     }
-    
-    public static final GuiItem BACK = new GuiItem("§cRetour", (byte)-1, Material.RED_STAINED_GLASS_PANE);
-    
+
     //Titre affiché dans l'inventaire
     @NotNull private String name;
     //Inventaire natif de Minecraft
@@ -46,16 +44,12 @@ public class BaseGui implements IGui {
     private GuiItem[] items;
     private boolean containsFakeItems = false;
     private int modifiers;
-    
+
     public BaseGui(@NotNull String name, int line, GuiItem... items){
         this(null, name, line, items);
         setBackButton(true);
     }
-    
-    public boolean containsFakeItems(){
-        return containsFakeItems;
-    }
-    
+
     /**
      * Créer un PagedGui
      *
@@ -70,7 +64,7 @@ public class BaseGui implements IGui {
             setItem(new GuiItem(item));
         }
     }
-    
+
     /**
      * Constructeur par copie
      *
@@ -86,7 +80,7 @@ public class BaseGui implements IGui {
             }
         }
     }
-    
+
     /**
      * Réalise une copie
      *
@@ -96,12 +90,22 @@ public class BaseGui implements IGui {
     public BaseGui copy(){
         return new BaseGui(this);
     }
-    
+
+    /**
+     * Mets à jour le slot visé
+     *
+     * @param slot le slot visé
+     */
+    public void update(int slot){
+        GuiItem item = getItem(slot);
+        inventory.setItem(slot, item);
+    }
+
     @Override
     public IGui getBaseGui(){
         return this;
     }
-    
+
     /**
      * Place des items de "décoration" dans le Gui.
      * Un tel item n'aura pas de nom
@@ -117,7 +121,7 @@ public class BaseGui implements IGui {
         }
         return this;
     }
-    
+
     /**
      * Changer le nom de l'item au slot visé
      *
@@ -132,7 +136,7 @@ public class BaseGui implements IGui {
             this.update(slot);
         }
     }
-    
+
     /**
      * Changer la description de l'item au slot visé
      *
@@ -146,9 +150,9 @@ public class BaseGui implements IGui {
             item.setDescription(description);
             this.update(slot);
         }
-        
+
     }
-    
+
     /**
      * Changer le type de l'item au slot visé
      *
@@ -164,7 +168,7 @@ public class BaseGui implements IGui {
         item.setType(material);
         this.update(slot);
     }
-    
+
     /**
      * Changer l'effet de lueur de l'item au slot visé
      *
@@ -179,8 +183,8 @@ public class BaseGui implements IGui {
             this.update(slot);
         }
     }
-    
-    
+
+
     /**
      * Ajouter un item au gui
      *
@@ -192,7 +196,7 @@ public class BaseGui implements IGui {
     public IGui setItem(@NotNull GuiItem item){
         return setItem(item.getSlot(), item);
     }
-    
+
     @NotNull
     @Override
     public IGui setItem(int slot, @Nullable GuiItem item){
@@ -203,37 +207,7 @@ public class BaseGui implements IGui {
         items[slot] = item;
         return this;
     }
-    
-    @Override
-    public IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player){
-        GuiItem it = getItem(slot);
-        if(it == null){
-            return this;
-        }
-        if(item == null){
-            if(!it.removeFakeItem(player.getUUID())){
-                return this;
-            }
-            if(this.equals(player.getCurrentlyOpen())){
-                ConsulatAPI.getNMS().getPacketNMS().setSlot(player.getPlayer(), slot, it);
-            }
-            containsFakeItems = false;
-            for(GuiItem guiItem : items){
-                if(guiItem != null && guiItem.containsFakeItems()){
-                    containsFakeItems = true;
-                    break;
-                }
-            }
-            return this;
-        }
-        it.addFakeItem(player.getUUID(), item);
-        containsFakeItems = true;
-        if(this.equals(player.getCurrentlyOpen())){
-            ConsulatAPI.getNMS().getPacketNMS().setSlot(player.getPlayer(), slot, item);
-        }
-        return this;
-    }
-    
+
     /**
      * Déplacer un item
      * <p>
@@ -246,7 +220,7 @@ public class BaseGui implements IGui {
     public void moveItem(int from, int to){
         moveItem(from, this, to);
     }
-    
+
     @Override
     public void moveItem(int from, @NotNull IGui guiTo, int to){
         if(from == to && this.equals(guiTo)){
@@ -266,7 +240,7 @@ public class BaseGui implements IGui {
         }
         guiTo.setItem(itemFrom);
     }
-    
+
     /**
      * Renvoie l'item au slot visé
      *
@@ -281,7 +255,7 @@ public class BaseGui implements IGui {
         }
         return items[slot];
     }
-    
+
     /**
      * Ouvre ce gui au joueur visé
      *
@@ -295,23 +269,13 @@ public class BaseGui implements IGui {
         player.setCurrentlyOpen((IGui)inventory.getHolder());
         onOpened(event);
     }
-    
-    /**
-     * Mets à jour le slot visé
-     *
-     * @param slot le slot visé
-     */
-    public void update(int slot){
-        GuiItem item = getItem(slot);
-        inventory.setItem(slot, item);
-    }
-    
+
     @Override
     @NotNull
     public String getName(){
         return name;
     }
-    
+
     /**
      * Changer le nom du gui
      *
@@ -327,7 +291,7 @@ public class BaseGui implements IGui {
     public String buildInventoryTitle(String title){
         return title;
     }
-    
+
     @Override
     public void setTitle(){
         String title = buildInventoryTitle(name);
@@ -337,7 +301,7 @@ public class BaseGui implements IGui {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * Supprime l'item au slot visé
      *
@@ -349,24 +313,18 @@ public class BaseGui implements IGui {
         items[slot] = null;
         this.update(slot);
     }
-    
-    @Override
-    @NotNull
-    public Inventory getInventory(){
-        return inventory;
-    }
-    
+
     @Override
     @NotNull
     public List<GuiItem> getItems(){
         return Collections.unmodifiableList(Arrays.asList(this.items));
     }
-    
+
     @Override
     public boolean isModifiable(){
         return (modifiers & 1) == 1;
     }
-    
+
     @Override
     public void setModifiable(boolean modifiable){
         if(modifiable){
@@ -375,12 +333,12 @@ public class BaseGui implements IGui {
             modifiers &= Integer.MAX_VALUE - 1;
         }
     }
-    
+
     @Override
     public boolean isDestroyOnClose(){
         return (modifiers & 2) == 2;
     }
-    
+
     @Override
     public void setDestroyOnClose(boolean destroyOnClose){
         if(destroyOnClose){
@@ -389,12 +347,12 @@ public class BaseGui implements IGui {
             modifiers &= Integer.MAX_VALUE - 2;
         }
     }
-    
+
     @Override
     public boolean isBackButton(){
         return (modifiers & 4) == 4;
     }
-    
+
     @Override
     public void setBackButton(boolean backButton){
         if(backButton){
@@ -403,7 +361,47 @@ public class BaseGui implements IGui {
             modifiers &= Integer.MAX_VALUE - 4;
         }
     }
-    
+
+    public boolean containsFakeItems(){
+        return containsFakeItems;
+    }
+
+    @Override
+    public IGui setFakeItem(int slot, ItemStack item, ConsulatPlayer player){
+        GuiItem it = getItem(slot);
+        if(it == null){
+            return this;
+        }
+        if(item == null){
+            if(!it.removeFakeItem(player.getUUID())){
+                return this;
+            }
+            if(this.equals(player.getCurrentlyOpen())){
+                ConsulatAPI.getNMS().getPacket().setSlot(player.getPlayer(), slot, it);
+            }
+            containsFakeItems = false;
+            for(GuiItem guiItem : items){
+                if(guiItem != null && guiItem.containsFakeItems()){
+                    containsFakeItems = true;
+                    break;
+                }
+            }
+            return this;
+        }
+        it.addFakeItem(player.getUUID(), item);
+        containsFakeItems = true;
+        if(this.equals(player.getCurrentlyOpen())){
+            ConsulatAPI.getNMS().getPacket().setSlot(player.getPlayer(), slot, item);
+        }
+        return this;
+    }
+
+    @Override
+    @NotNull
+    public Inventory getInventory(){
+        return inventory;
+    }
+
     @Override
     public String toString(){
         return "PagedGui{" +
@@ -412,7 +410,7 @@ public class BaseGui implements IGui {
                 ", items=" + Arrays.toString(items) +
                 '}';
     }
-    
+
     @Override
     protected void finalize(){
         System.out.println("Deleting " + name);

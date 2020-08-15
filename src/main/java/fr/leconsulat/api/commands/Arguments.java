@@ -24,25 +24,15 @@ public class Arguments {
     private static Method getItemStack;
     private static Method getEnchant;
     
-    /*private static Class<?> commandListenerWrapper;
-    
-    private static Method getPlayerList;
-    private static Method getOperators;*/
-    
     static{
         try {
             argumentProfile = MinecraftReflection.getMinecraftClass("ArgumentProfile").getConstructor();
             getItemStack = MinecraftReflection.getMinecraftClass("ArgumentItemStack").getMethod("a");
             getEnchant = MinecraftReflection.getMinecraftClass("ArgumentEnchantment").getMethod("a");
-            
-            /*commandListenerWrapper = MinecraftReflection.getMinecraftClass("CommandListenerWrapper");
-            getPlayerList = MinecraftReflection.getMinecraftClass("MinecraftServer").getMethod("getPlayerList");
-            getOperators = MinecraftReflection.getMinecraftClass("PlayerList").getMethod("m");*/
         } catch(NoSuchMethodException e){
             e.printStackTrace();
         }
     }
-    
     
     public static RequiredArgumentBuilder<Object, ?> enchant(String show){
         try {
@@ -86,7 +76,7 @@ public class Arguments {
     public static RequiredArgumentBuilder<Object, ?> playerList(String show){
         try {
             return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
-                ConsulatPlayer sender = CPlayerManager.getInstance().getConsulatPlayerFromContextSource(context.getSource());
+                ConsulatPlayer sender = ConsulatCommand.getConsulatPlayerFromContext(context.getSource());
                 if(sender != null){
                     suggest(CPlayerManager.getInstance().getConsulatPlayers(),
                             ConsulatPlayer::getName,
@@ -103,7 +93,7 @@ public class Arguments {
     public static RequiredArgumentBuilder<Object, ?> player(String show, Collection<UUID> list){
         try {
             return RequiredArgumentBuilder.argument(show, (ArgumentType<?>)argumentProfile.newInstance()).suggests((context, builder) -> {
-                ConsulatPlayer sender = CPlayerManager.getInstance().getConsulatPlayerFromContextSource(context.getSource());
+                ConsulatPlayer sender = ConsulatCommand.getConsulatPlayerFromContext(context.getSource());
                 if(sender != null){
                     for(UUID uuid : list){
                         Player player = Bukkit.getPlayer(uuid);

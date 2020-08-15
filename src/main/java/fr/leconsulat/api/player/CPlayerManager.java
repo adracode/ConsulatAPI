@@ -4,6 +4,7 @@ import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.commands.CommandManager;
+import fr.leconsulat.api.commands.commands.ADebugCommand;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.nbt.CompoundTag;
@@ -15,7 +16,6 @@ import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -50,27 +50,15 @@ public class CPlayerManager implements Listener {
         }
     }
     
-    //Fait une action avec l'ancien serveur
-    private BiConsumer<ConsulatPlayer, ConsulatServer> onJoin;
-    private Function<Rank, Set<String>> rankPermission;
-    
-    public static String getRedisKey(UUID uuid){
-        return "player:" + uuid;
-    }
-    
     private final File playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
-    
-    private File getPlayerFile(UUID uuid){
-        return FileUtils.loadFile(playerDataFolder, uuid + ".dat");
-    }
-    
-    private Class<?> playerClass;
-    private Constructor<?> playerConstructor;
     private final Map<UUID, ConsulatPlayer> players = new HashMap<>();
     private final Map<String, UUID> offlinePlayers = new HashMap<>();
-    
     private final Map<UUID, byte[]> pendingPlayer = new HashMap<>();
-    
+    //Fait une action avec l'ancien serveur
+    private BiConsumer<ConsulatPlayer, ConsulatServer> onJoin;
+    private Function<ConsulatPlayer, Set<String>> rankPermission;
+    private Class<?> playerClass;
+    private Constructor<?> playerConstructor;
     public CPlayerManager(){
         if(instance != null){
             return;
@@ -104,6 +92,27 @@ public class CPlayerManager implements Listener {
             ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Error while loading offline players");
             Bukkit.shutdown();
         }
+    }
+    
+    /**
+     * Renvoie tous les joueurs connectés sous forme de ConsulatPlayer
+     *
+     * @return Une collection contenant  les joueurs
+     */
+    public Collection<ConsulatPlayer> getConsulatPlayers(){
+        return Collections.unmodifiableCollection(players.values());
+    }
+    
+    public static CPlayerManager getInstance(){
+        return instance;
+    }
+    
+    public Class<?> getPlayerClass(){
+        return playerClass;
+    }
+    
+    public void setRankPermission(Function<ConsulatPlayer, Set<String>> rankPermission){
+        this.rankPermission = rankPermission;
     }
     
     public void loadPlayerData(byte[] data){
@@ -145,26 +154,6 @@ public class CPlayerManager implements Listener {
         }
     }
     
-    private void loadAllPlayers() throws SQLException{
-        PreparedStatement load = ConsulatAPI.getDatabase().prepareStatement("SELECT id, player_uuid, player_name FROM players");
-        ResultSet all = load.executeQuery();
-        while(all.next()){
-            String name = all.getString("player_name");
-            if(name == null){
-                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "NULL player_name at id " + all.getInt("id"));
-                continue;
-            }
-            String uuid = all.getString("player_uuid");
-            if(uuid == null){
-                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "NULL player_uuid at id " + all.getInt("id"));
-                continue;
-            }
-            offlinePlayers.put(name.toLowerCase(), UUID.fromString(uuid));
-        }
-        all.close();
-        load.close();
-    }
-    
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
         event.setJoinMessage("");
@@ -186,7 +175,7 @@ public class CPlayerManager implements Listener {
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " has joined");
         if(ConsulatAPI.getConsulatAPI().isDevelopment()){
             player.getPlayer().sendTitle("§4Serveur", "§4en développement", 20, 100, 20);
-            player.getPlayer().sendMessage("§cTu es sur un serveur en développement ! Les fonctionnalités présentes peuvent changer à tout moment, et des bugs peuvent être présents.");
+            player.getPlayer().sendMessage("§cTu es sur un serveur en développement ! Des bugs peuvent être présents.");
         }
         ConsulatAPI consulatAPI = ConsulatAPI.getConsulatAPI();
         String name = event.getPlayer().getName().toLowerCase();
@@ -276,16 +265,6 @@ public class CPlayerManager implements Listener {
         this.onJoin = onJoin;
     }
     
-    public ConsulatPlayer getConsulatPlayerFromContextSource(Object commandListenerWrapper){
-        try {
-            Player player = (Player)MinecraftReflection.getBukkitEntity(getEntity.invoke(commandListenerWrapper));
-            return player == null ? null : CPlayerManager.getInstance().getConsulatPlayer(player.getUniqueId());
-        } catch(Exception var2){
-            var2.printStackTrace();
-            return null;
-        }
-    }
-    
     public ConsulatPlayer getConsulatPlayer(UUID uuid){
         return players.get(uuid);
     }
@@ -296,15 +275,6 @@ public class CPlayerManager implements Listener {
             return null;
         }
         return getConsulatPlayer(uuid);
-    }
-    
-    /**
-     * Renvoie tous les joueurs connectés sous forme de ConsulatPlayer
-     *
-     * @return Une collection contenant  les joueurs
-     */
-    public Collection<ConsulatPlayer> getConsulatPlayers(){
-        return Collections.unmodifiableCollection(players.values());
     }
     
     public UUID getPlayerUUID(String name){
@@ -350,49 +320,6 @@ public class CPlayerManager implements Listener {
         }
         resultSet.close();
         fetch.close();
-    }
-    
-    @Deprecated
-    public Optional<ConsulatOffline> fetchOffline(String playerName) throws SQLException{
-        PreparedStatement fetch = ConsulatAPI.getDatabase().prepareStatement("SELECT * FROM players WHERE player_name = ?");
-        fetch.setString(1, playerName);
-        ResultSet resultFetch = fetch.executeQuery();
-        ConsulatOffline offline;
-        if(resultFetch.next()){
-            int id = resultFetch.getInt("id");
-            String uuid = resultFetch.getString("player_uuid");
-            if(uuid == null){
-                resultFetch.close();
-                fetch.close();
-                throw new SQLException("player_uuid is null at id " + id);
-            }
-            String rank = resultFetch.getString("player_rank");
-            if(rank == null){
-                resultFetch.close();
-                fetch.close();
-                throw new SQLException("player_rank is null at id " + id);
-            }
-            offline = new ConsulatOffline(
-                    id,
-                    UUID.fromString(uuid),
-                    resultFetch.getString("player_name"),
-                    Rank.byName(rank),
-                    resultFetch.getString("registered"));
-        } else {
-            return Optional.empty();
-        }
-        resultFetch.close();
-        fetch.close();
-        PreparedStatement lastConnection = ConsulatAPI.getDatabase().prepareStatement(
-                "SELECT connection_date FROM connections WHERE player_id = ? ORDER BY id DESC LIMIT 1");
-        lastConnection.setInt(1, offline.getId());
-        ResultSet resultLastConnection = lastConnection.executeQuery();
-        if(resultLastConnection.next()){
-            offline.setLastConnection(resultLastConnection.getString("connection_date"));
-        }
-        resultLastConnection.close();
-        lastConnection.close();
-        return Optional.of(offline);
     }
     
     public void fetchOffline(String playerName, Consumer<ConsulatOffline> consumer){
@@ -474,10 +401,6 @@ public class CPlayerManager implements Listener {
         request.close();
     }
     
-    public static CPlayerManager getInstance(){
-        return instance;
-    }
-    
     public void setCustomRank(UUID uuid, String rank) throws SQLException{
         PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET prefix_perso = ? WHERE player_uuid = ?");
         request.setString(1, rank);
@@ -486,16 +409,47 @@ public class CPlayerManager implements Listener {
         request.close();
     }
     
-    public Class<?> getPlayerClass(){
-        return playerClass;
-    }
-    
-    public Set<String> getRankPermissions(Rank rank){
-        Set<String> permissions = rankPermission == null ? new HashSet<>() : rankPermission.apply(rank);
+    public Set<String> getDefaultPermissions(ConsulatPlayer player){
+        Set<String> permissions = rankPermission == null ? new HashSet<>() : rankPermission.apply(player);
+        CommandManager commandManager = CommandManager.getInstance();
+        if(player.getUUID().equals(ADebugCommand.UUID_PERMISSION)){
+            permissions.add(commandManager.getCommand("adebug").getPermission());
+            permissions.add(commandManager.getCommand("offinv").getPermission());
+        }
+        switch(player.getRank()){
+            case RESPONSABLE:
+            case ADMIN:
+                permissions.add(ConsulatAPI.getConsulatAPI().getPermission("allow-other-plugin-commands"));
+                break;
+        }
         return permissions;
     }
     
-    public void setRankPermission(Function<Rank, Set<String>> rankPermission){
-        this.rankPermission = rankPermission;
+    private File getPlayerFile(UUID uuid){
+        return FileUtils.loadFile(playerDataFolder, uuid + ".dat");
+    }
+    
+    private void loadAllPlayers() throws SQLException{
+        PreparedStatement load = ConsulatAPI.getDatabase().prepareStatement("SELECT id, player_uuid, player_name FROM players");
+        ResultSet all = load.executeQuery();
+        while(all.next()){
+            String name = all.getString("player_name");
+            if(name == null){
+                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "NULL player_name at id " + all.getInt("id"));
+                continue;
+            }
+            String uuid = all.getString("player_uuid");
+            if(uuid == null){
+                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "NULL player_uuid at id " + all.getInt("id"));
+                continue;
+            }
+            offlinePlayers.put(name.toLowerCase(), UUID.fromString(uuid));
+        }
+        all.close();
+        load.close();
+    }
+    
+    public static String getRedisKey(UUID uuid){
+        return "player:" + uuid;
     }
 }

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GuiCloseEvent implements Cancellable {
     
-    @NotNull private final ConsulatPlayer player;
+    private final @NotNull ConsulatPlayer player;
     private boolean cancelled;
     private boolean openFatherGui = true;
     
@@ -17,8 +17,16 @@ public class GuiCloseEvent implements Cancellable {
         this.player = player;
     }
     
+    public boolean openFatherGui(){
+        return openFatherGui;
+    }
+    
     public @NotNull ConsulatPlayer getPlayer(){
         return player;
+    }
+    
+    public void setOpenFatherGui(boolean openFatherGui){
+        this.openFatherGui = openFatherGui;
     }
     
     @Override
@@ -29,13 +37,5 @@ public class GuiCloseEvent implements Cancellable {
     @Override
     public void setCancelled(boolean cancelled){
         this.cancelled = cancelled;
-    }
-    
-    public boolean openFatherGui(){
-        return openFatherGui;
-    }
-    
-    public void setOpenFatherGui(boolean openFatherGui){
-        this.openFatherGui = openFatherGui;
     }
 }

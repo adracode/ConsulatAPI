@@ -2,19 +2,21 @@ package fr.leconsulat.api.player.stream;
 
 import fr.leconsulat.api.nbt.CompoundTag;
 import fr.leconsulat.api.nbt.ListTag;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Objects;
 import java.util.UUID;
 
 public class OfflinePlayerInputStream {
     
     private ObjectInputStream is;
     
-    public OfflinePlayerInputStream(byte[] data){
+    public OfflinePlayerInputStream(@NotNull byte[] data){
         try {
-            is = new ObjectInputStream(new ByteArrayInputStream(data));
+            is = new ObjectInputStream(new ByteArrayInputStream(Objects.requireNonNull(data)));
         } catch(IOException e){
             e.printStackTrace();
         }

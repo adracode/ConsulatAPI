@@ -3,6 +3,7 @@ package fr.leconsulat.api.database;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.database.tasks.SaveTask;
 import org.bukkit.Bukkit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,11 +12,15 @@ public class SaveManager {
     
     private static SaveManager instance;
     
-    private Map<String, SaveTask<? extends Saveable, ?>> tasks = new HashMap<>();
+    static{
+        new SaveManager();
+    }
     
-    public SaveManager(){
+    private final @NotNull Map<String, SaveTask<? extends Saveable, ?>> tasks = new HashMap<>();
+    
+    private SaveManager(){
         if(instance != null){
-            return;
+            throw new IllegalStateException();
         }
         instance = this;
         int delay = 5 * 60 * 20;
@@ -51,14 +56,14 @@ public class SaveManager {
         }
     }
     
-    public static SaveManager getInstance(){
-        return instance;
-    }
-    
     //Bloquant
     public void removeAll(){
         for(SaveTask<? extends Saveable, ?> task : tasks.values()){
             task.removeDatas();
         }
+    }
+    
+    public static @NotNull SaveManager getInstance(){
+        return instance;
     }
 }

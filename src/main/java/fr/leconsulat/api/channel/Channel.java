@@ -3,55 +3,50 @@ package fr.leconsulat.api.channel;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
+@SuppressWarnings("unused")
 public abstract class Channel implements Iterable<ConsulatPlayer> {
     
-    private final UUID id;
-    private final String name;
-    protected Set<ConsulatPlayer> members = new HashSet<>();
+    protected final @NotNull Set<ConsulatPlayer> members = new HashSet<>();
+    private final @NotNull UUID id = UUID.randomUUID();
+    private final @NotNull String name;
     
-    public Channel(String id){
-        if(ChannelManager.getInstance() == null){
-            throw new IllegalStateException("ChannelManager is not instantiated");
-        }
-        this.id = UUID.randomUUID();
-        this.name = id;
+    public Channel(@NotNull String id){
+        this.name = Objects.requireNonNull(id);
         ChannelManager.getInstance().addChannel(id, this);
-    }
-    
-    public UUID getId(){
-        return id;
-    }
-    
-    public String getName(){
-        return name;
-    }
-    
-    public boolean isMember(ConsulatPlayer player){
-        return members.contains(player);
-    }
-    
-    public void addPlayer(ConsulatPlayer player){
-        members.add(player);
-    }
-    
-    public void removePlayer(ConsulatPlayer player){
-        if(this.equals(player.getCurrentChannel())){
-            player.setCurrentChannel(null);
-        }
-        members.remove(player);
     }
     
     public boolean isEmpty(){
         return members.isEmpty();
     }
     
-    public void sendMessage(String message, UUID... exclude){
+    public @NotNull UUID getId(){
+        return id;
+    }
+    
+    public @NotNull String getName(){
+        return name;
+    }
+    
+    public boolean isMember(@Nullable ConsulatPlayer player){
+        return members.contains(player);
+    }
+    
+    public void addPlayer(@NotNull ConsulatPlayer player){
+        members.add(Objects.requireNonNull(player));
+    }
+    
+    public void removePlayer(@NotNull ConsulatPlayer player){
+        if(this.equals(player.getCurrentChannel())){
+            player.setCurrentChannel(null);
+        }
+        members.remove(player);
+    }
+    
+    public void sendMessage(@NotNull String message, @NotNull UUID... exclude){
         if(exclude.length == 0){
             for(ConsulatPlayer p : members){
                 p.sendMessage(message);
@@ -72,35 +67,19 @@ public abstract class Channel implements Iterable<ConsulatPlayer> {
         }
     }
     
-    public void sendMessage(TextComponent... message){
+    public void sendMessage(@NotNull TextComponent... message){
         for(ConsulatPlayer p : members){
             p.sendMessage(message);
         }
     }
     
-    
     @Override
-    public @NotNull Iterator<ConsulatPlayer> iterator(){
-        return new PlayerIterator();
-    }
-    
-    private class PlayerIterator implements Iterator<ConsulatPlayer> {
-    
-        private final Iterator<ConsulatPlayer> iterator = members.iterator();
-    
-        @Override
-        public boolean hasNext(){
-            return iterator.hasNext();
-        }
-    
-        @Override
-        public ConsulatPlayer next(){
-            return iterator.next();
-        }
+    public int hashCode(){
+        return id.hashCode();
     }
     
     @Override
-    public boolean equals(Object o){
+    public boolean equals(@Nullable Object o){
         if(this == o){
             return true;
         }
@@ -111,7 +90,22 @@ public abstract class Channel implements Iterable<ConsulatPlayer> {
     }
     
     @Override
-    public int hashCode(){
-        return id.hashCode();
+    public @NotNull Iterator<ConsulatPlayer> iterator(){
+        return new PlayerIterator();
+    }
+    
+    private class PlayerIterator implements Iterator<ConsulatPlayer> {
+        
+        private final @NotNull Iterator<ConsulatPlayer> iterator = members.iterator();
+        
+        @Override
+        public boolean hasNext(){
+            return iterator.hasNext();
+        }
+        
+        @Override
+        public @NotNull ConsulatPlayer next(){
+            return iterator.next();
+        }
     }
 }

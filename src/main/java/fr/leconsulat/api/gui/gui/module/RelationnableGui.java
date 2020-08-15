@@ -14,10 +14,9 @@ import java.util.Map;
 
 public final class RelationnableGui<Gui extends IGui & Relationnable> implements Relationnable {
     
-    private Gui gui;
-    
-    private @Nullable Relationnable father;
     private final @NotNull Map<Object, Relationnable> children = new HashMap<>();
+    private Gui gui;
+    private @Nullable Relationnable father;
     
     public RelationnableGui(Gui gui){
         this.gui = gui;
@@ -55,6 +54,11 @@ public final class RelationnableGui<Gui extends IGui & Relationnable> implements
     }
     
     @Override
+    public Collection<Relationnable> getChildren(){
+        return Collections.unmodifiableCollection(children.values());
+    }
+    
+    @Override
     public @NotNull Relationnable getChild(Object key){
         Relationnable child = getLegacyChild(key);
         if(child == null){
@@ -66,11 +70,6 @@ public final class RelationnableGui<Gui extends IGui & Relationnable> implements
             child.getGui().onCreate();
         }
         return child;
-    }
-    
-    @Override
-    public Collection<Relationnable> getChildren(){
-        return Collections.unmodifiableCollection(children.values());
     }
     
     @Override

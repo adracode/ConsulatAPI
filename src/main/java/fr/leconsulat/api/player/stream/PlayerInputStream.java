@@ -1,7 +1,8 @@
 package fr.leconsulat.api.player.stream;
 
+import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.nbt.CompoundTag;
-import fr.leconsulat.api.utils.InventoryUtils;
+import fr.leconsulat.api.nms.api.Item;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -33,6 +34,7 @@ public class PlayerInputStream extends OfflinePlayerInputStream {
     }
     
     public PlayerInputStream readInventory(){
+        Item itemNMS = ConsulatAPI.getNMS().getItem();
         List<CompoundTag> inventoryTag = fetchInventory().getValue();
         PlayerInventory inventory = player.getInventory();
         inventory.clear();
@@ -40,7 +42,7 @@ public class PlayerInputStream extends OfflinePlayerInputStream {
         ItemStack[] extra = new ItemStack[1];
         for(CompoundTag tag : inventoryTag){
             int slot = tag.getByte("Slot") & 255;
-            ItemStack itemstack = InventoryUtils.fromTag(tag);
+            ItemStack itemstack = itemNMS.tagToItem(tag);
             if(itemstack.getType() != Material.AIR){
                 if(slot < inventory.getSize()){
                     inventory.setItem(slot, itemstack);

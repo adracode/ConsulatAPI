@@ -18,6 +18,4 @@ public class PostInitEvent extends Event {
     public HandlerList getHandlers(){
         return handlers;
     }
-    
-    
 }

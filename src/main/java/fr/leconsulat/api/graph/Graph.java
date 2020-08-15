@@ -8,10 +8,6 @@ public class Graph<T> implements Set<T> {
     
     private final Map<T, Vertex<T>> graph = new HashMap<>();
     
-    private boolean addVertex(T value){
-        return this.graph.putIfAbsent(value, new Vertex<>(value)) == null;
-    }
-    
     public void addNeighbours(T value, T neighbour){
         Vertex<T> vertex = graph.get(value);
         if(vertex == null){
@@ -31,6 +27,48 @@ public class Graph<T> implements Set<T> {
             neigh.removeNeighbor(vertex);
         }
         return true;
+    }
+    
+    @SafeVarargs
+    public final boolean isConnected(T... withoutVertices){
+        if(graph.isEmpty()){
+            return true;
+        }
+        Set<Vertex<T>> without = new HashSet<>(withoutVertices.length);
+        HashSet<Vertex<T>> done = new HashSet<>();
+        for(T t : withoutVertices){
+            without.add(graph.get(t));
+        }
+        Iterator<Vertex<T>> iterator = graph.values().iterator();
+        Vertex<T> start = iterator.next();
+        while(iterator.hasNext() && without.contains(start)){
+            start = iterator.next();
+        }
+        if(without.contains(start)){
+            return true;
+        }
+        Queue<Vertex<T>> fifo = new ArrayDeque<>(Collections.singleton(start));
+        done.add(start);
+        while(!fifo.isEmpty()){
+            Vertex<T> v = fifo.poll();
+            while(without.contains(v)){
+                v = fifo.poll();
+            }
+            if(v == null){
+                break;
+            }
+            for(Vertex<T> neigh : v.getNeighbours()){
+                if(!done.contains(neigh) && !without.contains(neigh)){
+                    done.add(neigh);
+                    fifo.offer(neigh);
+                }
+            }
+        }
+        return done.size() == graph.keySet().size() - withoutVertices.length;
+    }
+    
+    private boolean addVertex(T value){
+        return this.graph.putIfAbsent(value, new Vertex<>(value)) == null;
     }
     
     public int size(){
@@ -106,43 +144,6 @@ public class Graph<T> implements Set<T> {
     @Override
     public void clear(){
         graph.clear();
-    }
-    
-    public boolean isConnected(T... withoutVertices){
-        if(graph.isEmpty()){
-            return true;
-        }
-        Set<Vertex<T>> without = new HashSet<>(withoutVertices.length);
-        HashSet<Vertex<T>> done = new HashSet<>();
-        for(T t : withoutVertices){
-            without.add(graph.get(t));
-        }
-        Iterator<Vertex<T>> iterator = graph.values().iterator();
-        Vertex<T> start = iterator.next();
-        while(iterator.hasNext() && without.contains(start)){
-            start = iterator.next();
-        }
-        if(without.contains(start)){
-            return true;
-        }
-        Queue<Vertex<T>> fifo = new ArrayDeque<>(Collections.singleton(start));
-        done.add(start);
-        while(!fifo.isEmpty()){
-            Vertex<T> v = fifo.poll();
-            while(without.contains(v)){
-                v = fifo.poll();
-            }
-            if(v == null){
-                break;
-            }
-            for(Vertex<T> neigh : v.getNeighbours()){
-                if(!done.contains(neigh) && !without.contains(neigh)){
-                    done.add(neigh);
-                    fifo.offer(neigh);
-                }
-            }
-        }
-        return done.size() == graph.keySet().size() - withoutVertices.length;
     }
     
     @Override

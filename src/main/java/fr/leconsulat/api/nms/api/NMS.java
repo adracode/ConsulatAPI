@@ -2,8 +2,16 @@ package fr.leconsulat.api.nms.api;
 
 public interface NMS {
     
-    Packet getPacketNMS();
+    Packet getPacket();
     
-    Item getItemNMS();
+    Item getItem();
+    
+    Command getCommand();
+    
+    Server getServer();
+    
+    NBT getNBT();
+    
+    Block getBlock();
     
 }

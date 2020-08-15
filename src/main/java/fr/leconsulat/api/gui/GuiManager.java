@@ -8,14 +8,12 @@ import com.comphenix.protocol.events.PacketEvent;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
-import fr.leconsulat.api.gui.gui.BaseGui;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.gui.gui.module.api.Relationnable;
 import fr.leconsulat.api.gui.input.UserInput;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
-import fr.leconsulat.api.utils.minecraft.packets.PacketUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,6 +25,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,12 +37,16 @@ public class GuiManager implements Listener {
     
     private static GuiManager instance;
     
-    private final Map<UUID, UserInput> inputs = new HashMap<>();
-    private final Map<String, GuiContainer<?>> containers = new HashMap<>();
+    static {
+        new GuiManager();
+    }
     
-    public GuiManager(ConsulatAPI core){
+    private final @NotNull Map<UUID, UserInput> inputs = new HashMap<>();
+    private final @NotNull Map<String, GuiContainer<?>> containers = new HashMap<>();
+    
+    private GuiManager(){
         if(instance != null){
-            return;
+            throw new IllegalStateException();
         }
         instance = this;
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Client.UPDATE_SIGN) {
@@ -55,7 +58,7 @@ public class GuiManager implements Listener {
                     return;
                 }
                 event.setCancelled(true);
-                userInput.processInput(PacketUtils.getArrayFromUpdateSignPacket(event.getPacket().getHandle()));
+                userInput.processInput(event.getPacket().getStringArrays().read(0));
             }
         });
         ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Server.WINDOW_ITEMS) {
@@ -84,7 +87,7 @@ public class GuiManager implements Listener {
                 container.getItemListModifier().write(0, items);
             }
         });
-        Bukkit.getPluginManager().registerEvents(this, core);
+        Bukkit.getPluginManager().registerEvents(this, ConsulatAPI.getConsulatAPI());
     }
     
     public static GuiManager getInstance(){
@@ -141,7 +144,7 @@ public class GuiManager implements Listener {
             return;
         }
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getWhoClicked().getUniqueId());
-        if(clickedItem.getSlot() == (clickedInventory.getLine() - 1) * 9 && clickedItem.equals(BaseGui.BACK)){
+        if(clickedItem.getSlot() == (clickedInventory.getLine() - 1) * 9 && clickedItem.equals(GuiItem.BACK)){
             if(clickedInventory instanceof Pageable){
                 clickedInventory = ((Pageable)clickedInventory).getMainPage().getGui();
             }

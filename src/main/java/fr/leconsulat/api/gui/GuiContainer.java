@@ -23,7 +23,9 @@ public abstract class GuiContainer<T> {
     //Contient les différents guis, accessibles par leur "data"
     private Map<T, Datable<T>> guis = new HashMap<>();
     
-    public abstract Datable<T> createGui(T data);
+    void remove(@NotNull DataRelatGui<T> key){
+        this.guis.remove(key.getData());
+    }
     
     public Datable<T> addGui(Datable<T> gui){
         guis.put(gui.getData(), gui);
@@ -37,10 +39,6 @@ public abstract class GuiContainer<T> {
     public boolean removeGui(T data){
         Datable<T> removed = guis.remove(data);
         return removed != null;
-    }
-    
-    void remove(@NotNull DataRelatGui<T> key){
-        this.guis.remove(key.getData());
     }
     
     @Nullable
@@ -71,5 +69,7 @@ public abstract class GuiContainer<T> {
         }
         return gui.getGui();
     }
+    
+    public abstract Datable<T> createGui(T data);
     
 }
