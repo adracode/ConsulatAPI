@@ -204,8 +204,10 @@ public class ConsulatPlayer implements Saveable {
         CPlayerManager.getInstance().setHasCustomRank(getUUID(), hasCustomRank);
         if(hasCustomRank){
             customRank = new CustomRank();
+            addCommandPermission(CommandManager.getInstance().getCommand("perso").getPermission());
         } else {
             customRank = null;
+            removeCommandPermission(CommandManager.getInstance().getCommand("perso").getPermission());
         }
     }
     
@@ -233,7 +235,7 @@ public class ConsulatPlayer implements Saveable {
     public void initialize(int id, Rank rank, boolean hasCustomRank, String customRank, String registered){
         this.id = id;
         this.rank = rank;
-        this.customRank = hasCustomRank ? new CustomRank(customRank) : null;
+        this.customRank = hasCustomRank ? customRank == null ? new CustomRank() : new CustomRank(customRank) : null;
         this.registered = registered;
         this.initialized = true;
     }
@@ -319,6 +321,15 @@ public class ConsulatPlayer implements Saveable {
         try {
             File playerFile = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
             if(!playerFile.exists()){
+                for(Command command : CommandManager.getInstance().getCommands().values()){
+                    if(command instanceof ConsulatCommand){
+                        ConsulatCommand consulatCommand = (ConsulatCommand)command;
+                        if(hasPower(consulatCommand.getRank())){
+                            addPermission(consulatCommand.getPermission());
+                        }
+                    }
+                }
+                permissions.addAll(CPlayerManager.getInstance().getDefaultPermissions(this));
                 return;
             }
             NBTInputStream is = new NBTInputStream(playerFile);
@@ -326,6 +337,14 @@ public class ConsulatPlayer implements Saveable {
             is.close();
             loadNBT(playerTag);
             if(permissions.isEmpty()){
+                for(Command command : CommandManager.getInstance().getCommands().values()){
+                    if(command instanceof ConsulatCommand){
+                        ConsulatCommand consulatCommand = (ConsulatCommand)command;
+                        if(hasPower(consulatCommand.getRank())){
+                            addPermission(consulatCommand.getPermission());
+                        }
+                    }
+                }
                 permissions.addAll(CPlayerManager.getInstance().getDefaultPermissions(this));
             }
         } catch(IOException e){

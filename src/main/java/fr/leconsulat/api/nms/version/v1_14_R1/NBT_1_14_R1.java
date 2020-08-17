@@ -111,7 +111,7 @@ public class NBT_1_14_R1 implements NBT {
         NBTTagList list = new NBTTagList();
         List<? extends Tag> value = tag.getValue();
         for(int i = 0; i < value.size(); i++){
-            list.set(i, (NBTBase)toNMS(value.get(i)));
+            list.add((NBTBase)toNMS(value.get(i)));
         }
         return list;
     }

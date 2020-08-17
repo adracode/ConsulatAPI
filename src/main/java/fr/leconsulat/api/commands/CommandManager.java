@@ -12,11 +12,14 @@ import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.nms.api.server.DedicatedServer;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.command.SimpleCommandMap;
+import org.bukkit.command.defaults.BukkitCommand;
+import org.bukkit.craftbukkit.v1_14_R1.command.VanillaCommandWrapper;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -27,10 +30,10 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class CommandManager implements Listener {
-
+    
     private static CommandManager instance;
-
-    static {
+    
+    static{
         new CommandManager();
     }
     
@@ -73,13 +76,29 @@ public class CommandManager implements Listener {
             }
         });
     }
-
+    
+    public Map<String, Command> getCommands(){
+        return Collections.unmodifiableMap(commands);
+    }
+    
+    public static CommandManager getInstance(){
+        return instance;
+    }
+    
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPostInit(PostInitEvent e){
         DedicatedServer server = ConsulatAPI.getNMS().getServer().getDedicatedServer();
         dispatcher = server.getCommandDispatcher();
         vanillaNode = server.getVanillaCommandDispatcher().getRoot();
         node = server.getCommandDispatcher().getRoot();
+        removeMinecraftCommand("list");
+        removeMinecraftCommand("me");
+        removeMinecraftCommand("msg");
+        removeMinecraftCommand("teammsg");
+        removeMinecraftCommand("tell");
+        removeMinecraftCommand("tm");
+        removeMinecraftCommand("trigger");
+        removeMinecraftCommand("w");
         removeBukkitCommand("?");
         removeBukkitCommand("bukkit:?");
         removeBukkitCommand("about");
@@ -87,27 +106,12 @@ public class CommandManager implements Listener {
         removeBukkitCommand("bukkit:help");
         removeBukkitCommand("pl");
         removeBukkitCommand("bukkit:pl");
-        removeBukkitCommand("plugins");
+        removeBukkitCommand("icanhasbukkit");
         removeBukkitCommand("bukkit:plugins");
         removeBukkitCommand("ver");
         removeBukkitCommand("bukkit:ver");
         removeBukkitCommand("version");
         removeBukkitCommand("bukkit:version");
-        removeMinecraftCommand("minecraft:help");
-        removeMinecraftCommand("list");
-        removeMinecraftCommand("minecraft:list");
-        removeMinecraftCommand("me");
-        removeMinecraftCommand("minecraft:me");
-        removeMinecraftCommand("minecraft:msg");
-        removeMinecraftCommand("teammsg");
-        removeMinecraftCommand("minecraft:teammsg");
-        removeMinecraftCommand("minecraft:tell");
-        removeMinecraftCommand("tm");
-        removeMinecraftCommand("minecraft:tm");
-        removeMinecraftCommand("trigger");
-        removeMinecraftCommand("minecraft:trigger");
-        removeMinecraftCommand("w");
-        removeMinecraftCommand("minecraft:w");
         node.removeCommand("boutique");
         node.removeCommand("consulatcore:boutique");
         for(Runnable postInit : this.postInit){
@@ -115,7 +119,7 @@ public class CommandManager implements Listener {
         }
         postInit = null;
     }
-
+    
     @EventHandler
     public void onCommandUpdate(PlayerCommandSendEvent event){
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
@@ -125,59 +129,34 @@ public class CommandManager implements Listener {
         }
         for(Iterator<String> iterator = event.getCommands().iterator(); iterator.hasNext(); ){
             Command command = commands.get(iterator.next());
-            if(!(command instanceof ConsulatCommand)){
-                if(player.hasPermission(ConsulatAPI.getConsulatAPI().getPermission("allow-other-plugin-commands"))){
-                    continue;
-                }
-                if(command instanceof PluginIdentifiableCommand){
-                    if(!player.hasPermission(((PluginIdentifiableCommand)command).getPlugin().getName().toLowerCase() + ".commands")){
-                        iterator.remove();
-                    }
-                }
-                continue;
-            }
-            if(!player.hasPermission(command.getPermission())){
+            if(!isAllowed(player, command)){
                 iterator.remove();
             }
         }
     }
-
+    
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onCommand(PlayerCommandPreprocessEvent e){
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(e.getPlayer().getUniqueId());
         int separator = e.getMessage().indexOf(' ');
-        Command command = commands.get((separator == -1 ? e.getMessage().substring(1) : e.getMessage().substring(1, separator)).toLowerCase());
-        if(command == null){
-            e.setMessage("/help commands");
-            return;
-        }
-        if(!(command instanceof ConsulatCommand)){
-            if(player.hasPermission(ConsulatAPI.getConsulatAPI().getPermission("allow-other-plugin-commands"))){
-                return;
-            }
-            if(command instanceof PluginIdentifiableCommand){
-                if(!player.hasPermission(((PluginIdentifiableCommand)command).getPlugin().getName().toLowerCase() + ".commands")){
-                    e.setMessage("/help commands");
-                    return;
-                }
-            }
-        }
-        if(!player.hasPermission(command.getPermission())){
-            e.setMessage("/help commands");
+        String commandName = (separator == -1 ? e.getMessage().substring(1) : e.getMessage().substring(1, separator)).toLowerCase();
+        Command command = commands.get(commandName);
+        if(!isAllowed(player, command)){
+            e.setMessage("/help");
         }
     }
-
+    
     public Command getCommand(String command){
         return commands.get(command);
     }
-
+    
     public void addCommand(Command command){
         commands.put(command.getName(), command);
         for(String alias : command.getAliases()){
             commands.put(alias, command);
         }
     }
-
+    
     public void removeBukkitCommand(String commandName){
         Command command = commands.get(commandName);
         if(command == null){
@@ -190,7 +169,7 @@ public class CommandManager implements Listener {
         commands.remove(commandName);
         node.removeCommand(commandName);
     }
-
+    
     public void removeMinecraftCommand(String commandName){
         Command command = commands.get(commandName);
         if(command == null){
@@ -201,15 +180,19 @@ public class CommandManager implements Listener {
         }
         removeBukkitCommand(commandName);
         vanillaNode.removeCommand(commandName);
+        if(!commandName.startsWith("minecraft:")){
+            removeBukkitCommand("minecraft:" + commandName);
+            vanillaNode.removeCommand("minecraft:" + commandName);
+        }
     }
-
+    
     public void sendCommands(ConsulatPlayer player){
         player.getPlayer().updateCommands();
     }
     
     @SuppressWarnings({"unchecked", "rawtypes"})
     public void suggest(LiteralArgumentBuilder<?> suggestion, boolean replace){
-        postInit.add(()-> {
+        postInit.add(() -> {
             if(replace){
                 String command = suggestion.getLiteral();
                 if(node.getChild(command) != null){
@@ -222,12 +205,27 @@ public class CommandManager implements Listener {
             dispatcher.register((LiteralArgumentBuilder)suggestion);
         });
     }
-
-    public Map<String, Command> getCommands(){
-        return Collections.unmodifiableMap(commands);
+    
+    private boolean isAllowed(ConsulatPlayer player, Command command){
+        if(command == null){
+            return false;
+        }
+        if(!(command instanceof ConsulatCommand)){
+            if(player.hasPermission(ConsulatAPI.getConsulatAPI().getPermission("bypass-commands")) || (ConsulatAPI.getConsulatAPI().isDevelopment() && player.getRank() != Rank.INVITE)){
+                return true;
+            }
+            if(command instanceof PluginIdentifiableCommand){
+                return player.hasPermission(((PluginIdentifiableCommand)command).getPlugin().getName().toLowerCase() + ".commands");
+            }
+            if(command instanceof VanillaCommandWrapper){
+                return player.hasPermission("minecraft.commands");
+            }
+            if(command instanceof BukkitCommand){
+                return player.hasPermission("bukkit.commands");
+            }
+            return false;
+        }
+        return player.hasPermission(command.getPermission());
     }
-
-    public static CommandManager getInstance(){
-        return instance;
-    }
+    
 }

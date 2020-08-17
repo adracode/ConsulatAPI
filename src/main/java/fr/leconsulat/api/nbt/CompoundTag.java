@@ -90,7 +90,7 @@ public final class CompoundTag implements Tag {
 	@SuppressWarnings("unchecked")
 	public <T extends Tag> ListTag<T> getListTag(String name, NBTType expected){
 		ListTag<T> listTag = ((ListTag<T>)value.get(name));
-		if(listTag.getElementType() != expected){
+		if(listTag.getElementType() != NBTType.END && listTag.getElementType() != expected){
 			throw new IllegalArgumentException();
 		}
 		return listTag;

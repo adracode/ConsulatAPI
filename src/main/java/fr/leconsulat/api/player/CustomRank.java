@@ -13,16 +13,16 @@ public class CustomRank {
     private @Nullable ChatColor colorName = null;
     private @Nullable String cache = null;
     
-    public CustomRank(){
+    CustomRank(){
     }
     
-    public CustomRank(@NotNull String rank){
+    CustomRank(@NotNull String rank){
         Objects.requireNonNull(rank, "rank");
         
         int open = rank.indexOf('['), close = rank.indexOf(']');
         this.colorPrefix = ChatColor.getByChar(rank.charAt(1));
-        this.prefix = rank.substring(open, close + 2);
-        this.colorName = ChatColor.getByChar(rank.charAt(close + 3));
+        this.prefix = rank.substring(open, close + 1);
+        this.colorName = ChatColor.getByChar(rank.charAt(close + 2));
     }
     
     public @Nullable String getCustomRank(){
@@ -46,7 +46,7 @@ public class CustomRank {
     }
     
     public void setPrefix(@NotNull String prefix){
-        this.prefix = "[" + Objects.requireNonNull(prefix) + "] ";
+        this.prefix = "[" + Objects.requireNonNull(prefix) + "]";
         cache = null;
     }
     

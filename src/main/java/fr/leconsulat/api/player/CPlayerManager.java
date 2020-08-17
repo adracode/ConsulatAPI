@@ -16,9 +16,11 @@ import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.redisson.api.RFuture;
@@ -247,6 +249,24 @@ public class CPlayerManager implements Listener {
     
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void blockInventory(PlayerInteractEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player != null && player.isInventoryBlocked()){
+            event.setCancelled(true);
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void blockInventory(ProjectileLaunchEvent event){
+        if(event.getEntity().getShooter() instanceof Player){
+            ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(((Player)event.getEntity().getShooter()).getUniqueId());
+            if(player != null && player.isInventoryBlocked()){
+                event.setCancelled(true);
+            }
+        }
+    }
+    
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void blockInventory(PlayerItemConsumeEvent event){
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
         if(player != null && player.isInventoryBlocked()){
             event.setCancelled(true);
