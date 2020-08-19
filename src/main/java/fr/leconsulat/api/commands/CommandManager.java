@@ -42,6 +42,10 @@ public class CommandManager implements Listener {
     private RootCommandNode<?> vanillaNode;
     private RootCommandNode<?> node;
     private List<Runnable> postInit = new ArrayList<>();
+    private Set<String> sensitiveCommands = new HashSet<>(Arrays.asList(
+            "ban", "ban-ip", "banlist", "deop", "execute", "forceload", "function", "gamerule",
+            "kick", "op", "pardon", "pardon-ip", "reload", "rl", "restart", "timings", "save-all",
+            "save-off", "save-on", "schedule", "stop", "whitelist"));
     
     @SuppressWarnings("unchecked")
     private CommandManager(){
@@ -211,6 +215,9 @@ public class CommandManager implements Listener {
             return false;
         }
         if(!(command instanceof ConsulatCommand)){
+            if(sensitiveCommands.contains(command.getName()) && !player.hasPermission(ConsulatAPI.getConsulatAPI().getPermission("bypass-commands"))){
+                return false;
+            }
             if(player.hasPermission(ConsulatAPI.getConsulatAPI().getPermission("bypass-commands")) || (ConsulatAPI.getConsulatAPI().isDevelopment() && player.getRank() != Rank.INVITE)){
                 return true;
             }

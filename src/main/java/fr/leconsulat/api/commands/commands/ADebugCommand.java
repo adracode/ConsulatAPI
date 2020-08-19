@@ -147,7 +147,7 @@ public class ADebugCommand extends ConsulatCommand {
                                 sender.sendMessage("§cIl a déjà la permission");
                                 return;
                             }
-                            if(args[3].contains(".command.") || args[3].contains(".commands")){
+                            if(args[3].contains(".command.") || args[3].contains("commands")){
                                 target.addCommandPermission(args[3]);
                             } else {
                                 target.addPermission(args[3]);

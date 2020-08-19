@@ -11,7 +11,7 @@ public class GuiCloseEvent implements Cancellable {
     
     private final @NotNull ConsulatPlayer player;
     private boolean cancelled;
-    private boolean openFatherGui = true;
+    private boolean openFatherGui = false;
     
     public GuiCloseEvent(@NotNull ConsulatPlayer player){
         this.player = player;

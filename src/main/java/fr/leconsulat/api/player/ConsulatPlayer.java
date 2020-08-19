@@ -85,10 +85,12 @@ public class ConsulatPlayer implements Saveable {
         for(Command command : CommandManager.getInstance().getCommands().values()){
             if(command instanceof ConsulatCommand){
                 ConsulatCommand consulatCommand = (ConsulatCommand)command;
-                if(hasPower(consulatCommand.getRank())){
-                    addPermission(consulatCommand.getPermission());
-                } else {
-                    removePermission(consulatCommand.getPermission());
+                if(consulatCommand.getRank() != null){
+                    if(hasPower(consulatCommand.getRank())){
+                        addPermission(consulatCommand.getPermission());
+                    } else {
+                        removePermission(consulatCommand.getPermission());
+                    }
                 }
             }
         }
