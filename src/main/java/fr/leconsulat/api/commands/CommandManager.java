@@ -96,6 +96,7 @@ public class CommandManager implements Listener {
         vanillaNode = server.getVanillaCommandDispatcher().getRoot();
         node = server.getCommandDispatcher().getRoot();
         removeMinecraftCommand("list");
+        removeMinecraftCommand("help");
         removeMinecraftCommand("me");
         removeMinecraftCommand("msg");
         removeMinecraftCommand("teammsg");
@@ -177,6 +178,9 @@ public class CommandManager implements Listener {
     public void removeMinecraftCommand(String commandName){
         Command command = commands.get(commandName);
         if(command == null){
+            return;
+        }
+        if(!(command instanceof VanillaCommandWrapper) && !commandName.startsWith("minecraft:")){
             return;
         }
         for(String alias : command.getAliases()){

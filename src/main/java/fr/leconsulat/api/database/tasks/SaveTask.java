@@ -97,6 +97,7 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                     statement = ConsulatAPI.getDatabase().prepareStatement(sqlStatement);
                 }
                 fillUpdate.fill(statement, saveable);
+                lastKnownsData.put(saveable, currentData);
                 statement.addBatch();
             }
             if(statement != null){
