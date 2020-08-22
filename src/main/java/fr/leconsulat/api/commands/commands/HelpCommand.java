@@ -87,11 +87,13 @@ public class HelpCommand extends ConsulatCommand {
         return next.get(page);
     }
     
-    public static void formatCommandDescription(@NotNull ConsulatPlayer sender, Command command, boolean showPrefix){
+    public static void formatCommandDescription(@NotNull ConsulatPlayer sender, ConsulatCommand command, boolean showPrefix){
         List<String> aliases = command.getAliases();
         String aliasesStr = aliases.toString();
         sender.sendMessage(new ComponentBuilder(
-                (showPrefix ? "§b[§aCommande§b]" : "") + " §e/" + command.getName() + " - §7" + command.getDescription())
+                (showPrefix ? "§b[§aCommande§b]" : ""))
+                .append(" /" + command.getName() + " - ").color(ChatColor.YELLOW)
+                .append(command.getCommandDescription()).color(ChatColor.GRAY)
                 .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(
                         (aliases.isEmpty() ? "" : "§cAlias: §7" + aliasesStr.substring(1, aliasesStr.length() - 1) + "\n") + "§cUtilisation:\n§7" + command.getUsage()).create()))
                 .event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
@@ -113,7 +115,7 @@ public class HelpCommand extends ConsulatCommand {
                     page = 1;
                 } else {
                     if(sender.hasPermission(command.getPermission())){
-                        formatCommandDescription(sender, command, true);
+                        formatCommandDescription(sender, (ConsulatCommand)command, true);
                         return;
                     } else {
                         page = 1;

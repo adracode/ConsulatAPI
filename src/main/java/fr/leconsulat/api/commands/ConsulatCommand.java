@@ -6,6 +6,7 @@ import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -25,6 +26,7 @@ import java.util.function.Predicate;
 public abstract class ConsulatCommand extends Command implements PluginIdentifiableCommand, Comparable<ConsulatCommand> {
     
     private final @NotNull Plugin plugin;
+    private @NotNull BaseComponent[] description = TextComponent.fromLegacyText("");
     private final @NotNull String permission;
     private int argsMin;
     private @Nullable Rank rankNeeded;
@@ -39,6 +41,10 @@ public abstract class ConsulatCommand extends Command implements PluginIdentifia
     
     public @Nullable Rank getRank(){
         return rankNeeded;
+    }
+    
+    public @NotNull BaseComponent[] getCommandDescription(){
+        return description;
     }
     
     public ConsulatCommand setRank(@NotNull Rank rankNeeded){
@@ -161,8 +167,7 @@ public abstract class ConsulatCommand extends Command implements PluginIdentifia
     
     @Override
     public @NotNull ConsulatCommand setDescription(@NotNull String description){
-        this.description = description;
-        super.setDescription(description);
+        this.description = TextComponent.fromLegacyText(description);
         return this;
     }
     

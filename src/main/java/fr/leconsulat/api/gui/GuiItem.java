@@ -201,8 +201,8 @@ public class GuiItem extends ItemStack implements Cloneable {
         return this;
     }
     
-    public @NotNull Object getAttachedObject(){
-        return Objects.requireNonNull(attachedObject, "attachedObject");
+    public @Nullable Object getAttachedObject(){
+        return attachedObject;
     }
     
     public void setAttachedObject(@NotNull Object attachedObject){

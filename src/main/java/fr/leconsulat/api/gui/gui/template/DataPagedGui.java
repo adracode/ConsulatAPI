@@ -14,6 +14,7 @@ import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -93,6 +94,11 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     }
     
     @Override
+    public void refreshItems(){
+        mainPageGui.refreshItems();
+    }
+    
+    @Override
     public Pageable createPage(){
         return mainPageGui.createPage();
     }
@@ -111,6 +117,11 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     @Override
     public Iterator<GuiItem> iterator(){
         return mainPageGui.iterator();
+    }
+    
+    @Override
+    public @NotNull Iterator<GuiItem> reverseIterator(){
+        return mainPageGui.reverseIterator();
     }
     
     @Override
@@ -177,6 +188,11 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
     @Override
     public @NotNull IGui setItemAll(int slot, @Nullable GuiItem item){
         return mainPageGui.setItemAll(slot, item);
+    }
+    
+    @Override
+    public void setSort(Comparator<GuiItem> comparator){
+        mainPageGui.setSort(comparator);
     }
     
     @Override

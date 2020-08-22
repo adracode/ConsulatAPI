@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -38,6 +39,8 @@ public interface MainPage extends Pageable {
     
     void removeItem(int page, int slot);
     
+    void refreshItems();
+    
     Pageable createPage();
     
     void removeAll();
@@ -45,6 +48,8 @@ public interface MainPage extends Pageable {
     List<Pageable> getPages();
     
     @NotNull Iterator<GuiItem> iterator();
+    
+    @NotNull Iterator<GuiItem> reverseIterator();
     
     void setDisplayNamePages(int slot, @NotNull String name);
     
@@ -57,6 +62,8 @@ public interface MainPage extends Pageable {
     @NotNull IGui setItemAll(@NotNull GuiItem item);
     
     @NotNull IGui setItemAll(int slot, @Nullable GuiItem item);
+    
+    void setSort(Comparator<GuiItem> comparator);
     
     void setTitle();
     

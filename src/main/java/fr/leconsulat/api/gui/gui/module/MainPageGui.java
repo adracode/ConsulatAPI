@@ -23,6 +23,7 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     private byte currentIndex = -1;
     private byte[] dynamicItems;
     private byte[] templateItems;
+    private @Nullable Comparator<GuiItem> sort;
     
     public MainPageGui(Gui gui){
         this.gui = gui;
@@ -60,7 +61,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         for(byte i = (byte)from; i < to; i++){
             dynamicItems[i - from] = i;
         }
-    }    @Override
+    }
+    
+    @Override
     public final void setDynamicItems(int... slots){
         Set<Byte> sorted = new TreeSet<>();
         for(int slot : slots){
@@ -82,7 +85,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public int getPage(){
         return 0;
-    }    @Override
+    }
+    
+    @Override
     public void setTemplateItems(int... slots){
         Set<Byte> sorted = new TreeSet<>();
         for(int slot : slots){
@@ -103,7 +108,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     
     @Override
     public void setPage(int page){
-    }    @Override
+    }
+    
+    @Override
     public ByteIterator getDynamicItems(){
         return ByteIterators.wrap(dynamicItems);
     }
@@ -111,7 +118,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public MainPage getMainPage(){
         return this;
-    }    @Override
+    }
+    
+    @Override
     public void addPage(Pageable gui){
         currentIndex = -1;
         pages.add(gui);
@@ -121,7 +130,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public IGui getGui(){
         return gui;
-    }    @Override
+    }
+    
+    @Override
     public Pageable createPage(){
         if(templateItems == null || templateItems.length == 0){
             return new PageableGui(gui, gui.getName(), gui.getLine());
@@ -141,7 +152,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public void onPageClick(GuiClickEvent event, Pageable pageGui){
         gui.onPageClick(event, pageGui);
-    }    @Override
+    }
+    
+    @Override
     public void removePage(int page){
         Pageable removed = pages.remove(page);
         if(removed == null){
@@ -161,7 +174,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
         gui.onPageOpen(event, pageGui);
-    }    @Override
+    }
+    
+    @Override
     public int numberOfPages(){
         return pages.size();
     }
@@ -169,7 +184,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
         gui.onPageOpened(event, pageGui);
-    }    @Override
+    }
+    
+    @Override
     public int getCurrentPage(){
         return numberOfPages() - 1;
     }
@@ -178,7 +195,9 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     public void onPageClose(GuiCloseEvent event, Pageable pageGui){
         gui.onPageClose(event, pageGui);
         
-    }    @Override
+    }
+    
+    @Override
     public final int getItemsNumber(){
         return currentIndex + 1 + getCurrentPage() * dynamicItems.length;
     }
@@ -186,57 +205,73 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public void onPageRemoved(GuiRemoveEvent event, Pageable pageGui){
         gui.onPageRemoved(event, pageGui);
-    }    @Override
+    }
+    
+    @Override
     public byte getCurrentSlot(){
         return dynamicItems[currentIndex];
     }
     
-    private class GuiIterator implements Iterator<GuiItem> {
-        
-        private int page = 0;
-        private byte indexSlot = -1;
-        
-        @Override
-        public boolean hasNext(){
-            if(++indexSlot >= dynamicItems.length){
-                indexSlot = 0;
-                ++page;
-            }
-            return page < getCurrentPage() || indexSlot <= currentIndex;
-        }
-        
-        @Override
-        public GuiItem next(){
-            return getPage(page).getGui().getItem(dynamicItems[indexSlot]);
-        }
-        
-        @Override
-        public void remove(){
-            removeItem(page, dynamicItems[indexSlot]);
-        }
-    }    @Override
-    public void addItem(GuiItem item){
+    private void prepareAddItem(){
         int length = dynamicItems.length;
-        Pageable gui;
         if(++currentIndex >= length){
-            gui = newPage();
+            newPage();
+            //currentIndex == -1
             ++currentIndex;
-        } else {
-            gui = getPage(getCurrentPage());
+        }
+    }
+    
+    @Override
+    public void addItem(GuiItem item){
+        prepareAddItem();
+        Pageable gui = getPage(getCurrentPage());
+        if(sort != null){
+            int page = 0, indexSlot = 0;
+            for(ReversedGuiIterator iterator = this.reverseIterator(); iterator.hasPrevious(); ){
+                GuiItem guiItem = iterator.previous();
+                if(sort.compare(guiItem, item) < 0){
+                    page = iterator.getPage();
+                    indexSlot = iterator.getIndex();
+                    if(indexSlot >= dynamicItems.length){
+                        ++page;
+                        indexSlot = 0;
+                    }
+                    break;
+                }
+                int currentSlot = guiItem.getSlot();
+                boolean nextPage = currentSlot + 1 >= dynamicItems[dynamicItems.length - 1];
+                if(nextPage){
+                    getPage(iterator.getPage()).getGui().moveItem(currentSlot, getPage(iterator.getPage() + 1).getGui(), 0);
+                } else {
+                    getPage(iterator.getPage()).getGui().moveItem(currentSlot, currentSlot + 1);
+                }
+            }
+            getPage(page).getGui().setItem(dynamicItems[indexSlot], item);
+            return;
         }
         gui.getGui().setItem(getCurrentSlot(), item);
     }
     
     @Override
     public void removeItem(int page, int slot){
-        Pageable gui = getPage(page);
-        gui.getGui().removeItem(slot);
         int currentPage = getCurrentPage();
         byte currentSlot = getCurrentSlot();
         if(slot != currentSlot || currentPage != page){
-            Pageable lastGui = getPage(currentPage);
-            lastGui.getGui().moveItem(currentSlot, gui.getGui(), slot);
+            if(sort != null){
+                for(GuiIterator iterator = this.iterator(page, Arrays.binarySearch(dynamicItems, (byte)slot) + 1); iterator.hasNext(); ){
+                    int guiItemSlot = iterator.next().getSlot();
+                    boolean previousPage = currentSlot - 1 < dynamicItems[0];
+                    if(previousPage){
+                        getPage(iterator.getPage()).getGui().moveItem(guiItemSlot, getPage(iterator.getPage() - 1).getGui(), 0);
+                    } else {
+                        getPage(iterator.getPage()).getGui().moveItem(guiItemSlot, guiItemSlot - 1);
+                    }
+                }
+            } else {
+                getPage(currentPage).getGui().moveItem(currentSlot, gui.getGui(), slot);
+            }
         }
+        getPage(currentPage).getGui().removeItem(currentSlot);
         if(currentIndex <= 0){
             if(currentPage > 0){
                 removePage(currentPage);
@@ -249,8 +284,25 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     }
     
     @Override
+    public void refreshItems(){
+        TreeSet<GuiItem> sortedItems = new TreeSet<>(sort);
+        for(GuiIterator iterator = this.iterator(); iterator.hasNext(); ){
+            sortedItems.add(iterator.next());
+        }
+        int index = -1, dynamicSize = dynamicItems.length;
+        for(GuiItem item : sortedItems){
+            setItem(++index / dynamicSize, dynamicItems[index % dynamicSize], item);
+        }
+    }
+    
+    private void setItem(int page, int slot, GuiItem item){
+        getPage(page).getGui().setItem(slot, item);
+    }
+    
+    @Override
     public void removeAll(){
         for(Iterator<GuiItem> iterator = this.iterator(); iterator.hasNext(); ){
+            iterator.next();
             iterator.remove();
         }
     }
@@ -260,10 +312,18 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         return Collections.unmodifiableList(pages);
     }
     
-    @NotNull
     @Override
-    public Iterator<GuiItem> iterator(){
-        return new GuiIterator();
+    public @NotNull GuiIterator iterator(){
+        return new GuiIterator(0, 0);
+    }
+    
+    @Override
+    public @NotNull ReversedGuiIterator reverseIterator(){
+        return new ReversedGuiIterator(getCurrentPage(), currentIndex);
+    }
+    
+    public @NotNull GuiIterator iterator(int page, int index){
+        return new GuiIterator(page, index);
     }
     
     @Override
@@ -278,7 +338,6 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         for(Pageable page : pages){
             page.getGui().setDescription(slot, description);
         }
-        
     }
     
     @Override
@@ -286,7 +345,6 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         for(Pageable page : pages){
             page.getGui().setType(slot, material);
         }
-        
     }
     
     @Override
@@ -294,7 +352,6 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         for(Pageable page : pages){
             page.getGui().setGlowing(slot, glow);
         }
-        
     }
     
     @Override
@@ -314,31 +371,140 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     }
     
     @Override
+    public void setSort(@NotNull Comparator<GuiItem> comparator){
+        this.sort = comparator;
+    }
+    
+    @Override
     public void setTitle(){
         for(int i = 1; i < pages.size(); i++){
             pages.get(i).getGui().setTitle();
         }
     }
     
-
+    private class GuiIterator implements Iterator<GuiItem> {
+        
+        private ListIterator<GuiItem> items;
+        private int currentIndex;
+        
+        public GuiIterator(int page, int index){
+            List<GuiItem> items = new ArrayList<>(pages.size() * dynamicItems.length);
+            for(Pageable pageable : pages){
+                IGui gui = pageable.getGui();
+                for(int slot : dynamicItems){
+                    GuiItem item = gui.getItem(slot);
+                    if(item == null){
+                        break;
+                    }
+                    items.add(item);
+                }
+            }
+            this.items = items.listIterator(Math.min(page * dynamicItems.length + index, items.size()));
+            currentIndex = index - 1;
+        }
+        
+        public int getPage(){
+            return getIndex() / dynamicItems.length;
+        }
+        
+        public int getIndex(){
+            return currentIndex;
+        }
+        
+        @Override
+        public boolean hasNext(){
+            return items.hasNext();
+        }
+        
+        @Override
+        public @NotNull GuiItem next(){
+            GuiItem item = items.next();
+            ++currentIndex;
+            return item;
+        }
+        
+        @Override
+        public void remove(){
+            removeItem(getPage(), dynamicItems[getIndex()]);
+        }
+        
+    }
     
-
+    private class ReversedGuiIterator implements ListIterator<GuiItem> {
+        
+        private ListIterator<GuiItem> items;
+        private int currentIndex;
+        
+        public ReversedGuiIterator(int page, int index){
+            List<GuiItem> items = new ArrayList<>(pages.size() * dynamicItems.length);
+            for(Pageable pageable : pages){
+                IGui gui = pageable.getGui();
+                for(int slot : dynamicItems){
+                    GuiItem item = gui.getItem(slot);
+                    if(item == null){
+                        break;
+                    }
+                    items.add(item);
+                }
+            }
+            this.items = items.listIterator(Math.min(page * dynamicItems.length + index, items.size()));
+            currentIndex = index + 1;
+        }
+        
+        public int getPage(){
+            return previousIndex() / dynamicItems.length;
+        }
+        
+        public int getIndex(){
+            return currentIndex % dynamicItems.length;
+        }
+        
+        @Override
+        public boolean hasNext(){
+            throw new UnsupportedOperationException();
+        }
+        
+        @Override
+        public @NotNull GuiItem next(){
+            throw new UnsupportedOperationException();
+        }
+        
+        @Override
+        public boolean hasPrevious(){
+            return items.hasPrevious();
+        }
+        
+        @Override
+        public @NotNull GuiItem previous(){
+            GuiItem item = items.previous();
+            --currentIndex;
+            return item;
+        }
+        
+        @Override
+        public int nextIndex(){
+            throw new UnsupportedOperationException();
+        }
     
-
+        @Override
+        public int previousIndex(){
+            return items.previousIndex();
+        }
     
-
+        @Override
+        public void remove(){
+            removeItem(getPage(), dynamicItems[getIndex()]);
+        }
+        
+        @Override
+        public void set(GuiItem item){
+            throw new UnsupportedOperationException();
+        }
+        
+        @Override
+        public void add(GuiItem item){
+            throw new UnsupportedOperationException();
+        }
+    }
     
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
 }

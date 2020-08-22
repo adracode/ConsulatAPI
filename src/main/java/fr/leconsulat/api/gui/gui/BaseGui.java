@@ -100,7 +100,13 @@ public class BaseGui implements IGui {
         GuiItem item = getItem(slot);
         inventory.setItem(slot, item);
     }
-
+    
+    @Override
+    public void removeItems(){
+        inventory.clear();
+        Arrays.fill(items, null);
+    }
+    
     @Override
     public IGui getBaseGui(){
         return this;

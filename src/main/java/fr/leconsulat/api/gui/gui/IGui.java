@@ -75,6 +75,8 @@ public interface IGui extends InventoryHolder {
         setFakeItem(slot, fake, player);
     }
     
+    void removeItems();
+    
     IGui getBaseGui();
     
     @NotNull IGui setDeco(@NotNull Material type, int... slots);
