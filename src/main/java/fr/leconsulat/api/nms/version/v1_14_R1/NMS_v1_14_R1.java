@@ -10,6 +10,7 @@ public class NMS_v1_14_R1 implements NMS {
     private Server serverNMS = new Server_1_14_R1();
     private NBT nbtNMS = new NBT_1_14_R1();
     private Block blockNMS = new Block_1_14_R1();
+    private Player playerNMS = new Player_1_14_R1();
     
     @Override
     public Packet getPacket(){
@@ -38,5 +39,10 @@ public class NMS_v1_14_R1 implements NMS {
     @Override
     public Block getBlock(){
         return blockNMS;
+    }
+    
+    @Override
+    public Player getPlayer(){
+        return playerNMS;
     }
 }

@@ -96,6 +96,7 @@ public class BaseGui implements IGui {
      *
      * @param slot le slot visé
      */
+    @Override
     public void update(int slot){
         GuiItem item = getItem(slot);
         inventory.setItem(slot, item);
@@ -419,6 +420,5 @@ public class BaseGui implements IGui {
 
     @Override
     protected void finalize(){
-        System.out.println("Deleting " + name);
     }
 }

@@ -1,15 +1,10 @@
 package fr.leconsulat.api.gui;
 
-import fr.leconsulat.api.ConsulatAPI;
-import fr.leconsulat.api.player.CPlayerManager;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +19,7 @@ public class GuiItem extends ItemStack implements Cloneable {
     private @Nullable Object attachedObject;
     private @Nullable Map<UUID, ItemStack> fakeItems;
     
-    private GuiItem(Material material){
+    protected GuiItem(Material material){
         super(material);
         setFlags();
     }
@@ -37,26 +32,6 @@ public class GuiItem extends ItemStack implements Cloneable {
         }
         if(description != null && description.size() != 0){
             meta.setLore(description);
-        }
-        setItemMeta(meta);
-    }
-    
-    private GuiItem(String name, String player, List<String> description){
-        this(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta)getItemMeta();
-        meta.setDisplayName(name);
-        if(description != null){
-            meta.setLore(description);
-        }
-        UUID uuid = CPlayerManager.getInstance().getPlayerUUID(player);
-        if(uuid == null){
-            Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-                meta.setOwningPlayer(Bukkit.getOfflinePlayer(player));
-                setItemMeta(meta);
-            });
-        } else {
-            Player bukkitPlayer = Bukkit.getPlayer(uuid);
-            meta.setOwningPlayer(bukkitPlayer == null ? Bukkit.getOfflinePlayer(uuid) : bukkitPlayer);
         }
         setItemMeta(meta);
     }
@@ -76,32 +51,10 @@ public class GuiItem extends ItemStack implements Cloneable {
         this.slot = slot;
     }
     
-    public GuiItem(String name, byte slot, String player, List<String> description){
-        this(name, player, description);
-        this.slot = slot;
-    }
-    
-    public GuiItem(String name, byte slot, UUID player, List<String> description){
-        this(name, player, description);
-        this.slot = slot;
-    }
-    
     public GuiItem(ItemStack item, int slot){
         super(item);
         setFlags();
         this.slot = (byte)slot;
-    }
-    
-    public GuiItem(String name, UUID uuid, List<String> description){
-        this(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta)getItemMeta();
-        meta.setDisplayName(name);
-        if(description != null){
-            meta.setLore(description);
-        }
-        Player bukkitPlayer = Bukkit.getPlayer(uuid);
-        meta.setOwningPlayer(bukkitPlayer == null ? Bukkit.getOfflinePlayer(uuid) : bukkitPlayer);
-        setItemMeta(meta);
     }
     
     public List<String> getDescription(String... add){

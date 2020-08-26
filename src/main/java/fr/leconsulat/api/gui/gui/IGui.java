@@ -1,5 +1,6 @@
 package fr.leconsulat.api.gui.gui;
 
+import fr.leconsulat.api.gui.GuiHeadItem;
 import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
@@ -75,6 +76,8 @@ public interface IGui extends InventoryHolder {
         setFakeItem(slot, fake, player);
     }
     
+    void update(int slot);
+    
     void removeItems();
     
     IGui getBaseGui();
@@ -146,12 +149,16 @@ public interface IGui extends InventoryHolder {
         return new GuiItem(name, (byte)slot, material, Arrays.asList(description));
     }
     
-    static GuiItem getItem(String name, int slot, String player, String... description){
-        return new GuiItem(name, (byte)slot, player, Arrays.asList(description));
+    static GuiHeadItem getItem(IGui gui, String name, int slot, String player, String... description){
+        GuiHeadItem headItem = new GuiHeadItem(player, gui);
+        headItem.setDisplayName(name).setSlot(slot).setDescription(description);
+        return headItem;
     }
     
-    static GuiItem getItem(String name, int slot, UUID player, String... description){
-        return new GuiItem(name, (byte)slot, player, Arrays.asList(description));
+    static GuiHeadItem getItem(IGui gui, String name, int slot, UUID player, String... description){
+        GuiHeadItem headItem = new GuiHeadItem(player, gui);
+        headItem.setDisplayName(name).setSlot(slot).setDescription(description);
+        return headItem;
     }
     
     static GuiItem getItem(GuiItem item, int slot){

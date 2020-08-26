@@ -14,4 +14,5 @@ public interface NMS {
     
     Block getBlock();
     
+    Player getPlayer();
 }

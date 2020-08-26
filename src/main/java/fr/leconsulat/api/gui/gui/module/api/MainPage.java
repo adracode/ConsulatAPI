@@ -67,4 +67,6 @@ public interface MainPage extends Pageable {
     
     void setTitle();
     
+    void update(int slot);
+    
 }

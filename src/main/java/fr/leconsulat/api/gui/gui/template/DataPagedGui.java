@@ -200,4 +200,10 @@ public class DataPagedGui<T> extends DataGui<T> implements MainPage {
         super.setTitle();
         mainPageGui.setTitle();
     }
+    
+    @Override
+    public void update(int slot){
+        super.update(slot);
+        mainPageGui.update(slot);
+    }
 }

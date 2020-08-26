@@ -245,7 +245,7 @@ public class EventManager implements Listener {
         Event event = null;
         switch(material){
             case NAME_TAG:
-                if(entity.getType() != EntityType.PLAYER && !itemInHand.getItemMeta().hasDisplayName()){
+                if(entity.getType() != EntityType.PLAYER && itemInHand.getItemMeta().hasDisplayName()){
                     event = new PlayerNameEntityEvent(entity, player);
                 }
                 break;
@@ -315,8 +315,11 @@ public class EventManager implements Listener {
                 case PUFFERFISH:
                 case COD:
                 case SALMON:
-                    if(material == Material.BUCKET){
-                        event = new PlayerPickupFishEvent(entity, player);
+                    switch(material){
+                        case BUCKET:
+                        case WATER_BUCKET:
+                            event = new PlayerPickupFishEvent(entity, player);
+                            break;
                     }
                     break;
                 case CAT:

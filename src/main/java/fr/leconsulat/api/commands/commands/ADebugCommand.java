@@ -9,7 +9,6 @@ import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.commands.Arguments;
 import fr.leconsulat.api.commands.ConsulatCommand;
-import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.exemples.ManageExemple;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.module.api.Pageable;
@@ -177,7 +176,7 @@ public class ADebugCommand extends ConsulatCommand {
                         IGui open = sender.getCurrentlyOpen();
                         if(open instanceof Pageable){
                             for(int i = 0, size = Integer.parseInt(args[2]); i < size; ++i){
-                                ((Pageable)open).getMainPage().addItem(new GuiItem("Test", (byte)-1, "adracode", null));
+                                ((Pageable)open).getMainPage().addItem(IGui.getItem(open, "Test", (byte)-1, "adracode"));
                             }
                         } else {
                             sender.sendMessage("§cPas une page.");

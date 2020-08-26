@@ -11,12 +11,12 @@ public class ChildTestGui extends DataRelatPagedGui<Void> {
     
     public ChildTestGui(){
         super(null, "Classement", 6,
-                IGui.getItem("1er", 0, "adracode", "§r§aBravo !", "§7Tu es le premier !"),
                 IGui.getItem("Page: ", 49, Material.PAPER).setGlowing(true),
                 IGui.getItem("Suivant", 53, Material.ARROW),
                 IGui.getItem("Précédent", 45, Material.ARROW),
                 IGui.getItem("§eJe me déplace !", 1, Material.SLIME_BALL)
         );
+        setItem(IGui.getItem(this, "1er", 0, "adracode", "§r§aBravo !", "§7Tu es le premier !"));
     }
     
     @Override

@@ -229,21 +229,21 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
             int page = 0, indexSlot = 0;
             for(ReversedGuiIterator iterator = this.reverseIterator(); iterator.hasPrevious(); ){
                 GuiItem guiItem = iterator.previous();
-                if(sort.compare(guiItem, item) < 0){
+                if(sort.compare(item, guiItem) > 0){
                     page = iterator.getPage();
-                    indexSlot = iterator.getIndex();
+                    indexSlot = iterator.getIndex() + 1;
                     if(indexSlot >= dynamicItems.length){
                         ++page;
                         indexSlot = 0;
                     }
                     break;
                 }
-                int currentSlot = guiItem.getSlot();
-                boolean nextPage = currentSlot + 1 >= dynamicItems[dynamicItems.length - 1];
+                int currentIndex = iterator.getIndex() + 1;
+                boolean nextPage = currentIndex == dynamicItems.length;
                 if(nextPage){
-                    getPage(iterator.getPage()).getGui().moveItem(currentSlot, getPage(iterator.getPage() + 1).getGui(), 0);
+                    getPage(iterator.getPage()).getGui().moveItem(guiItem.getSlot(), getPage(iterator.getPage() + 1).getGui(), dynamicItems[0]);
                 } else {
-                    getPage(iterator.getPage()).getGui().moveItem(currentSlot, currentSlot + 1);
+                    getPage(iterator.getPage()).getGui().moveItem(guiItem.getSlot(), dynamicItems[currentIndex]);
                 }
             }
             getPage(page).getGui().setItem(dynamicItems[indexSlot], item);
@@ -260,11 +260,12 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
             if(sort != null){
                 for(GuiIterator iterator = this.iterator(page, Arrays.binarySearch(dynamicItems, (byte)slot) + 1); iterator.hasNext(); ){
                     int guiItemSlot = iterator.next().getSlot();
-                    boolean previousPage = currentSlot - 1 < dynamicItems[0];
+                    int indexSlot = iterator.getIndex() - 1;
+                    boolean previousPage = indexSlot < 0;
                     if(previousPage){
-                        getPage(iterator.getPage()).getGui().moveItem(guiItemSlot, getPage(iterator.getPage() - 1).getGui(), 0);
+                        getPage(iterator.getPage()).getGui().moveItem(guiItemSlot, getPage(iterator.getPage() - 1).getGui(), dynamicItems[dynamicItems.length - 1]);
                     } else {
-                        getPage(iterator.getPage()).getGui().moveItem(guiItemSlot, guiItemSlot - 1);
+                        getPage(iterator.getPage()).getGui().moveItem(guiItemSlot, dynamicItems[indexSlot]);
                     }
                 }
             } else {
@@ -286,8 +287,8 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
     @Override
     public void refreshItems(){
         TreeSet<GuiItem> sortedItems = new TreeSet<>(sort);
-        for(GuiIterator iterator = this.iterator(); iterator.hasNext(); ){
-            sortedItems.add(iterator.next());
+        for(GuiItem guiItem : this){
+            sortedItems.add(guiItem);
         }
         int index = -1, dynamicSize = dynamicItems.length;
         for(GuiItem item : sortedItems){
@@ -382,10 +383,17 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         }
     }
     
-    private class GuiIterator implements Iterator<GuiItem> {
+    @Override
+    public void update(int slot){
+        for(int i = 1; i < pages.size(); i++){
+            pages.get(i).getGui().update(slot);
+        }
+    }
+    
+    public class GuiIterator implements Iterator<GuiItem> {
         
         private ListIterator<GuiItem> items;
-        private int currentIndex;
+        private int index;
         
         public GuiIterator(int page, int index){
             List<GuiItem> items = new ArrayList<>(pages.size() * dynamicItems.length);
@@ -400,15 +408,15 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
                 }
             }
             this.items = items.listIterator(Math.min(page * dynamicItems.length + index, items.size()));
-            currentIndex = index - 1;
+            this.index = Math.min(page * dynamicItems.length + index - 1, items.size() - 2);
         }
         
         public int getPage(){
-            return getIndex() / dynamicItems.length;
+            return index / dynamicItems.length;
         }
         
         public int getIndex(){
-            return currentIndex;
+            return index % dynamicItems.length;
         }
         
         @Override
@@ -419,7 +427,7 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         @Override
         public @NotNull GuiItem next(){
             GuiItem item = items.next();
-            ++currentIndex;
+            ++index;
             return item;
         }
         
@@ -430,10 +438,10 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         
     }
     
-    private class ReversedGuiIterator implements ListIterator<GuiItem> {
+    public class ReversedGuiIterator implements ListIterator<GuiItem> {
         
         private ListIterator<GuiItem> items;
-        private int currentIndex;
+        private int index;
         
         public ReversedGuiIterator(int page, int index){
             List<GuiItem> items = new ArrayList<>(pages.size() * dynamicItems.length);
@@ -448,15 +456,15 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
                 }
             }
             this.items = items.listIterator(Math.min(page * dynamicItems.length + index, items.size()));
-            currentIndex = index + 1;
+            this.index = Math.min(page * dynamicItems.length + index + 1, items.size());
         }
         
         public int getPage(){
-            return previousIndex() / dynamicItems.length;
+            return index / dynamicItems.length;
         }
         
         public int getIndex(){
-            return currentIndex % dynamicItems.length;
+            return index % dynamicItems.length;
         }
         
         @Override
@@ -477,7 +485,7 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         @Override
         public @NotNull GuiItem previous(){
             GuiItem item = items.previous();
-            --currentIndex;
+            --index;
             return item;
         }
         
@@ -485,12 +493,12 @@ public final class MainPageGui<Gui extends IGui & MainPage> implements MainPage 
         public int nextIndex(){
             throw new UnsupportedOperationException();
         }
-    
+        
         @Override
         public int previousIndex(){
             return items.previousIndex();
         }
-    
+        
         @Override
         public void remove(){
             removeItem(getPage(), dynamicItems[getIndex()]);

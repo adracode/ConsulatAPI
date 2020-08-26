@@ -206,4 +206,10 @@ public class PagedGui extends BaseGui implements MainPage {
         super.setTitle();
         mainPageGui.setTitle();
     }
+    
+    @Override
+    public void update(int slot){
+        super.update(slot);
+        mainPageGui.update(slot);
+    }
 }
