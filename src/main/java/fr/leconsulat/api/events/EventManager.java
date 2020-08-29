@@ -406,6 +406,12 @@ public class EventManager implements Listener {
                 case MINECART_COMMAND:
                     event = new PlayerOpenCommandBlockEvent(entity, player);
                     break;
+                case VILLAGER:
+                    Villager villager = (Villager)entity;
+                    if(!villager.isTrading() && villager.getRecipeCount() != 0 && !villager.isSleeping() && villager.isAdult()){
+                        event = new PlayerOpenVillagerEvent(villager, player);
+                    }
+                    break;
                 case PLAYER:
                 case BAT:
                 case EGG:
@@ -440,7 +446,6 @@ public class EventManager implements Listener {
                 case PILLAGER:
                 case SKELETON:
                 case SNOWBALL:
-                case VILLAGER:
                 case ENDERMITE:
                 case LIGHTNING:
                 case ILLUSIONER:

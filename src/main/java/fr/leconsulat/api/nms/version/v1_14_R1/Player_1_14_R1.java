@@ -10,7 +10,7 @@ import org.bukkit.entity.EntityType;
 public class Player_1_14_R1 implements Player {
     
     @Override
-    public void pickup(org.bukkit.entity.Player player, Entity entity){
+    public boolean pickup(org.bukkit.entity.Player player, Entity entity){
         switch(entity.getType()){
             case ARROW:
             case SPECTRAL_ARROW:
@@ -18,15 +18,18 @@ public class Player_1_14_R1 implements Player {
             case TRIDENT:
                 break;
             default:
-                return;
+                return true;
         }
         if(entity.getType() != EntityType.DROPPED_ITEM){
             EntityArrow arrowEntity = (EntityArrow)((CraftEntity)entity).getHandle();
             arrowEntity.shake = 0;
             arrowEntity.inGround = true;
-            arrowEntity.fromPlayer = EntityArrow.PickupStatus.ALLOWED;
+            if(arrowEntity.fromPlayer != EntityArrow.PickupStatus.ALLOWED){
+                return false;
+            }
         }
         ((CraftEntity)entity).getHandle().pickup(((CraftPlayer)player).getHandle());
+        return true;
     }
     
 }
