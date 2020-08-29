@@ -2,10 +2,13 @@ package fr.leconsulat.api.server;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.utils.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +71,9 @@ public abstract class Server {
     public void onPlayerConnect(ConsulatPlayer player){
     }
     
+    public void onConnectionRefused(ConsulatPlayer player){
+    }
+    
     public int getSlot(){
         return slot;
     }
@@ -103,6 +109,13 @@ public abstract class Server {
         out.writeUTF("Connect");
         out.writeUTF(name);
         player.getPlayer().sendPluginMessage(getPlugin(), "BungeeCord", out.toByteArray());
+        Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
+            ConsulatPlayer currentPlayer = CPlayerManager.getInstance().getConsulatPlayer(player.getUUID());
+            if(currentPlayer == player){
+                currentPlayer.sendMessage("§cUne erreur est survenue.");
+                onConnectionRefused(currentPlayer);
+            }
+        }, 10 * 20L);
     }
     
     public int getPlayersInQueue(){

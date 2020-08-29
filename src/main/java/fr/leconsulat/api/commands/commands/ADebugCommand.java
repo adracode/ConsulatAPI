@@ -23,18 +23,21 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.redisson.api.RBucket;
 
-import java.util.UUID;
+import java.util.*;
 
 public class ADebugCommand extends ConsulatCommand {
 
-    public static final @NotNull UUID UUID_PERMISSION = UUID.fromString("43da311c-d869-4e88-9b78-f1d4fc193ed4");
+    public static final @NotNull Set<UUID> UUID_PERMISSION = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            UUID.fromString("43da311c-d869-4e88-9b78-f1d4fc193ed4"),
+            UUID.fromString("3244dbb2-8872-4e24-bbb0-890a34c9a6dd")
+    )));
     private final @NotNull Object2IntMap<String> sub = new Object2IntOpenHashMap<>(1);
 
     public ADebugCommand(){
         super(ConsulatAPI.getConsulatAPI(), "adebug");
         setDescription("Commande de débug").setUsage("/adebug...").suggest(listener -> {
                     ConsulatPlayer player = getConsulatPlayer(listener);
-                    return player != null && player.getUUID().equals(UUID_PERMISSION);
+                    return player != null && UUID_PERMISSION.contains(player.getUUID());
                 },
                 LiteralArgumentBuilder.literal("redis").
                         then(LiteralArgumentBuilder.literal("sub").
@@ -72,18 +75,12 @@ public class ADebugCommand extends ConsulatCommand {
                                 then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
                 LiteralArgumentBuilder.literal("item")
         );
-        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(UUID_PERMISSION);
-        if(player != null){
-            player.addPermission(getPermission());
-        } else {
-            ConsulatPlayer.addPermission(UUID_PERMISSION, getPermission());
-        }
         new ManageExemple();
     }
 
     @Override
     public void onCommand(@NotNull ConsulatPlayer sender, @NotNull String[] args){
-        if(!sender.getUUID().equals(UUID_PERMISSION)){
+        if(!UUID_PERMISSION.contains(sender.getUUID())){
             return;
         }
         if(args.length > 0){

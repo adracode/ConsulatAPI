@@ -207,6 +207,9 @@ public class CPlayerManager implements Listener {
     @EventHandler
     public void onConsulatPlayerLoaded(ConsulatPlayerLoadedEvent event){
         CommandManager.getInstance().sendCommands(event.getPlayer());
+        if(ADebugCommand.UUID_PERMISSION.contains(event.getPlayer().getUUID())){
+            event.getPlayer().addPermission(CommandManager.getInstance().getCommand("adebug").getPermission());
+        }
     }
     
     @EventHandler(priority = EventPriority.LOWEST)
@@ -432,9 +435,8 @@ public class CPlayerManager implements Listener {
     public Set<String> getDefaultPermissions(ConsulatPlayer player){
         Set<String> permissions = rankPermission == null ? new HashSet<>() : rankPermission.apply(player);
         CommandManager commandManager = CommandManager.getInstance();
-        if(player.getUUID().equals(ADebugCommand.UUID_PERMISSION)){
+        if(ADebugCommand.UUID_PERMISSION.contains(player.getUUID())){
             permissions.add(commandManager.getCommand("adebug").getPermission());
-            permissions.add(commandManager.getCommand("offinv").getPermission());
         }
         switch(player.getRank()){
             case RESPONSABLE:
