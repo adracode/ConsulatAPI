@@ -9,6 +9,7 @@ import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -206,6 +207,23 @@ public class EventManager implements Listener {
                 }
             }
             break;
+            case LEFT_CLICK_BLOCK:{
+                if(clickedBlock == null){
+                    return;
+                }
+                PlayerInteractBlockEvent interactBlockEvent = null;
+                Block aboveClicked = clickedBlock.getRelative(BlockFace.UP);
+                if(aboveClicked.getType() == Material.FIRE){
+                    interactBlockEvent = new PlayerBreakFireEvent(aboveClicked, player);
+                }
+                if(interactBlockEvent != null){
+                    Bukkit.getPluginManager().callEvent(interactBlockEvent);
+                    if(interactBlockEvent.isCancelled()){
+                        event.setCancelled(true);
+                    }
+                }
+            }
+            break;
             case PHYSICAL:
                 if(clickedBlock == null){
                     return;
@@ -234,6 +252,7 @@ public class EventManager implements Listener {
                 }
                 break;
         }
+        
     }
     
     @EventHandler
