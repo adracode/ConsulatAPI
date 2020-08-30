@@ -26,13 +26,13 @@ import org.redisson.api.RBucket;
 import java.util.*;
 
 public class ADebugCommand extends ConsulatCommand {
-
+    
     public static final @NotNull Set<UUID> UUID_PERMISSION = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             UUID.fromString("43da311c-d869-4e88-9b78-f1d4fc193ed4"),
             UUID.fromString("3244dbb2-8872-4e24-bbb0-890a34c9a6dd")
     )));
     private final @NotNull Object2IntMap<String> sub = new Object2IntOpenHashMap<>(1);
-
+    
     public ADebugCommand(){
         super(ConsulatAPI.getConsulatAPI(), "adebug");
         setDescription("Commande de débug").setUsage("/adebug...").suggest(listener -> {
@@ -44,7 +44,7 @@ public class ADebugCommand extends ConsulatCommand {
                                 then(Arguments.word("channel"))).
                         then(LiteralArgumentBuilder.literal("pub").
                                 then(Arguments.word("channel").
-                                then(RequiredArgumentBuilder.argument("message", StringArgumentType.greedyString())))).
+                                        then(RequiredArgumentBuilder.argument("message", StringArgumentType.greedyString())))).
                         then(LiteralArgumentBuilder.literal("pubint").
                                 then(Arguments.word("channel").
                                         then(RequiredArgumentBuilder.argument("message", IntegerArgumentType.integer())))).
@@ -73,11 +73,13 @@ public class ADebugCommand extends ConsulatCommand {
                 LiteralArgumentBuilder.literal("blockinventory").
                         then(Arguments.playerList("joueur").
                                 then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
-                LiteralArgumentBuilder.literal("item")
+                LiteralArgumentBuilder.literal("item"),
+                LiteralArgumentBuilder.literal("debug").
+                        then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))
         );
         new ManageExemple();
     }
-
+    
     @Override
     public void onCommand(@NotNull ConsulatPlayer sender, @NotNull String[] args){
         if(!UUID_PERMISSION.contains(sender.getUUID())){
@@ -203,6 +205,12 @@ public class ADebugCommand extends ConsulatCommand {
                     break;
                 case "item":
                     sender.sendMessage(ConsulatAPI.getNMS().getItem().getItemNameId(sender.getPlayer().getInventory().getItemInMainHand()));
+                    break;
+                case "debug":
+                    if(args.length < 2){
+                        return;
+                    }
+                    ConsulatAPI.getConsulatAPI().setDebug(Boolean.parseBoolean(args[1]));
                     break;
             }
         }

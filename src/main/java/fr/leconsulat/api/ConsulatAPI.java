@@ -66,6 +66,10 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         return debug;
     }
     
+    public void setDebug(boolean debug){
+        this.debug = debug;
+    }
+    
     public boolean isDevelopment(){
         return development;
     }
