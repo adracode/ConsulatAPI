@@ -158,6 +158,7 @@ public class CPlayerManager implements Listener {
     
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
+        ConsulatAPI api = ConsulatAPI.getConsulatAPI();
         event.setJoinMessage("");
         ConsulatPlayer player = addPlayer(event.getPlayer().getUniqueId(), event.getPlayer().getName());
         RFuture<String> server = player.getServer();
@@ -174,30 +175,31 @@ public class CPlayerManager implements Listener {
                 player.setServer();
             });
         }
-        ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " has joined");
-        if(ConsulatAPI.getConsulatAPI().isDevelopment()){
+        if(api.isDebug()){
+            api.log(Level.INFO, "Player " + player + " has joined");
+        }
+        if(api.isDevelopment()){
             player.getPlayer().sendTitle("§4Serveur", "§4en développement", 20, 100, 20);
             player.getPlayer().sendMessage("§cTu es sur un serveur en développement ! Des bugs peuvent être présents.");
         }
-        ConsulatAPI consulatAPI = ConsulatAPI.getConsulatAPI();
         String name = event.getPlayer().getName().toLowerCase();
         if(!offlinePlayers.containsKey(name)){
             offlinePlayers.put(name, event.getPlayer().getUniqueId());
         }
-        Bukkit.getServer().getScheduler().runTaskAsynchronously(consulatAPI, () -> {
+        Bukkit.getServer().getScheduler().runTaskAsynchronously(api, () -> {
             try {
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "Fetching player...");
                 long start = System.currentTimeMillis();
                 fetchPlayer(player);
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "Player " + player + " fetched in " + (System.currentTimeMillis() - start) + " ms");
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions...");
+                api.log(Level.INFO, "Player " + (api.isDebug() ? player : player.getName()) + " fetched in " + (System.currentTimeMillis() - start) + " ms");
                 start = System.currentTimeMillis();
                 player.load();
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
-                Bukkit.getScheduler().runTask(consulatAPI,
+                if(api.isDebug()){
+                    api.log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
+                }
+                Bukkit.getScheduler().runTask(api,
                         () -> Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLoadedEvent(player)));
             } catch(SQLException e){
-                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () ->
+                Bukkit.getScheduler().runTask(api, () ->
                         event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage()));
                 e.printStackTrace();
             }
