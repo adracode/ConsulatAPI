@@ -418,12 +418,16 @@ public class CPlayerManager implements Listener {
         });
     }
     
-    public void setHasCustomRank(UUID uuid, boolean hasCustomRank) throws SQLException{
-        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET buyedPerso = ? WHERE player_uuid = ?");
-        request.setBoolean(1, hasCustomRank);
-        request.setString(2, uuid.toString());
-        request.executeUpdate();
-        request.close();
+    public void setHasCustomRank(UUID uuid, boolean hasCustomRank){
+        try {
+            PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET buyedPerso = ? WHERE player_uuid = ?");
+            request.setBoolean(1, hasCustomRank);
+            request.setString(2, uuid.toString());
+            request.executeUpdate();
+            request.close();
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
     }
     
     public void setCustomRank(UUID uuid, String rank) throws SQLException{

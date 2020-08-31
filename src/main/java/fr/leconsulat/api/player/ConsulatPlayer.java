@@ -202,7 +202,7 @@ public class ConsulatPlayer implements Saveable {
         }
     }
     
-    public void setHasCustomRank(boolean hasCustomRank) throws SQLException{
+    public void setHasCustomRank(boolean hasCustomRank){
         CPlayerManager.getInstance().setHasCustomRank(getUUID(), hasCustomRank);
         if(hasCustomRank){
             customRank = new CustomRank();
