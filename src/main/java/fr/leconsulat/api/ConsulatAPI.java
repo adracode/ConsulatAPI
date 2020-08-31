@@ -6,7 +6,6 @@ import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.ADebugCommand;
-import fr.leconsulat.api.commands.commands.GCCommand;
 import fr.leconsulat.api.commands.commands.HelpCommand;
 import fr.leconsulat.api.commands.commands.RankCommand;
 import fr.leconsulat.api.database.DatabaseManager;
@@ -195,7 +194,6 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         CommandManager.getInstance();
         GuiManager.getInstance();
         new HelpCommand().register();
-        new GCCommand().register();
         new RankCommand().register();
         //new OfflineInventoryCommand().register();
         new ADebugCommand().register();
