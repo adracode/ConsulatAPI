@@ -156,7 +156,7 @@ public class ConsulatPlayer implements Saveable {
             return rank.getRankColor() + "[" + rank.getRankName() + "]";
         }
         String customRank = getCustomRank();
-        return customRank == null ? rank.getRankColor() + "[" + rank.getRankName() + "]": customRank;
+        return customRank == null ? rank.getRankColor() + "[" + rank.getRankName() + "]" : customRank;
     }
     
     public boolean isInQueue(){
@@ -459,6 +459,25 @@ public class ConsulatPlayer implements Saveable {
                 e.printStackTrace();
             }
         });
+    }
+    
+    public static boolean hasPermission(UUID uuid, String permission){
+        try {
+            File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
+            CompoundTag playerTag;
+            if(!file.exists()){
+                return false;
+            } else {
+                NBTInputStream is = new NBTInputStream(file);
+                playerTag = is.read();
+                is.close();
+            }
+            Set<StringTag> permissions = new HashSet<>(playerTag.getList("Permissions", NBTType.STRING));
+            return permissions.contains(new StringTag(permission));
+        } catch(IOException e){
+            e.printStackTrace();
+            return false;
+        }
     }
     
     public static void removePermission(UUID uuid, String... permission){

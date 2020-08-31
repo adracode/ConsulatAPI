@@ -169,7 +169,8 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         FileConfiguration config = getConfig();
         this.debug = config.getBoolean("debug", false);
         this.development = config.getBoolean("dev", false);
-        this.server = ConsulatServer.valueOf(config.getString("server-name", "unknown").toUpperCase());
+        this.server = ConsulatServer.valueOf(
+                config.getString("server-name", "unknown").toUpperCase().replaceAll("TEST", ""));
         log(Level.INFO, "Loading in server " + server);
         playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
         try {

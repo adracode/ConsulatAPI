@@ -15,14 +15,17 @@ import fr.leconsulat.api.gui.gui.module.api.Pageable;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.redis.RedisManager;
+import fr.leconsulat.api.utils.FileUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.redisson.api.RBucket;
 
+import java.io.File;
 import java.util.*;
 
 public class ADebugCommand extends ConsulatCommand {
@@ -57,9 +60,13 @@ public class ADebugCommand extends ConsulatCommand {
                         then(LiteralArgumentBuilder.literal("add").
                                 then(Arguments.playerList("joueur").
                                         then(Arguments.word("permission")))).
+                        then(LiteralArgumentBuilder.literal("addall").
+                                then(Arguments.word("permission"))).
                         then(LiteralArgumentBuilder.literal("remove").
                                 then(Arguments.playerList("joueur").
-                                        then(Arguments.word("permission")))),
+                                        then(Arguments.word("permission")))).
+                        then(LiteralArgumentBuilder.literal("removeall").
+                                then(Arguments.word("permission"))),
                 LiteralArgumentBuilder.literal("guipage").
                         then(RequiredArgumentBuilder.argument("tick", IntegerArgumentType.integer(0)).
                                 then(RequiredArgumentBuilder.argument("items", IntegerArgumentType.integer(0)))),
@@ -128,19 +135,54 @@ public class ADebugCommand extends ConsulatCommand {
                     break;
                 case "permission":{
                     if(args.length < 4){
-                        return;
+                        if(args.length < 3){
+                            return;
+                        }
+                        switch(args[1]){
+                            case "addall":
+                                Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                                    int count = 0;
+                                    for(File file : FileUtils.getFiles(new File(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/"))){
+                                        ConsulatPlayer.addPermission(UUID.fromString(file.getName().substring(0, 36)), args[2]);
+                                        ++count;
+                                    }
+                                    sender.sendMessage("§aPermission donnée pour " + count + " joueurs");
+                                });
+                                break;
+                            case "removeall":
+                                Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                                    int count = 0;
+                                    for(File file : FileUtils.getFiles(new File(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/"))){
+                                        ConsulatPlayer.removePermission(UUID.fromString(file.getName().substring(0, 36)), args[2]);
+                                        ++count;
+                                    }
+                                    sender.sendMessage("§aPermission retiré pour " + count + " joueurs");
+                                });
+                                break;
+                        }
                     }
-                    ConsulatPlayer target = CPlayerManager.getInstance().getConsulatPlayer(args[2]);
-                    if(target == null){
-                        sender.sendMessage("§cJoueur non connecté");
-                        return;
-                    }
+                    @Nullable ConsulatPlayer target = CPlayerManager.getInstance().getConsulatPlayer(args[2]);
                     switch(args[1]){
                         case "has":
-                            sender.sendMessage((target.hasPermission(args[3]) ? "§aIl a la permission " :
-                                    "§cIl n'a pas la permission ") + args[3]);
+                            if(target == null){
+                                Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                                    sender.sendMessage((ConsulatPlayer.hasPermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3]) ?
+                                            "§aIl a la permission " :
+                                            "§cIl n'a pas la permission ") + args[3]);
+                                });
+                            } else {
+                                sender.sendMessage((target.hasPermission(args[3]) ? "§aIl a la permission " :
+                                        "§cIl n'a pas la permission ") + args[3]);
+                            }
                             break;
                         case "add":
+                            if(target == null){
+                                Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                                    ConsulatPlayer.addPermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3]);
+                                    sender.sendMessage("§aPermission donnée s'il ne l'a pas");
+                                });
+                                return;
+                            }
                             if(target.hasPermission(args[3])){
                                 sender.sendMessage("§cIl a déjà la permission");
                                 return;
@@ -153,6 +195,13 @@ public class ADebugCommand extends ConsulatCommand {
                             sender.sendMessage("§aPermission donnée");
                             break;
                         case "remove":
+                            if(target == null){
+                                Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                                    ConsulatPlayer.removePermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3]);
+                                    sender.sendMessage("§aPermission retirée s'il ne l'a pas");
+                                });
+                                return;
+                            }
                             if(!target.hasPermission(args[3])){
                                 sender.sendMessage("§cIl n'a pas la permission");
                                 return;
