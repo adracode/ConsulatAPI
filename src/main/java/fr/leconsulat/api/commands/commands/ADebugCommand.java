@@ -148,6 +148,9 @@ public class ADebugCommand extends ConsulatCommand {
                                     }
                                     sender.sendMessage("§aPermission donnée pour " + count + " joueurs");
                                 });
+                                for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
+                                    player.addPermission(args[2]);
+                                }
                                 break;
                             case "removeall":
                                 Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
@@ -158,6 +161,9 @@ public class ADebugCommand extends ConsulatCommand {
                                     }
                                     sender.sendMessage("§aPermission retiré pour " + count + " joueurs");
                                 });
+                                for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
+                                    player.removePermission(args[2]);
+                                }
                                 break;
                         }
                     }
