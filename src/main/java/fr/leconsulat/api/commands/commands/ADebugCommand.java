@@ -6,7 +6,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import fr.leconsulat.api.ConsulatAPI;
-import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.commands.Arguments;
 import fr.leconsulat.api.commands.ConsulatCommand;
 import fr.leconsulat.api.gui.exemples.ManageExemple;
@@ -70,13 +69,6 @@ public class ADebugCommand extends ConsulatCommand {
                 LiteralArgumentBuilder.literal("guipage").
                         then(RequiredArgumentBuilder.argument("tick", IntegerArgumentType.integer(0)).
                                 then(RequiredArgumentBuilder.argument("items", IntegerArgumentType.integer(0)))),
-                LiteralArgumentBuilder.literal("config").
-                        then(Arguments.word("server").suggests((context, builder) -> {
-                            for(ConsulatServer server : ConsulatServer.values()){
-                                builder.suggest(server.name());
-                            }
-                            return builder.buildFuture();
-                        })),
                 LiteralArgumentBuilder.literal("blockinventory").
                         then(Arguments.playerList("joueur").
                                 then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
@@ -236,17 +228,6 @@ public class ADebugCommand extends ConsulatCommand {
                             sender.sendMessage("§cPas une page.");
                         }
                     }, Integer.parseInt(args[1]));
-                    break;
-                case "config":
-                    ConsulatAPI api = ConsulatAPI.getConsulatAPI();
-                    if(api.getConsulatServer() == ConsulatServer.UNKNOWN){
-                        if(args.length > 1){
-                            api.setServer(ConsulatServer.valueOf(args[1].toUpperCase()));
-                            api.getConfig().set("server-name", args[1]);
-                            api.saveConfig();
-                            sender.sendMessage("§aNom serveur changé..");
-                        }
-                    }
                     break;
                 case "blockinventory":
                     if(args.length < 3){
