@@ -1,7 +1,9 @@
 package fr.leconsulat.api.database;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.database.tasks.SaveTask;
 import org.bukkit.Bukkit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,41 +12,58 @@ public class SaveManager {
     
     private static SaveManager instance;
     
-    private Map<String, SaveTask> tasks = new HashMap<>();
+    static{
+        new SaveManager();
+    }
     
-    public SaveManager(){
+    private final @NotNull Map<String, SaveTask<? extends Saveable, ?>> tasks = new HashMap<>();
+    
+    private SaveManager(){
         if(instance != null){
-            return;
+            throw new IllegalStateException();
         }
         instance = this;
-        //int delay = 10 * 20;
         int delay = 5 * 60 * 20;
         Bukkit.getScheduler().runTaskTimerAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-            for(SaveTask task : tasks.values()){
+            for(SaveTask<?, ?> task : tasks.values()){
                 task.run();
             }
         }, delay, delay);
     }
     
-    public void addSaveTask(String id, SaveTask task){
+    public void addSaveTask(String id, SaveTask<? extends Saveable, ?> task){
         tasks.put(id, task);
     }
     
     public void addData(String id, Saveable toSave){
-        SaveTask task = tasks.get(id);
+        SaveTask<? extends Saveable, ?> task = tasks.get(id);
         if(task != null){
             task.addData(toSave);
         }
     }
     
-    public void removeData(String id, Saveable toSave){
-        SaveTask task = tasks.get(id);
+    public void removeData(String id, Saveable toSave, boolean save){
+        SaveTask<? extends Saveable, ?> task = tasks.get(id);
         if(task != null){
-            task.removeData(toSave);
+            task.removeData(toSave, save);
         }
     }
     
-    public static SaveManager getInstance(){
+    public void saveOnce(String id, Saveable toSave){
+        SaveTask<? extends Saveable, ?> task = tasks.get(id);
+        if(task != null){
+            task.saveOnce(toSave);
+        }
+    }
+    
+    //Bloquant
+    public void removeAll(){
+        for(SaveTask<? extends Saveable, ?> task : tasks.values()){
+            task.removeDatas();
+        }
+    }
+    
+    public static @NotNull SaveManager getInstance(){
         return instance;
     }
 }

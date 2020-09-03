@@ -3,5 +3,12 @@ database: serveur
 username: default
 password: default
 
-player: fr.amisoz.consulatcore.players.SurvivalPlayer
+redis-host: localhost
+redis-port: 6379
+redis-password: default
+redis-client: default
+
+player: fr.leconsulat.api.player.ConsulatPlayer
 debug: false
+dev: false
+server-name: unknown

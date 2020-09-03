@@ -1,37 +1,30 @@
 package fr.leconsulat.api.gui.exemples;
 
-import fr.leconsulat.api.gui.events.GuiClickEvent;
-import fr.leconsulat.api.gui.events.GuiCloseEvent;
-import fr.leconsulat.api.gui.events.GuiCreateEvent;
-import fr.leconsulat.api.gui.events.GuiOpenEvent;
-import fr.leconsulat.api.gui.*;
+import fr.leconsulat.api.gui.event.GuiClickEvent;
+import fr.leconsulat.api.gui.event.GuiCloseEvent;
+import fr.leconsulat.api.gui.event.GuiOpenEvent;
+import fr.leconsulat.api.gui.gui.IGui;
+import fr.leconsulat.api.gui.gui.module.api.Relationnable;
+import fr.leconsulat.api.gui.gui.template.DataRelatGui;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Material;
+import org.jetbrains.annotations.Nullable;
 
-public class TestGui extends GuiListener {
+public class TestGui extends DataRelatGui<ConsulatPlayer> {
     
-    public TestGui(){
-        super(null, ConsulatPlayer.class);
-        addGui(null,
-                this, "§cCou§ecou", 4,
-                getItem("§aSalut", 10, Material.ENDER_PEARL, "§7Ceci est un §8item §7de §cTest", "§7Veuillez le traiter avec §arespect"),
-                getItem("nom du joueur", 28, Material.HEART_OF_THE_SEA),
-                getItem("§aSalut", 0, Material.ENDER_PEARL, "§dOui").setGlowing(true)
+    public TestGui(ConsulatPlayer player){
+        super(player, "§cCoucou", 4,
+                IGui.getItem("§aSalut", 10, Material.ENDER_PEARL, "§7Ceci est un §8item §7de §cTest", "§7Veuillez le traiter avec §arespect"),
+                IGui.getItem("nom du joueur", 28, Material.HEART_OF_THE_SEA),
+                IGui.getItem("§aSalut", 0, Material.ENDER_PEARL, "§dOui").setGlowing(true)
         );
-        addChild(10, new ChildTestGui(this));
+        setDisplayName(28, player.getName());
     }
     
     @Override
-    public void onCreate(GuiCreateEvent event){
-        if(event.getKey() == null){
-            return;
-        }
-        event.getGui().setDisplayName(28, ((ConsulatPlayer)event.getKey()).getName());
-    }
-    
-    @Override
-    public void onOpen(GuiOpenEvent event){
+    public void onOpened(GuiOpenEvent event){
         event.getPlayer().sendMessage("Je te vois en fait");
+        setDescriptionPlayer(28, event.getPlayer(), "Oui");
     }
     
     @Override
@@ -43,7 +36,12 @@ public class TestGui extends GuiListener {
     public void onClick(GuiClickEvent event){
         event.getPlayer().sendMessage("" + event.getSlot());
         if(event.getSlot() == 10){
-            getChild(event.getSlot()).open(event.getPlayer(), 1);
+            getChild(0).getGui().open(event.getPlayer());
         }
+    }
+    
+    @Override
+    public Relationnable createChild(@Nullable Object key){
+        return new ChildTestGui();
     }
 }

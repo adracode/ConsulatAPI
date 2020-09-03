@@ -1,31 +1,31 @@
 package fr.leconsulat.api.player;
 
-import fr.leconsulat.api.ConsulatAPI;
 import org.bukkit.ChatColor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.logging.Level;
+import java.util.Objects;
 
 public class CustomRank {
     
-    private ChatColor colorPrefix = null;
-    private String prefix = null;
-    private ChatColor colorName = null;
-    private String cache = null;
+    private @Nullable ChatColor colorPrefix = null;
+    private @Nullable String prefix = null;
+    private @Nullable ChatColor colorName = null;
+    private @Nullable String cache = null;
     
-    public CustomRank(){
+    CustomRank(){
     }
     
-    public CustomRank(String rank){
-        if(rank == null){
-            return;
-        }
+    CustomRank(@NotNull String rank){
+        Objects.requireNonNull(rank, "rank");
+        
         int open = rank.indexOf('['), close = rank.indexOf(']');
         this.colorPrefix = ChatColor.getByChar(rank.charAt(1));
-        this.prefix = rank.substring(open, close + 2);
-        this.colorName = ChatColor.getByChar(rank.charAt(close + 3));
+        this.prefix = rank.substring(open, close + 1);
+        this.colorName = ChatColor.getByChar(rank.charAt(close + 2));
     }
     
-    public String getCustomRank(){
+    public @Nullable String getCustomRank(){
         if(cache == null){
             if(colorPrefix == null || prefix == null || colorName == null){
                 return null;
@@ -36,22 +36,22 @@ public class CustomRank {
         return cache;
     }
     
-    public String getCustomPrefix(){
+    public @Nullable String getCustomPrefix(){
         return colorPrefix + prefix;
     }
     
-    public void setColorPrefix(ChatColor colorPrefix){
-        this.colorPrefix = colorPrefix;
+    public void setColorPrefix(@NotNull ChatColor colorPrefix){
+        this.colorPrefix = Objects.requireNonNull(colorPrefix);
         cache = null;
     }
     
-    public void setPrefix(String prefix){
-        this.prefix = "[" + prefix + "] ";
+    public void setPrefix(@NotNull String prefix){
+        this.prefix = "[" + Objects.requireNonNull(prefix) + "]";
         cache = null;
     }
     
-    public void setColorName(ChatColor colorName){
-        this.colorName = colorName;
+    public void setColorName(@NotNull ChatColor colorName){
+        this.colorName = Objects.requireNonNull(colorName);
         cache = null;
     }
     

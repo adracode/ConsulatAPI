@@ -56,7 +56,6 @@ public class ReflectionUtils {
     
     public static Object getDeclaredField(Class<?> c, String name, Object instance){
         try {
-            
             Field field = c.getDeclaredField(name);
             if(!field.isAccessible()){
                 field.setAccessible(true);
