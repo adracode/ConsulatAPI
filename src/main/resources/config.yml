@@ -12,3 +12,4 @@ player: fr.leconsulat.api.player.ConsulatPlayer
 debug: false
 dev: false
 server-name: unknown
+crashed: false

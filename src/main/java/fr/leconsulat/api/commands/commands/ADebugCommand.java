@@ -73,6 +73,7 @@ public class ADebugCommand extends ConsulatCommand {
                         then(Arguments.playerList("joueur").
                                 then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
                 LiteralArgumentBuilder.literal("item"),
+                LiteralArgumentBuilder.literal("crash"),
                 LiteralArgumentBuilder.literal("debug").
                         then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))
         );
@@ -247,6 +248,16 @@ public class ADebugCommand extends ConsulatCommand {
                         return;
                     }
                     ConsulatAPI.getConsulatAPI().setDebug(Boolean.parseBoolean(args[1]));
+                    break;
+                case "crash":
+                    if(!ConsulatAPI.getConsulatAPI().isDevelopment()){
+                        return;
+                    }
+                    try {
+                        wait(20*1000);
+                    } catch(InterruptedException e){
+                        e.printStackTrace();
+                    }
                     break;
             }
         }

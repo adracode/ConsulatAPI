@@ -18,6 +18,7 @@ import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.runnable.KeepAlive;
+import fr.leconsulat.api.saver.Saver;
 import fr.leconsulat.api.utils.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -54,6 +55,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private File log;
     private boolean debug = false;
     private boolean development = false;
+    private boolean hasCrashed;
     
     private int lastTimeTick = 50;
     
@@ -154,7 +156,8 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         RedisManager.getInstance().getRedis().shutdown();
         SaveManager.getInstance().removeAll();
         databaseManager.disconnect();
-        
+        getConfig().set("crashed", false);
+        saveConfig();
     }
     
     @Override
@@ -170,7 +173,18 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         this.development = config.getBoolean("dev", false);
         this.server = ConsulatServer.valueOf(
                 config.getString("server-name", "unknown").toUpperCase().replaceAll("TEST", ""));
+        if(config.get("crashed", null) == null){
+            config.set("crashed", false);
+            saveConfig();
+        }
+        this.hasCrashed = config.getBoolean("crashed");
+        if(hasCrashed){
+            log(Level.SEVERE, "Server has previously crashed !");
+        }
+        config.set("crashed", true);
+        saveConfig();
         log(Level.INFO, "Loading in server " + server);
+        new Saver().addSave(() -> SaveManager.getInstance().removeAll());
         playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
         try {
             String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
@@ -202,4 +216,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
     }
     
+    public boolean hasCrashed(){
+        return hasCrashed;
+    }
 }
