@@ -383,7 +383,7 @@ public class ConsulatPlayer implements Saveable {
         setServer(null);
     }
     
-    public void save(){
+    public synchronized void save(){
         try {
             File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
             if(!file.exists()){
