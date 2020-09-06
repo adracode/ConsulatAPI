@@ -253,10 +253,11 @@ public class ADebugCommand extends ConsulatCommand {
                     if(!ConsulatAPI.getConsulatAPI().isDevelopment()){
                         return;
                     }
-                    try {
-                        wait(20*1000);
-                    } catch(InterruptedException e){
-                        e.printStackTrace();
+                    long start = System.currentTimeMillis();
+                    while(true){
+                        if(System.currentTimeMillis() - start >= 20_000L){
+                            break;
+                        }
                     }
                     break;
             }

@@ -107,6 +107,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         for(Player p : Bukkit.getOnlinePlayers()){
             getServer().getPluginManager().callEvent(new PlayerJoinEvent(p, ""));
         }
+        Saver.getInstance().start();
     }
     
     @EventHandler
@@ -174,12 +175,15 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         this.server = ConsulatServer.valueOf(
                 config.getString("server-name", "unknown").toUpperCase().replaceAll("TEST", ""));
         if(config.get("crashed", null) == null){
+            log(Level.WARNING, "No 'crashed' in config, adding.");
             config.set("crashed", false);
             saveConfig();
         }
         this.hasCrashed = config.getBoolean("crashed");
         if(hasCrashed){
             log(Level.SEVERE, "Server has previously crashed !");
+        } else {
+            log(Level.INFO, "No crash :)");
         }
         config.set("crashed", true);
         saveConfig();

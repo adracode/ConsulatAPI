@@ -16,13 +16,16 @@ public class Saver extends Thread {
     private long lastUpdate = System.currentTimeMillis();
     private Set<Runnable> saves = new HashSet<>();
     
-    @Override
-    public void run(){
+    public Saver(){
         if(instance == null){
             instance = this;
         } else {
             throw new IllegalStateException("Saver is already instantiated");
         }
+    }
+    
+    @Override
+    public synchronized void run(){
         int timeBeforeCrash = 15_000;
         Bukkit.getScheduler().scheduleSyncRepeatingTask(ConsulatAPI.getConsulatAPI(), () -> {
             lastUpdate = System.currentTimeMillis();
@@ -32,6 +35,7 @@ public class Saver extends Thread {
                 if(System.currentTimeMillis() - lastUpdate >= timeBeforeCrash){
                     ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Server has stopped responding, crash ? Saving...");
                     save();
+                    lastUpdate = System.currentTimeMillis();
                 }
                 wait(50);
             } catch(InterruptedException e){
