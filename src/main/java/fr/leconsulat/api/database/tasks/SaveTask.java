@@ -51,6 +51,11 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
         T objectToSave = (T)toSave;
         Objects.requireNonNull(objectToSave, "objectToSave");
         Object data = lastKnownsData.remove(objectToSave);
+        if(data == null){
+            if(!lastKnownsData.containsKey(objectToSave)){
+                return;
+            }
+        }
         if(save){
             if(!ConsulatAPI.getConsulatAPI().isEnabled()){
                 try {

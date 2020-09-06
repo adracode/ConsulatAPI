@@ -85,7 +85,7 @@ public abstract class Server {
     
     public ConnectResult queuePlayer(ConsulatPlayer player){
         if(queue == null){
-            if(this.players >= slot){
+            if(this.players >= slot && !player.hasPower(Rank.FINANCEUR) && player.getRank() != Rank.TOURISTE){
                 return ConnectResult.SERVER_FULL;
             }
             connectPlayer(player);
