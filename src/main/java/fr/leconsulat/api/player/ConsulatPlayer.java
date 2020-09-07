@@ -315,6 +315,11 @@ public class ConsulatPlayer implements Saveable {
         this.permissions.remove(permission);
     }
     
+    public void resetPermissions(){
+        permissions.clear();
+        giveDefaultPermissions();
+    }
+    
     public int decrementPosition(){
         return --positionInQueue;
     }
@@ -323,15 +328,7 @@ public class ConsulatPlayer implements Saveable {
         try {
             File playerFile = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
             if(!playerFile.exists()){
-                for(Command command : CommandManager.getInstance().getCommands().values()){
-                    if(command instanceof ConsulatCommand){
-                        ConsulatCommand consulatCommand = (ConsulatCommand)command;
-                        if(hasPower(consulatCommand.getRank())){
-                            addPermission(consulatCommand.getPermission());
-                        }
-                    }
-                }
-                permissions.addAll(CPlayerManager.getInstance().getDefaultPermissions(this));
+                giveDefaultPermissions();
                 return;
             }
             NBTInputStream is = new NBTInputStream(playerFile);
@@ -339,25 +336,41 @@ public class ConsulatPlayer implements Saveable {
             is.close();
             loadNBT(playerTag);
             if(permissions.isEmpty()){
-                for(Command command : CommandManager.getInstance().getCommands().values()){
-                    if(command instanceof ConsulatCommand){
-                        ConsulatCommand consulatCommand = (ConsulatCommand)command;
-                        if(hasPower(consulatCommand.getRank())){
-                            addPermission(consulatCommand.getPermission());
-                        }
-                    }
-                }
-                permissions.addAll(CPlayerManager.getInstance().getDefaultPermissions(this));
+                giveDefaultPermissions();
             }
         } catch(IOException e){
             e.printStackTrace();
         }
     }
     
+    public void giveDefaultPermissions(){
+        for(Command command : CommandManager.getInstance().getCommands().values()){
+            if(command instanceof ConsulatCommand){
+                ConsulatCommand consulatCommand = (ConsulatCommand)command;
+                if(hasPower(consulatCommand.getRank())){
+                    addPermission(consulatCommand.getPermission());
+                }
+            }
+        }
+        permissions.addAll(CPlayerManager.getInstance().getDefaultPermissions(this));
+    }
+    
     public void loadNBT(@NotNull CompoundTag player){
         List<StringTag> list = player.getList("Permissions", NBTType.STRING);
         for(StringTag t : list){
             this.permissions.add(t.getValue());
+        }
+        if(player.has("LastKnownRank")){
+            Rank lastRank = Rank.valueOf(player.getString("LastKnownRank"));
+            if(lastRank != rank){
+                if(lastRank.getRankPower() >= rank.getRankPower()){
+                    permissions.clear();
+                }
+                giveDefaultPermissions();
+            }
+        }
+        if(player.has("DefaultPermissions")){
+            resetPermissions();
         }
     }
     
@@ -368,6 +381,7 @@ public class ConsulatPlayer implements Saveable {
             perms.addTag(new StringTag(s));
         }
         player.put("Permissions", perms);
+        player.putString("LastKnownRank", rank.name());
         return player;
     }
     
@@ -434,31 +448,30 @@ public class ConsulatPlayer implements Saveable {
                 '}';
     }
     
-    public static void addPermission(UUID uuid, String... permission){
-        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-            try {
-                File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
-                CompoundTag playerTag;
-                if(!file.exists()){
-                    playerTag = new CompoundTag();
-                    playerTag.put("Permissions", new ListTag<>(NBTType.STRING));
-                } else {
-                    NBTInputStream is = new NBTInputStream(file);
-                    playerTag = is.read();
-                    is.close();
-                }
-                List<StringTag> permissions = new ArrayList<>(playerTag.getList("Permissions", NBTType.STRING));
-                for(String perm : permission){
-                    permissions.add(new StringTag(perm));
-                }
-                playerTag.put("Permissions", new ListTag<>(NBTType.STRING, permissions));
-                NBTOutputStream os = new NBTOutputStream(file, playerTag);
-                os.write("ConsulatPlayer");
-                os.close();
-            } catch(IOException e){
-                e.printStackTrace();
+    public static boolean addPermission(UUID uuid, String... permission){
+        try {
+            File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
+            CompoundTag playerTag;
+            if(!file.exists()){
+                return false;
             }
-        });
+            NBTInputStream is = new NBTInputStream(file);
+            playerTag = is.read();
+            is.close();
+            boolean added = false;
+            List<StringTag> permissions = new ArrayList<>(playerTag.getList("Permissions", NBTType.STRING));
+            for(String perm : permission){
+                added |= permissions.add(new StringTag(perm));
+            }
+            playerTag.put("Permissions", new ListTag<>(NBTType.STRING, permissions));
+            NBTOutputStream os = new NBTOutputStream(file, playerTag);
+            os.write("ConsulatPlayer");
+            os.close();
+            return added;
+        } catch(IOException e){
+            e.printStackTrace();
+            return false;
+        }
     }
     
     public static boolean hasPermission(UUID uuid, String permission){
@@ -467,11 +480,10 @@ public class ConsulatPlayer implements Saveable {
             CompoundTag playerTag;
             if(!file.exists()){
                 return false;
-            } else {
-                NBTInputStream is = new NBTInputStream(file);
-                playerTag = is.read();
-                is.close();
             }
+            NBTInputStream is = new NBTInputStream(file);
+            playerTag = is.read();
+            is.close();
             Set<StringTag> permissions = new HashSet<>(playerTag.getList("Permissions", NBTType.STRING));
             return permissions.contains(new StringTag(permission));
         } catch(IOException e){
@@ -480,29 +492,50 @@ public class ConsulatPlayer implements Saveable {
         }
     }
     
-    public static void removePermission(UUID uuid, String... permission){
-        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-            try {
-                File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
-                CompoundTag playerTag;
-                if(!file.exists()){
-                    playerTag = new CompoundTag();
-                } else {
-                    NBTInputStream is = new NBTInputStream(file);
-                    playerTag = is.read();
-                    is.close();
-                }
-                List<StringTag> permissions = new ArrayList<>(playerTag.getList("Permissions", NBTType.STRING));
-                for(String perm : permission){
-                    permissions.remove(new StringTag(perm));
-                }
-                playerTag.put("Permissions", new ListTag<>(NBTType.STRING, permissions));
-                NBTOutputStream os = new NBTOutputStream(file, playerTag);
-                os.write("ConsulatPlayer");
-                os.close();
-            } catch(IOException e){
-                e.printStackTrace();
+    public static boolean removePermission(UUID uuid, String... permission){
+        try {
+            File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
+            CompoundTag playerTag;
+            if(!file.exists()){
+                return false;
             }
-        });
+            NBTInputStream is = new NBTInputStream(file);
+            playerTag = is.read();
+            is.close();
+            boolean removed = false;
+            List<StringTag> permissions = new ArrayList<>(playerTag.getList("Permissions", NBTType.STRING));
+            for(String perm : permission){
+                removed |= permissions.remove(new StringTag(perm));
+            }
+            playerTag.put("Permissions", new ListTag<>(NBTType.STRING, permissions));
+            NBTOutputStream os = new NBTOutputStream(file, playerTag);
+            os.write("ConsulatPlayer");
+            os.close();
+            return removed;
+        } catch(IOException e){
+            e.printStackTrace();
+            return false;
+        }
     }
+    
+    public static void resetPermissions(UUID uuid){
+        try {
+            File file = FileUtils.loadFile(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/" + uuid + ".dat");
+            CompoundTag playerTag;
+            if(!file.exists()){
+                playerTag = new CompoundTag();
+            } else {
+                NBTInputStream is = new NBTInputStream(file);
+                playerTag = is.read();
+                is.close();
+            }
+            playerTag.putByte("DefaultPermissions", (byte)1);
+            NBTOutputStream os = new NBTOutputStream(file, playerTag);
+            os.write("ConsulatPlayer");
+            os.close();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+    
 }

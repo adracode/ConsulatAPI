@@ -445,10 +445,16 @@ public class CPlayerManager implements Listener {
             permissions.add(commandManager.getCommand("adebug").getPermission());
         }
         switch(player.getRank()){
-            case RESPONSABLE:
             case ADMIN:
-                permissions.add(ConsulatAPI.getConsulatAPI().getPermission("allow-other-plugin-commands"));
+            case RESPONSABLE:
+                permissions.add(ConsulatAPI.getConsulatAPI().getPermission("bypass-commands"));
                 break;
+                /*permissions.add("minecraft.commands");
+                permissions.add("bukkit.commands");
+                for(Plugin plugin : Bukkit.getPluginManager().getPlugins()){
+                    permissions.add(plugin.getName().toLowerCase() + ".commands");
+                }
+                break;*/
         }
         return permissions;
     }
