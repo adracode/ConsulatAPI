@@ -53,6 +53,7 @@ public class ADebugCommand extends ConsulatCommand {
                         then(LiteralArgumentBuilder.literal("get").
                                 then(Arguments.word("key"))),
                 LiteralArgumentBuilder.literal("permission").
+                        then(LiteralArgumentBuilder.literal("resetall")).
                         then(LiteralArgumentBuilder.literal("has").
                                 then(Arguments.playerList("joueur").
                                         then(Arguments.word("permission")))).
@@ -129,6 +130,21 @@ public class ADebugCommand extends ConsulatCommand {
                 case "permission":{
                     if(args.length < 4){
                         if(args.length < 3){
+                            switch(args[1]){
+                                case "resetall":
+                                    Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                                        int count = 0;
+                                        for(File file : FileUtils.getFiles(new File(ConsulatAPI.getConsulatAPI().getDataFolder(), "players/"))){
+                                            ConsulatPlayer.resetPermissions(UUID.fromString(file.getName().substring(0, 36)));
+                                            ++count;
+                                        }
+                                        sender.sendMessage("§aReset de " + count + " permissions.");
+                                    });
+                                    for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
+                                        player.resetPermissions();
+                                    }
+                                    break;
+                            }
                             return;
                         }
                         switch(args[1]){
@@ -177,13 +193,16 @@ public class ADebugCommand extends ConsulatCommand {
                         case "add":
                             if(target == null){
                                 Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-                                    ConsulatPlayer.addPermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3]);
-                                    sender.sendMessage("§aPermission donnée s'il ne l'a pas");
+                                    if(ConsulatPlayer.addPermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3])){
+                                        sender.sendMessage("§aPermission donnée.");
+                                    } else {
+                                        sender.sendMessage("§cIl a déjà la permission.");
+                                    }
                                 });
                                 return;
                             }
                             if(target.hasPermission(args[3])){
-                                sender.sendMessage("§cIl a déjà la permission");
+                                sender.sendMessage("§cIl a déjà la permission.");
                                 return;
                             }
                             if(args[3].contains(".command.") || args[3].contains("commands")){
@@ -191,18 +210,21 @@ public class ADebugCommand extends ConsulatCommand {
                             } else {
                                 target.addPermission(args[3]);
                             }
-                            sender.sendMessage("§aPermission donnée");
+                            sender.sendMessage("§aPermission donnée.");
                             break;
                         case "remove":
                             if(target == null){
                                 Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
-                                    ConsulatPlayer.removePermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3]);
-                                    sender.sendMessage("§aPermission retirée s'il ne l'a pas");
+                                    if(ConsulatPlayer.removePermission(Bukkit.getOfflinePlayer(args[2]).getUniqueId(), args[3])){
+                                        sender.sendMessage("§aPermission retirée.");
+                                    } else {
+                                        sender.sendMessage("§cIl n'a pas la permission.");
+                                    }
                                 });
                                 return;
                             }
                             if(!target.hasPermission(args[3])){
-                                sender.sendMessage("§cIl n'a pas la permission");
+                                sender.sendMessage("§cIl n'a pas la permission.");
                                 return;
                             }
                             if(args[3].contains(".command.")){
@@ -210,7 +232,7 @@ public class ADebugCommand extends ConsulatCommand {
                             } else {
                                 target.removePermission(args[3]);
                             }
-                            sender.sendMessage("§aIl n'a plus la permission");
+                            sender.sendMessage("§aIl n'a plus la permission.");
                             break;
                     }
                 }
