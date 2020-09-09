@@ -11,4 +11,6 @@ public interface DedicatedServer {
     
     SimpleCommandMap getCommandMap();
     
+    boolean isStopped();
+    
 }

@@ -28,4 +28,9 @@ public class DedicatedServer_1_14_R1 implements DedicatedServer {
     public SimpleCommandMap getCommandMap(){
         return ((CraftServer)Bukkit.getServer()).getCommandMap();
     }
+    
+    @Override
+    public boolean isStopped(){
+        return dedicatedServer.hasStopped();
+    }
 }
