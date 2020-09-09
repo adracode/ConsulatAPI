@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -91,7 +92,7 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
     public void run(){
         try {
             PreparedStatement statement = null;
-            for(Map.Entry<T, D> saveableData : lastKnownsData.entrySet()){
+            for(Map.Entry<T, D> saveableData : new HashSet<>(lastKnownsData.entrySet())){
                 T saveable = saveableData.getKey();
                 D knownData = saveableData.getValue();
                 D currentData = getData.apply(saveable);

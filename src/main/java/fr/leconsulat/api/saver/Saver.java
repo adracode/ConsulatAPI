@@ -13,7 +13,7 @@ public class Saver extends Thread {
     
     private static Saver instance;
     
-    private long lastUpdate = System.currentTimeMillis();
+    private long lastUpdate = Long.MAX_VALUE;
     private Set<Runnable> saves = new HashSet<>();
     
     public Saver(){
@@ -30,8 +30,14 @@ public class Saver extends Thread {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(ConsulatAPI.getConsulatAPI(), () -> {
             lastUpdate = System.currentTimeMillis();
         }, 1L, 1L);
+        ConsulatAPI api = ConsulatAPI.getConsulatAPI();
+        api.log(Level.INFO, "Starting saver.");
         while(true){
             try {
+                if(!api.isEnabled()){
+                    api.log(Level.INFO, "Server is stopping, disabling saver.");
+                    return;
+                }
                 if(System.currentTimeMillis() - lastUpdate >= timeBeforeCrash){
                     ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Server has stopped responding, crash ? Saving...");
                     save();

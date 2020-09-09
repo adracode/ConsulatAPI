@@ -61,6 +61,7 @@ public class CPlayerManager implements Listener {
     private Function<ConsulatPlayer, Set<String>> rankPermission;
     private Class<?> playerClass;
     private Constructor<?> playerConstructor;
+    
     public CPlayerManager(){
         if(instance != null){
             return;
@@ -168,13 +169,13 @@ public class CPlayerManager implements Listener {
             player.setInventoryBlocked(false);
         }
         server.thenRun(player::setServer);
-        if(onJoin != null){
-            server.onComplete((oldServer, exception) -> {
-                ConsulatServer consulatServer = oldServer == null ? ConsulatServer.UNKNOWN : ConsulatServer.valueOf(oldServer);
+        server.onComplete((oldServer, exception) -> {
+            ConsulatServer consulatServer = oldServer == null ? ConsulatServer.UNKNOWN : ConsulatServer.valueOf(oldServer);
+            if(onJoin != null){
                 onJoin.accept(player, consulatServer);
-                player.setServer();
-            });
-        }
+            }
+            player.setServer();
+        });
         if(api.isDebug()){
             api.log(Level.INFO, "Player " + player + " has joined");
         }
@@ -228,8 +229,7 @@ public class CPlayerManager implements Listener {
         player.onQuit();
         Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
             player.getServer().onComplete((serverStr, exception) -> {
-                ConsulatServer server = ConsulatServer.valueOf(serverStr);
-                if(server == ConsulatAPI.getConsulatAPI().getConsulatServer() && Bukkit.getPlayer(player.getUUID()) == null){
+                if(serverStr == null || ConsulatServer.valueOf(serverStr) == ConsulatAPI.getConsulatAPI().getConsulatServer() && Bukkit.getPlayer(player.getUUID()) == null){
                     player.disconnected();
                 }
             });
