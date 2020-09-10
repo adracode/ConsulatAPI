@@ -1,6 +1,7 @@
 package fr.leconsulat.api.saver;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.nms.api.server.DedicatedServer;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
 import org.bukkit.Bukkit;
@@ -13,8 +14,9 @@ public class Saver extends Thread {
     
     private static Saver instance;
     
-    private long lastUpdate = System.currentTimeMillis();
+    private long lastUpdate = Long.MAX_VALUE;
     private Set<Runnable> saves = new HashSet<>();
+    private DedicatedServer server = ConsulatAPI.getNMS().getServer().getDedicatedServer();
     
     public Saver(){
         if(instance == null){
@@ -30,7 +32,8 @@ public class Saver extends Thread {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(ConsulatAPI.getConsulatAPI(), () -> {
             lastUpdate = System.currentTimeMillis();
         }, 1L, 1L);
-        while(true){
+        ConsulatAPI.getConsulatAPI().log(Level.INFO, "Starting saver.");
+        while(!server.isStopped()){
             try {
                 if(System.currentTimeMillis() - lastUpdate >= timeBeforeCrash){
                     ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Server has stopped responding, crash ? Saving...");
@@ -42,6 +45,7 @@ public class Saver extends Thread {
                 e.printStackTrace();
             }
         }
+        ConsulatAPI.getConsulatAPI().log(Level.INFO, "Server is stopping, saver disabled.");
     }
     
     private void save(){

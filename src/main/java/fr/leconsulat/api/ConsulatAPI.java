@@ -188,7 +188,6 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         config.set("crashed", true);
         saveConfig();
         log(Level.INFO, "Loading in server " + server);
-        new Saver().addSave(() -> SaveManager.getInstance().removeAll());
         playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
         try {
             String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
@@ -196,6 +195,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e){
             e.printStackTrace();
         }
+        new Saver().addSave(() -> SaveManager.getInstance().removeAll());
         databaseManager = new DatabaseManager();
         databaseManager.connect();
         RedisManager redisManager = new RedisManager(

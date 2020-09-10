@@ -152,6 +152,9 @@ public class ConsulatPlayer implements Saveable {
     }
     
     public @NotNull String getDisplayRank(){
+        if(!isInitialized()){
+            return "§f";
+        }
         if(!hasCustomRank()){
             return rank.getRankColor() + "[" + rank.getRankName() + "]";
         }
@@ -243,7 +246,9 @@ public class ConsulatPlayer implements Saveable {
     }
     
     public void onQuit(){
-        save();
+        if(isInitialized()){
+            save();
+        }
     }
     
     public boolean hasCustomRank(){
