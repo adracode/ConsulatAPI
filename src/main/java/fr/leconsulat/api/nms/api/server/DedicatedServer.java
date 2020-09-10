@@ -13,4 +13,8 @@ public interface DedicatedServer {
     
     boolean isStopped();
     
+    boolean getProperties(String properties);
+    
+    void setProperties(String properties, boolean value);
+    
 }

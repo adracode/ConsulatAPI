@@ -7,6 +7,7 @@ import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.ADebugCommand;
 import fr.leconsulat.api.commands.commands.HelpCommand;
+import fr.leconsulat.api.commands.commands.PropertiesCommand;
 import fr.leconsulat.api.commands.commands.RankCommand;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
@@ -21,6 +22,7 @@ import fr.leconsulat.api.runnable.KeepAlive;
 import fr.leconsulat.api.saver.Saver;
 import fr.leconsulat.api.utils.FileUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -29,6 +31,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.redisson.api.RTopic;
 
 import java.io.BufferedWriter;
@@ -56,6 +59,8 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private boolean debug = false;
     private boolean development = false;
     private boolean hasCrashed;
+    
+    private World theEnd;
     
     private int lastTimeTick = 50;
     
@@ -89,6 +94,10 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     public static NMS getNMS(){
         return getConsulatAPI().nms;
+    }
+    
+    public @Nullable World getTheEnd(){
+        return theEnd;
     }
     
     @NotNull
@@ -188,6 +197,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         config.set("crashed", true);
         saveConfig();
         log(Level.INFO, "Loading in server " + server);
+        theEnd = Bukkit.getServer().getAllowEnd() ? Bukkit.getWorlds().get(2) : null;
         playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
         try {
             String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
@@ -211,10 +221,11 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         playerManager = new CPlayerManager();
         CommandManager.getInstance();
         GuiManager.getInstance();
+        new ADebugCommand().register();
         new HelpCommand().register();
+        new PropertiesCommand().register();
         new RankCommand().register();
         //new OfflineInventoryCommand().register();
-        new ADebugCommand().register();
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> this.getServer().getPluginManager().callEvent(new PostInitEvent()), 1L);
