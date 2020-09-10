@@ -199,9 +199,7 @@ public class EventManager implements Listener {
                             return;
                     }
                     Bukkit.getPluginManager().callEvent(interactBlockEvent);
-                    if(interactBlockEvent.isCancelled()){
-                        event.setCancelled(true);
-                    }
+                    event.setCancelled(interactBlockEvent.isCancelled());
                 } else {
                     onItemUse(event, player, clickedBlock);
                 }
@@ -218,9 +216,8 @@ public class EventManager implements Listener {
                 }
                 if(interactBlockEvent != null){
                     Bukkit.getPluginManager().callEvent(interactBlockEvent);
-                    if(interactBlockEvent.isCancelled()){
-                        event.setCancelled(true);
-                    }
+                    event.setCancelled(interactBlockEvent.isCancelled());
+                    
                 }
             }
             break;
@@ -246,9 +243,7 @@ public class EventManager implements Listener {
                 }
                 if(interactBlockEvent != null){
                     Bukkit.getPluginManager().callEvent(interactBlockEvent);
-                    if(interactBlockEvent.isCancelled()){
-                        event.setCancelled(true);
-                    }
+                    event.setCancelled(interactBlockEvent.isCancelled());
                 }
                 break;
         }
@@ -511,9 +506,7 @@ public class EventManager implements Listener {
         }
         if(event != null){
             Bukkit.getPluginManager().callEvent(event);
-            if(((Cancellable)event).isCancelled()){
-                interactEvent.setCancelled(true);
-            }
+            interactEvent.setCancelled(((Cancellable)event).isCancelled());
         }
     }
     
@@ -554,9 +547,7 @@ public class EventManager implements Listener {
             }
             if(playerPlaceItemEvent != null){
                 Bukkit.getPluginManager().callEvent(playerPlaceItemEvent);
-                if(playerPlaceItemEvent.isCancelled()){
-                    event.setCancelled(true);
-                }
+                event.setCancelled(playerPlaceItemEvent.isCancelled());
             }
         }
     }
