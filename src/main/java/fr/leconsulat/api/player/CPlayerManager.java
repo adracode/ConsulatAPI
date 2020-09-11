@@ -286,6 +286,16 @@ public class CPlayerManager implements Listener {
         }
     }
     
+    @EventHandler(priority = EventPriority.LOW)
+    public void onEnterEnd(PlayerPortalEvent event){
+        if(event.getTo() == null){
+            return;
+        }
+        if(Objects.equals(ConsulatAPI.getConsulatAPI().getTheEnd(), event.getTo().getWorld()) && !Bukkit.getServer().getAllowEnd()){
+            event.setCancelled(true);
+        }
+    }
+    
     public void onJoin(BiConsumer<ConsulatPlayer, ConsulatServer> onJoin){
         this.onJoin = onJoin;
     }
