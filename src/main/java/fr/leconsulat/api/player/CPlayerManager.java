@@ -3,6 +3,7 @@ package fr.leconsulat.api.player;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.Text;
+import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.ADebugCommand;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
@@ -94,12 +95,13 @@ public class CPlayerManager implements Listener {
     
     public void setSyncChat(boolean syncChat){
         RedisManager redis = RedisManager.getInstance();
+        String channel = (ConsulatAPI.getConsulatAPI().isDevelopment() ? "Dev" : "") + "Chat";
         if(syncChat){
-            this.syncChat = redis.getRedis().getTopic("Chat");
-            this.syncChatListener = redis.register("Chat", String.class, (channel, message) -> Bukkit.broadcastMessage(message));
+            this.syncChat = redis.getRedis().getTopic(channel);
+            this.syncChatListener = redis.register(channel, String.class, (chan, message) -> Bukkit.broadcastMessage(message));
         } else {
             this.syncChat = null;
-            redis.getRedis().getTopic("Chat").removeListener(this.syncChatListener);
+            redis.getRedis().getTopic(channel).removeListener(this.syncChatListener);
         }
     }
     
@@ -238,9 +240,13 @@ public class CPlayerManager implements Listener {
     
     @EventHandler
     public void onConsulatPlayerLoaded(ConsulatPlayerLoadedEvent event){
-        CommandManager.getInstance().sendCommands(event.getPlayer());
-        if(ADebugCommand.UUID_PERMISSION.contains(event.getPlayer().getUUID())){
-            event.getPlayer().addPermission(CommandManager.getInstance().getCommand("adebug").getPermission());
+        ConsulatPlayer player = event.getPlayer();
+        CommandManager.getInstance().sendCommands(player);
+        if(ADebugCommand.UUID_PERMISSION.contains(player.getUUID())){
+            player.addPermission(CommandManager.getInstance().getCommand("adebug").getPermission());
+        }
+        if(player.hasPermission(CommandManager.getInstance().getCommand("staffchat").getPermission())){
+            ChannelManager.getInstance().getChannel("staff").addPlayer(player);
         }
     }
     
@@ -265,7 +271,7 @@ public class CPlayerManager implements Listener {
         }, 20);
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent event){
         ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
         if(player == null){
@@ -281,6 +287,7 @@ public class CPlayerManager implements Listener {
         ConsulatAPI api = ConsulatAPI.getConsulatAPI();
         if(api.isSyncChat()){
             syncChat.publishAsync("§2[" + api.getConsulatServer().getDisplay() + "] " + player.getDisplayName() + "§7: §f" + message);
+            event.setCancelled(true);
         } else {
             event.setMessage(message);
             event.setFormat(player.getDisplayRank() + " %s§7: §f%s");

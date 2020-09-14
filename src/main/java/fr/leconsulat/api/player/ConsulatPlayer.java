@@ -3,6 +3,7 @@ package fr.leconsulat.api.player;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.channel.Channel;
+import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.channel.Speakable;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.ConsulatCommand;
@@ -385,6 +386,10 @@ public class ConsulatPlayer implements Saveable {
     public void onQuit(){
         if(isInitialized()){
             save();
+        }
+        Channel staffChannel = ChannelManager.getInstance().getChannel("staff");
+        if(staffChannel.isMember(this)){
+            staffChannel.removePlayer(this);
         }
     }
     

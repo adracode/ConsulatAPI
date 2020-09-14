@@ -72,8 +72,8 @@ public class AntecedentsGui extends DataPagedGui<ConsulatOffline> {
     }
     
     @Override
-    public void onPageOpen(GuiOpenEvent event, Pageable pageGui){
-        if(pageGui.getPage() == 0 && getItem(10) == null){
+    public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
+        if(pageGui.getPage() == 0 && pageGui.getGui().getItem(10) == null){
             event.getPlayer().getPlayer().closeInventory();
             event.getPlayer().sendMessage(Text.NO_ANTECEDENT);
         }
