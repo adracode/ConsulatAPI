@@ -1,8 +1,8 @@
 package fr.leconsulat.api.player;
 
-import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
+import fr.leconsulat.api.Text;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.ADebugCommand;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
@@ -14,6 +14,7 @@ import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.player.stream.OfflinePlayerInputStream;
 import fr.leconsulat.api.player.stream.PlayerInputStream;
 import fr.leconsulat.api.ranks.Rank;
+import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
@@ -25,12 +26,12 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.redisson.api.RFuture;
+import org.redisson.api.RTopic;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,15 +44,6 @@ import java.util.logging.Level;
 public class CPlayerManager implements Listener {
     
     private static CPlayerManager instance;
-    private static Method getEntity;
-    
-    static{
-        try {
-            getEntity = MinecraftReflection.getMinecraftClass("CommandListenerWrapper").getMethod("h");
-        } catch(NoSuchMethodException var1){
-            var1.printStackTrace();
-        }
-    }
     
     private final File playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
     private final Map<UUID, ConsulatPlayer> players = new HashMap<>();
@@ -62,6 +54,8 @@ public class CPlayerManager implements Listener {
     private Function<ConsulatPlayer, Set<String>> rankPermission;
     private Class<?> playerClass;
     private Constructor<?> playerConstructor;
+    private RTopic syncChat;
+    private int syncChatListener;
     
     public CPlayerManager(){
         if(instance != null){
@@ -95,6 +89,17 @@ public class CPlayerManager implements Listener {
             e.printStackTrace();
             ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Error while loading offline players");
             Bukkit.shutdown();
+        }
+    }
+    
+    public void setSyncChat(boolean syncChat){
+        RedisManager redis = RedisManager.getInstance();
+        if(syncChat){
+            this.syncChat = redis.getRedis().getTopic("Chat");
+            this.syncChatListener = redis.register("Chat", String.class, (channel, message) -> Bukkit.broadcastMessage(message));
+        } else {
+            this.syncChat = null;
+            redis.getRedis().getTopic("Chat").removeListener(this.syncChatListener);
         }
     }
     
@@ -258,6 +263,28 @@ public class CPlayerManager implements Listener {
                 }
             });
         }, 20);
+    }
+    
+    @EventHandler
+    public void onChat(AsyncPlayerChatEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player == null){
+            event.getPlayer().sendMessage(Text.ERROR);
+            event.setCancelled(true);
+            return;
+        }
+        String message = player.chat(event.getMessage());
+        if(message == null){
+            event.setCancelled(true);
+            return;
+        }
+        ConsulatAPI api = ConsulatAPI.getConsulatAPI();
+        if(api.isSyncChat()){
+            syncChat.publishAsync("§2[" + api.getConsulatServer().getDisplay() + "] " + player.getDisplayName() + "§7: §f" + message);
+        } else {
+            event.setMessage(message);
+            event.setFormat(player.getDisplayRank() + " %s§7: §f%s");
+        }
     }
     
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)

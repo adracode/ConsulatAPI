@@ -62,6 +62,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     private boolean development = false;
     private boolean hasCrashed;
     private boolean chat = true;
+    private boolean syncChat = false;
     
     private World theEnd;
     
@@ -79,6 +80,10 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         return chat;
     }
     
+    public boolean isSyncChat(){
+        return syncChat;
+    }
+    
     public void setDebug(boolean debug){
         this.debug = debug;
     }
@@ -89,6 +94,11 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     public void setChat(boolean chat){
         this.chat = chat;
+    }
+    
+    public void setSyncChat(boolean syncChat){
+        this.syncChat = syncChat;
+        CPlayerManager.getInstance().setSyncChat(syncChat);
     }
     
     public static ConsulatAPI getConsulatAPI(){
