@@ -7,6 +7,9 @@ import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.ADebugCommand;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
+import fr.leconsulat.api.moderation.BanReason;
+import fr.leconsulat.api.moderation.MuteReason;
+import fr.leconsulat.api.moderation.SanctionType;
 import fr.leconsulat.api.nbt.CompoundTag;
 import fr.leconsulat.api.nbt.NBTInputStream;
 import fr.leconsulat.api.nbt.NBTOutputStream;
@@ -152,7 +155,7 @@ public class CPlayerManager implements Listener {
             NBTOutputStream os = new NBTOutputStream(playerFile, player);
             os.write("");
             os.close();
-        } catch(IOException e){
+        } catch(IOException | NullPointerException e){
             e.printStackTrace();
         }
     }
@@ -191,6 +194,8 @@ public class CPlayerManager implements Listener {
             try {
                 long start = System.currentTimeMillis();
                 fetchPlayer(player);
+                setAntecedents(player);
+                ConsulatAPI.getConsulatAPI().getModerationDatabase().setMute(player.getPlayer());
                 api.log(Level.INFO, "Player " + (api.isDebug() ? player : player.getName()) + " fetched in " + (System.currentTimeMillis() - start) + " ms");
                 start = System.currentTimeMillis();
                 player.load();
@@ -440,12 +445,48 @@ public class CPlayerManager implements Listener {
         }
     }
     
-    public void setCustomRank(UUID uuid, String rank) throws SQLException{
-        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET prefix_perso = ? WHERE player_uuid = ?");
-        request.setString(1, rank);
-        request.setString(2, uuid.toString());
-        request.executeUpdate();
-        request.close();
+    private void setAntecedents(ConsulatPlayer player) throws SQLException{
+        PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT sanction, reason FROM antecedents WHERE playeruuid = ? AND cancelled = 0");
+        preparedStatement.setString(1, player.getUUID().toString());
+        ResultSet resultSet = preparedStatement.executeQuery();
+        
+        while(resultSet.next()){
+            SanctionType sanctionType = SanctionType.valueOf(resultSet.getString("sanction"));
+            String reason = resultSet.getString("reason");
+            if(sanctionType == SanctionType.MUTE){
+                MuteReason muteReason = Arrays.stream(MuteReason.values()).filter(mute -> mute.getSanctionName().equals(reason)).findFirst().orElse(null);
+                if(muteReason != null){
+                    if(player.getMuteHistory().containsKey(muteReason)){
+                        int number = player.getMuteHistory().get(muteReason);
+                        player.getMuteHistory().put(muteReason, ++number);
+                    } else {
+                        player.getMuteHistory().put(muteReason, 1);
+                    }
+                }
+            } else {
+                BanReason banReason = Arrays.stream(BanReason.values()).filter(ban -> ban.getSanctionName().equals(reason)).findFirst().orElse(null);
+                if(banReason != null){
+                    if(player.getBanHistory().containsKey(banReason)){
+                        int number = player.getBanHistory().get(banReason);
+                        player.getBanHistory().put(banReason, ++number);
+                    } else {
+                        player.getBanHistory().put(banReason, 1);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void setCustomRank(UUID uuid, String rank) {
+        try {
+            PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET prefix_perso = ? WHERE player_uuid = ?");
+            request.setString(1, rank);
+            request.setString(2, uuid.toString());
+            request.executeUpdate();
+            request.close();
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
     }
     
     public Set<String> getDefaultPermissions(ConsulatPlayer player){
