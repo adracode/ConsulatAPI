@@ -10,9 +10,7 @@ import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
 import fr.leconsulat.api.moderation.BanReason;
 import fr.leconsulat.api.moderation.MuteReason;
 import fr.leconsulat.api.moderation.SanctionType;
-import fr.leconsulat.api.nbt.CompoundTag;
-import fr.leconsulat.api.nbt.NBTInputStream;
-import fr.leconsulat.api.nbt.NBTOutputStream;
+import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.player.stream.OfflinePlayerInputStream;
 import fr.leconsulat.api.player.stream.PlayerInputStream;
 import fr.leconsulat.api.ranks.Rank;
@@ -145,16 +143,34 @@ public class CPlayerManager implements Listener {
             UUID uuid = inputStream.fetchUUID();
             File playerFile = getPlayerFile(uuid);
             NBTInputStream is = new NBTInputStream(playerFile);
-            CompoundTag player = is.read();
+            CompoundTag playerTag = is.read();
             is.close();
             float experience = inputStream.fetchLevel();
             int level = (int)experience;
-            player.putInt("XpLevel", level);
-            player.putFloat("XpP", experience - level);
-            player.put("Inventory", inputStream.fetchInventory());
-            NBTOutputStream os = new NBTOutputStream(playerFile, player);
-            os.write("");
-            os.close();
+            ListTag<CompoundTag> saveInventory = playerTag.getListTag("Inventory", NBTType.COMPOUND);
+            float saveXp = playerTag.getInt("XpLevel") + playerTag.getFloat("XpP");
+            playerTag.putInt("XpLevel", level);
+            playerTag.putFloat("XpP", experience - level);
+            playerTag.put("Inventory", inputStream.fetchInventory());
+            NBTOutputStream os = new NBTOutputStream(playerFile, playerTag);
+            try {
+                os.write("");
+            } catch(Exception e){
+                ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(uuid);
+                if(player != null){
+                    player.addPermission(ConsulatPlayer.ERROR);
+                    player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                } else {
+                    ConsulatPlayer.addPermission(uuid, ConsulatPlayer.ERROR);
+                }
+                playerTag.putInt("XpLevel", (int)saveXp);
+                playerTag.putFloat("XpP", saveXp - (int)saveXp);
+                playerTag.put("Inventory", saveInventory);
+                os = new NBTOutputStream(playerFile, playerTag);
+                os.write("");
+            } finally {
+                os.close();
+            }
         } catch(IOException | NullPointerException e){
             e.printStackTrace();
         }
@@ -199,14 +215,17 @@ public class CPlayerManager implements Listener {
                 api.log(Level.INFO, "Player " + (api.isDebug() ? player : player.getName()) + " fetched in " + (System.currentTimeMillis() - start) + " ms");
                 start = System.currentTimeMillis();
                 player.load();
+                if(player.isError()){
+                    api.log(Level.WARNING, "Player " + (api.isDebug() ? player : player.getName()) + " errored !");
+                    player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                    return;
+                }
                 if(api.isDebug()){
                     api.log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
                 }
-                Bukkit.getScheduler().runTask(api,
-                        () -> Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLoadedEvent(player)));
+                Bukkit.getScheduler().runTask(api, () -> Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLoadedEvent(player)));
             } catch(SQLException e){
-                Bukkit.getScheduler().runTask(api, () ->
-                        event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage()));
+                Bukkit.getScheduler().runTask(api, () -> event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n"));
                 e.printStackTrace();
             }
         });

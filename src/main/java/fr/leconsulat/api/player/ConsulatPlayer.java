@@ -37,6 +37,7 @@ import java.util.*;
 public class ConsulatPlayer implements Saveable {
     
     private static final String SPEAK_PERM = ConsulatAPI.getConsulatAPI().getPermission("bypass-chat");
+    public static final String ERROR = ConsulatAPI.getConsulatAPI().getPermission("error");
     
     private final @NotNull UUID uuid;
     private final @NotNull String name;
@@ -196,6 +197,17 @@ public class ConsulatPlayer implements Saveable {
         return message;
     }
     
+    public boolean isError(){
+        return hasPermission(ERROR);
+    }
+    
+    public void setError(boolean error){
+        if(error){
+            addPermission(ERROR);
+        } else {
+            removePermission(ERROR);
+        }
+    }
     
     public @NotNull String getRegistered(){
         if(!isInitialized()){
