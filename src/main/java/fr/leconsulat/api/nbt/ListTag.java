@@ -1,5 +1,7 @@
 package fr.leconsulat.api.nbt;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,18 +11,18 @@ public final class ListTag<T extends Tag> implements Tag {
 	
 	private static final long serialVersionUID = -5298469483175161595L;
 	
-	private NBTType type;
+	private @NotNull NBTType type;
 	private final List<T> value;
 	
 	public ListTag(){
-		this(null);
+		this(NBTType.END);
 	}
 	
-	public ListTag(NBTType type) {
+	public ListTag(@NotNull NBTType type) {
 		this(type, null);
 	}
 	
-	public ListTag(NBTType type, Collection<T> value) {
+	public ListTag(@NotNull NBTType type, Collection<T> value) {
 		this.type = type;
 		this.value = value == null ? new ArrayList<>() : new ArrayList<>(value);
 	}
@@ -34,7 +36,7 @@ public final class ListTag<T extends Tag> implements Tag {
 	}
 	
 	public void addTag(T tag){
-		if(type == null){
+		if(type == NBTType.END){
 			type = tag.getType();
 		}
 		if(tag.getClass() != type.getTagClass()){
