@@ -53,5 +53,6 @@ public final class Text {
         return textComponent;
     }
     public static String PLAYER_BANNED(String player){return ANNOUNCE_PREFIX + "§c" + player + "§4 a été banni.";}
+    public static String PLAYER_MUTED(String player){return Text.ANNOUNCE_PREFIX + "§6" + player + " §ea été mute.";}
     
 }

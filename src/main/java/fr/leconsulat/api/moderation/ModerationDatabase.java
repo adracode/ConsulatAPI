@@ -22,6 +22,8 @@ public class ModerationDatabase {
     
     private Connection connection;
     private RTopic ban = RedisManager.getInstance().getRedis().getTopic("Ban");
+    private RTopic mute = RedisManager.getInstance().getRedis().getTopic("Mute");
+    private RTopic unmute = RedisManager.getInstance().getRedis().getTopic("Unmute");
     
     public ModerationDatabase(){
         this.connection = ConsulatAPI.getDatabase();
@@ -36,6 +38,29 @@ public class ModerationDatabase {
                 });
             }
             Bukkit.broadcastMessage(Text.PLAYER_BANNED(Bukkit.getOfflinePlayer(sanction.getUUID()).getName()));
+        });
+        RedisManager.getInstance().register("Mute", SanctionPlayer.class, (channel, sanction) -> {
+            ConsulatPlayer target = CPlayerManager.getInstance().getConsulatPlayer(sanction.getUUID());
+            if(target != null){
+                MuteReason muteReason = MuteReason.valueOf(sanction.getReason());
+                target.setMuted(true);
+                target.setMuteExpireMillis(sanction.getId());
+                target.setMuteReason(muteReason.getSanctionName());
+                target.sendMessage("§cTu as été sanctionné. Tu ne peux plus parler pour: §4" + muteReason.getSanctionName());
+                if(target.getMuteHistory().containsKey(muteReason)){
+                    int number = target.getMuteHistory().get(muteReason);
+                    target.getMuteHistory().put(muteReason, ++number);
+                } else {
+                    target.getMuteHistory().put(muteReason, 1);
+                }
+            }
+            Bukkit.broadcastMessage(Text.PLAYER_MUTED(Bukkit.getOfflinePlayer(sanction.getUUID()).getName()));
+        });
+        RedisManager.getInstance().register("Unmute", String.class, (channel, uuid) -> {
+            ConsulatPlayer target = CPlayerManager.getInstance().getConsulatPlayer(UUID.fromString(uuid));
+            if(target != null && target.isMuted()){
+                target.setMuted(false);
+            }
         });
     }
     
@@ -76,6 +101,14 @@ public class ModerationDatabase {
     
     public void banPlayer(SanctionPlayer sanction){
         ban.publishAsync(sanction);
+    }
+    
+    public void mutePlayer(SanctionPlayer sanction){
+        mute.publishAsync(sanction);
+    }
+    
+    public void unmutePlayer(UUID uuid){
+        unmute.publishAsync(uuid.toString());
     }
     
     public void setMute(Player player) throws SQLException{

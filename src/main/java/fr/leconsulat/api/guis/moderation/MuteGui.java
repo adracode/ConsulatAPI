@@ -2,6 +2,7 @@ package fr.leconsulat.api.guis.moderation;
 
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.Text;
+import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
@@ -9,10 +10,11 @@ import fr.leconsulat.api.gui.event.GuiOpenEvent;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.template.DataRelatGui;
 import fr.leconsulat.api.moderation.MuteReason;
+import fr.leconsulat.api.moderation.SanctionType;
+import fr.leconsulat.api.moderation.sync.SanctionPlayer;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatOffline;
 import fr.leconsulat.api.player.ConsulatPlayer;
-import fr.leconsulat.api.ranks.Rank;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -100,33 +102,19 @@ public class MuteGui extends DataRelatGui<ConsulatOffline> {
                 ConsulatAPI.getConsulatAPI().getModerationDatabase().addSanction(
                         offlineTarget.getUUID(), offlineTarget.getName(), muter.getPlayer(),
                         "MUTE", muteReason.getSanctionName(), resultTime, currentTime);
-                if(target != null){
-                    target.setMuted(true);
-                    target.setMuteExpireMillis(resultTime);
-                    target.setMuteReason(muteReason.getSanctionName());
-                    target.sendMessage("§cTu as été sanctionné. Tu ne peux plus parler pour: §4" + muteReason.getSanctionName());
-                    if(target.getMuteHistory().containsKey(muteReason)){
-                        int number = target.getMuteHistory().get(muteReason);
-                        target.getMuteHistory().put(muteReason, ++number);
-                    } else {
-                        target.getMuteHistory().put(muteReason, 1);
-                    }
-                }
+                ConsulatAPI.getConsulatAPI().getModerationDatabase().mutePlayer(new SanctionPlayer(
+                        resultTime, SanctionType.MUTE, offlineTarget.getUUID(), muteReason.name(), muter.getUUID()
+                ));
             } catch(SQLException e){
                 muter.sendMessage(Text.ERROR);
                 e.printStackTrace();
             }
         });
-        for(ConsulatPlayer onlinePlayer : CPlayerManager.getInstance().getConsulatPlayers()){
-            if(onlinePlayer.hasPower(Rank.MODO)){
-                long durationRound = Math.round(durationMute);
-                long days = ((durationRound / (1000 * 60 * 60 * 24)));
-                long hours = ((durationRound / (1000 * 60 * 60)) % 24);
-                long minutes = ((durationRound / (1000 * 60)) % 60);
-                onlinePlayer.sendMessage(Text.SANCTION_MUTED(offlineTarget.getName(), muteReason.getSanctionName(), days + "J" + hours + "H" + minutes + "M", muter.getName(), recidiveNumber));
-            }
-        }
-        Bukkit.broadcastMessage(Text.ANNOUNCE_PREFIX + "§6" + offlineTarget.getName() + " §ea été mute.");
+        long durationRound = Math.round(durationMute);
+        long days = ((durationRound / (1000 * 60 * 60 * 24)));
+        long hours = ((durationRound / (1000 * 60 * 60)) % 24);
+        long minutes = ((durationRound / (1000 * 60)) % 60);
+        ChannelManager.getInstance().getChannel("staff").sendMessage(Text.SANCTION_MUTED(offlineTarget.getName(), muteReason.getSanctionName(), days + "J" + hours + "H" + minutes + "M", muter.getName(), recidiveNumber));
         muter.getPlayer().closeInventory();
     }
     
