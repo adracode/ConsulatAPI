@@ -2,8 +2,11 @@ package fr.leconsulat.api.moderation;
 
 import org.bukkit.Material;
 
-public enum SanctionType {
+import java.io.Serializable;
+
+public enum SanctionType implements Serializable {
     
+    KICK(Material.MINECART),
     MUTE(Material.PAPER),
     BAN(Material.BARRIER);
     

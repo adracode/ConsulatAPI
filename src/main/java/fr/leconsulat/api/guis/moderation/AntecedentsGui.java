@@ -28,6 +28,9 @@ import java.util.List;
 
 public class AntecedentsGui extends DataPagedGui<ConsulatOffline> {
     
+    private boolean noAntecedents = true;
+    private Runnable onFinishCreation;
+    
     public AntecedentsGui(ConsulatOffline player){
         super(player, "§6§lAntécédents §7↠ §e" + player.getName(), 5);
         setDeco(Material.BLACK_STAINED_GLASS_PANE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44);
@@ -43,16 +46,18 @@ public class AntecedentsGui extends DataPagedGui<ConsulatOffline> {
                 List<SanctionedPlayer> sanctions = getAntecedents(consulatOffline.getUUID().toString());
                 Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
                     for(int i = 0; i < sanctions.size(); i++){
+                        noAntecedents = false;
                         SanctionedPlayer sanctionObject = sanctions.get(i);
                         GuiItem item = IGui.getItem("§cSANCTION", i, sanctionObject.getSanctionType().getMaterial(),
                                 "§6Le: §e" + sanctionObject.getSanctionAt(),
                                 "§6Jusqu'au: §e" + sanctionObject.getExpire(),
                                 "§6Motif: §e" + sanctionObject.getSanctionName(),
-                                "§6Modérateur: §e" + sanctionObject.getMod_name(),
+                                "§6Modérateur: §e" + sanctionObject.getSanctioner(),
                                 "§6Annulé: §e" + (sanctionObject.isCancelled() ? "Oui" : "Non"),
                                 "§6Actif: §e" + (sanctionObject.isActive() ? "Oui" : "Non"));
                         addItem(item);
                     }
+                    onFinishCreation.run();
                 });
             } catch(SQLException e){
                 e.printStackTrace();
@@ -73,10 +78,12 @@ public class AntecedentsGui extends DataPagedGui<ConsulatOffline> {
     
     @Override
     public void onPageOpened(GuiOpenEvent event, Pageable pageGui){
-        if(pageGui.getPage() == 0 && pageGui.getGui().getItem(10) == null){
-            event.getPlayer().getPlayer().closeInventory();
-            event.getPlayer().sendMessage(Text.NO_ANTECEDENT);
-        }
+        onFinishCreation = () -> {
+            if(noAntecedents){
+                event.getPlayer().getPlayer().closeInventory();
+                event.getPlayer().sendMessage(Text.NO_ANTECEDENT);
+            }
+        };
     }
     
     @Override

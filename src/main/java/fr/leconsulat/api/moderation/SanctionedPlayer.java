@@ -6,16 +6,16 @@ public class SanctionedPlayer {
     private String sanctionName;
     private String sanctionAt;
     private String expire;
-    private String mod_name;
+    private String sanctioner;
     private boolean isActive;
     private boolean isCancelled;
     
-    public SanctionedPlayer(SanctionType sanctionType, String sanctionName, String sanctionAt, String expire, String mod_name, boolean isActive, boolean isCancelled){
+    public SanctionedPlayer(SanctionType sanctionType, String sanctionName, String sanctionAt, String expire, String sanctioner, boolean isActive, boolean isCancelled){
         this.sanctionType = sanctionType;
         this.sanctionName = sanctionName;
         this.sanctionAt = sanctionAt;
         this.expire = expire;
-        this.mod_name = mod_name;
+        this.sanctioner = sanctioner;
         this.isActive = isActive;
         this.isCancelled = isCancelled;
     }
@@ -52,12 +52,12 @@ public class SanctionedPlayer {
         this.expire = expire;
     }
     
-    public String getMod_name(){
-        return mod_name;
+    public String getSanctioner(){
+        return sanctioner;
     }
     
-    public void setMod_name(String mod_name){
-        this.mod_name = mod_name;
+    public void setSanctioner(String sanctioner){
+        this.sanctioner = sanctioner;
     }
     
     public boolean isActive(){

@@ -235,12 +235,12 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         new Saver().addSave(() -> SaveManager.getInstance().removeAll());
         databaseManager = new DatabaseManager();
         databaseManager.connect();
-        moderationDatabase = new ModerationDatabase();
         RedisManager redisManager = new RedisManager(
                 config.getString("redis-host"),
                 config.getInt("redis-port"),
                 config.getString("redis-password"),
                 config.getString("redis-client"));
+        moderationDatabase = new ModerationDatabase();
         debugChannel = redisManager.getRedis().getTopic("Debug");
         protocolManager = ProtocolLibrary.getProtocolManager();
         SaveManager.getInstance();

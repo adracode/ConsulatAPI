@@ -21,7 +21,7 @@ public final class StringUtils {
         if(toJoin.length == 1){
             return toJoin[0];
         }
-        if(start < 0 || end >= toJoin.length){
+        if(start < 0 || end > toJoin.length){
             throw new IndexOutOfBoundsException();
         }
         StringBuilder builder = new StringBuilder(toJoin[start]);
@@ -46,7 +46,7 @@ public final class StringUtils {
         if(toJoin.length == 1){
             return toJoin[0];
         }
-        if(start < 0 || end >= toJoin.length){
+        if(start < 0 || end > toJoin.length){
             throw new IndexOutOfBoundsException();
         }
         StringBuilder builder = new StringBuilder(toJoin[start]);

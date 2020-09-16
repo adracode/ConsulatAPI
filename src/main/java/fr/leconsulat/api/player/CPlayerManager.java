@@ -224,7 +224,9 @@ public class CPlayerManager implements Listener {
                 player.load();
                 if(player.isError()){
                     api.log(Level.WARNING, "Player " + (api.isDebug() ? player : player.getName()) + " errored !");
-                    player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                    Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
+                        player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                    });
                     return;
                 }
                 if(api.isDebug()){

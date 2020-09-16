@@ -1,22 +1,42 @@
 package fr.leconsulat.api.moderation;
 
 import fr.leconsulat.api.ConsulatAPI;
+import fr.leconsulat.api.Text;
+import fr.leconsulat.api.moderation.sync.SanctionPlayer;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
+import fr.leconsulat.api.redis.RedisManager;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.redisson.api.RTopic;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 public class ModerationDatabase {
     
     private Connection connection;
+    private RTopic ban = RedisManager.getInstance().getRedis().getTopic("Ban");
     
     public ModerationDatabase(){
         this.connection = ConsulatAPI.getDatabase();
+        RedisManager.getInstance().register("Ban", SanctionPlayer.class, (channel, sanction) -> {
+            ConsulatPlayer target = CPlayerManager.getInstance().getConsulatPlayer(sanction.getUUID());
+            if(target != null){
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(sanction.getId());
+                Date date = calendar.getTime();
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
+                    target.getPlayer().kickPlayer(Text.KICK_PLAYER("§4" + sanction.getReason() + "\n§cJusqu'au: §4" + ConsulatAPI.getConsulatAPI().DATE_FORMAT.format(date)));
+                });
+            }
+            Bukkit.broadcastMessage(Text.PLAYER_BANNED(Bukkit.getOfflinePlayer(sanction.getUUID()).getName()));
+        });
     }
     
     public void addSanction(UUID uuid, String name, Player moderator, String sanctionType, String reason, long expireMillis, long applicationMillis) throws SQLException{
@@ -52,6 +72,10 @@ public class ModerationDatabase {
         } catch(SQLException e){
             e.printStackTrace();
         }
+    }
+    
+    public void banPlayer(SanctionPlayer sanction){
+        ban.publishAsync(sanction);
     }
     
     public void setMute(Player player) throws SQLException{

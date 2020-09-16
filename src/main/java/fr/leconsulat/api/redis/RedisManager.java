@@ -3,6 +3,7 @@ package fr.leconsulat.api.redis;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.listener.MessageListener;
+import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
 
 public class RedisManager {
@@ -19,6 +20,7 @@ public class RedisManager {
         Config redisConfig = new Config();
         redisConfig.setThreads(2);
         redisConfig.setNettyThreads(2);
+        redisConfig.setCodec(new JsonJacksonCodec());
         redisConfig.useSingleServer()
                 .setAddress("redis://" + host + ":" + port)
                 .setPassword(password)

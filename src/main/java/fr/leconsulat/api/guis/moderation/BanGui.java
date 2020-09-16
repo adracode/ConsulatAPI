@@ -2,6 +2,7 @@ package fr.leconsulat.api.guis.moderation;
 
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.Text;
+import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.gui.GuiItem;
 import fr.leconsulat.api.gui.event.GuiClickEvent;
 import fr.leconsulat.api.gui.event.GuiCloseEvent;
@@ -9,17 +10,20 @@ import fr.leconsulat.api.gui.event.GuiOpenEvent;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.gui.gui.template.DataRelatGui;
 import fr.leconsulat.api.moderation.BanReason;
+import fr.leconsulat.api.moderation.SanctionType;
+import fr.leconsulat.api.moderation.sync.SanctionPlayer;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatOffline;
 import fr.leconsulat.api.player.ConsulatPlayer;
-import fr.leconsulat.api.ranks.Rank;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 public class BanGui extends DataRelatGui<ConsulatOffline> {
     
@@ -89,28 +93,14 @@ public class BanGui extends DataRelatGui<ConsulatOffline> {
             try {
                 ConsulatAPI.getConsulatAPI().getModerationDatabase().addSanction(
                         offlineTarget.getUUID(), offlineTarget.getName(), banner.getPlayer(), "BAN", ban.getSanctionName(), resultTime, currentTime);
-                Bukkit.getScheduler().scheduleSyncDelayedTask(ConsulatAPI.getConsulatAPI(), () -> {
-                    ConsulatPlayer target = CPlayerManager.getInstance().getConsulatPlayer(offlineTarget.getUUID());
-                    if(target != null){
-                        Calendar calendar = Calendar.getInstance();
-                        calendar.setTimeInMillis(resultTime);
-                        Date date = calendar.getTime();
-                        target.getPlayer().kickPlayer(Text.KICK_PLAYER("§4" + ban.getSanctionName() + "\n§cJusqu'au: §4" + ConsulatAPI.getConsulatAPI().DATE_FORMAT.format(date)));
-                    }
-                    Bukkit.getOnlinePlayers().forEach(onlinePlayer -> {
-                        ConsulatPlayer consulatPlayer = CPlayerManager.getInstance().getConsulatPlayer(onlinePlayer.getUniqueId());
-                        if(consulatPlayer != null){
-                            Rank onlineRank = consulatPlayer.getRank();
-                            if(onlineRank.getRankPower() >= Rank.MODO.getRankPower()){
-                                long durationRound = Math.round(durationBan);
-                                long days = ((durationRound / (1000 * 60 * 60 * 24)));
-                                long hours = ((durationRound / (1000 * 60 * 60)) % 24);
-                                long minutes = ((durationRound / (1000 * 60)) % 60);
-                                consulatPlayer.sendMessage(Text.SANCTION_BANNED(offlineTarget.getName(), ban.getSanctionName(), days + "J" + hours + "H" + minutes + "M", banner.getName(), recidiveNumber));
-                            }
-                        }
-                    });
-                    Bukkit.broadcastMessage(Text.PLAYER_BANNED(offlineTarget.getName()));
+                Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
+                    ConsulatAPI.getConsulatAPI().getModerationDatabase().banPlayer(new SanctionPlayer(resultTime, SanctionType.BAN, offlineTarget.getUUID(), ban.getSanctionName(), banner.getUUID()));
+                    long durationRound = Math.round(durationBan);
+                    long days = ((durationRound / (1000 * 60 * 60 * 24)));
+                    long hours = ((durationRound / (1000 * 60 * 60)) % 24);
+                    long minutes = ((durationRound / (1000 * 60)) % 60);
+                    ChannelManager.getInstance().getChannel("staff").sendMessage(
+                            Text.SANCTION_BANNED(offlineTarget.getName(), ban.getSanctionName(), days + "J" + hours + "H" + minutes + "M", banner.getName(), recidiveNumber));
                 });
             } catch(SQLException e){
                 banner.sendMessage(Text.ERROR);
