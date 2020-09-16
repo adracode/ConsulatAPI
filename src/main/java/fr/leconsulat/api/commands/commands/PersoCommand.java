@@ -100,6 +100,7 @@ public class PersoCommand extends ConsulatCommand {
                 if(!allowedColors.contains(color)){
                     return;
                 }
+                sender.setColorName(color);
                 sender.sendMessage(Text.NEW_CUSTOM_RANK(sender));
                 sender.applyCustomRank();
                 sender.setPersoState(CustomRankState.START);

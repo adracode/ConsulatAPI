@@ -60,7 +60,7 @@ public class ConsulatPlayer implements Saveable {
     private String muteReason;
     private HashMap<BanReason, Integer> banHistory = new HashMap<>();
     private HashMap<MuteReason, Integer> muteHistory = new HashMap<>();
-    private CustomRankState customRankState;
+    private CustomRankState customRankState = CustomRankState.START;
     
     public ConsulatPlayer(@NotNull UUID uuid, @NotNull String name){
         this.uuid = Objects.requireNonNull(uuid);
