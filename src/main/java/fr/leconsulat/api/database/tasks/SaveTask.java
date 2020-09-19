@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.logging.Level;
 
 public class SaveTask<T extends Saveable, D> implements Runnable {
     
@@ -30,7 +31,9 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
     @SuppressWarnings("unchecked")
     public void addData(@NotNull Saveable saveable){
         Objects.requireNonNull(saveable, "saveable");
-        lastKnownsData.put((T)saveable, getData.apply((T)saveable));
+        D data = getData.apply((T)saveable);
+        lastKnownsData.put((T)saveable, data);
+        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Adding " + saveable.getDisplayName() + ". Current data: " + data);
     }
     
     public void removeData(@NotNull Saveable toSave, boolean save){
@@ -52,8 +55,10 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
         T objectToSave = (T)toSave;
         Objects.requireNonNull(objectToSave, "objectToSave");
         Object data = lastKnownsData.remove(objectToSave);
+        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ". Last data: " + data);
         if(data == null){
             if(!lastKnownsData.containsKey(objectToSave)){
+                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ", but not found");
                 return;
             }
         }
@@ -74,7 +79,9 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                 Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
                     try {
                         Object currentData = getData.apply(objectToSave);
+                        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving (remove) " + objectToSave.getDisplayName() + ". Current data: " + currentData);
                         if(force || ((currentData != null || data != null) && (currentData == null || !currentData.equals(data)))){
+                            ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving (remove) " + objectToSave.getDisplayName());
                             PreparedStatement statement = ConsulatAPI.getDatabase().prepareStatement(sqlStatement);
                             fillUpdate.fill(statement, objectToSave);
                             statement.executeUpdate();
@@ -96,7 +103,9 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                 T saveable = saveableData.getKey();
                 D knownData = saveableData.getValue();
                 D currentData = getData.apply(saveable);
+                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving " + saveable.getDisplayName() + ", last data: " + knownData + ". Current data: " + currentData);
                 if(currentData == null && knownData == null || currentData != null && currentData.equals(knownData)){
+                    ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] No need to save this");
                     continue;
                 }
                 if(statement == null){
@@ -104,6 +113,7 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                 }
                 fillUpdate.fill(statement, saveable);
                 lastKnownsData.put(saveable, currentData);
+                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving (" + getData.apply(saveable) + ")");
                 statement.addBatch();
             }
             if(statement != null){
