@@ -12,7 +12,7 @@ import org.redisson.api.RTopic;
 
 public class ToggleChatCommand extends ConsulatCommand {
     
-    private RTopic toggleChat = RedisManager.getInstance().getRedis().getTopic("ToggleChat");
+    private RTopic toggleChat;
     
     public ToggleChatCommand(){
         super(ConsulatAPI.getConsulatAPI(), "togglechat");
@@ -21,15 +21,22 @@ public class ToggleChatCommand extends ConsulatCommand {
                 setAliases("chat").
                 setRank(Rank.RESPONSABLE).
                 suggest();
-        RedisManager.getInstance().register("ToggleChat", String.class, (channel, player) -> {
+        String topicName = "ToggleChat" + (ConsulatAPI.getConsulatAPI().isDevelopment() ? "Dev" : "");
+        RedisManager.getInstance().register(topicName, String.class, (channel, player) -> {
             ConsulatAPI core = ConsulatAPI.getConsulatAPI();
-            core.setChat(!core.isChat());
+            int separator = player.indexOf(':');
+            boolean status = Boolean.parseBoolean(player.substring(0, separator));
+            if(core.isChat() == status){
+                return;
+            }
+            core.setChat(status);
             if(core.isChat()){
-                Bukkit.broadcastMessage(Text.BRODCAST(player, "Le chat est à nouveau disponible."));
+                Bukkit.broadcastMessage(Text.BRODCAST(player.substring(separator + 1), "Le chat est à nouveau disponible."));
             } else {
-                Bukkit.broadcastMessage(Text.BRODCAST(player, "Le chat est coupé."));
+                Bukkit.broadcastMessage(Text.BRODCAST(player.substring(separator + 1), "Le chat est coupé."));
             }
         });
+        toggleChat = RedisManager.getInstance().getRedis().getTopic(topicName);
     }
     
     @Override
