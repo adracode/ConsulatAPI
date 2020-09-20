@@ -72,8 +72,8 @@ public final class CompoundTag implements Tag {
 	@Deprecated
 	public <T extends Tag> List<T> getList(String name, Class<T> expected){
 		ListTag<T> listTag = ((ListTag<T>)value.get(name));
-		if(listTag.getElementType().getTagClass() != expected){
-			throw new IllegalArgumentException();
+		if(listTag.getElementType() != NBTType.END && listTag.getElementType().getTagClass() != expected){
+			throw new IllegalArgumentException("Expected: " + expected + ", current: " + listTag.getElementType());
 		}
 		return listTag.getValue();
 	}
@@ -81,8 +81,8 @@ public final class CompoundTag implements Tag {
 	@SuppressWarnings("unchecked")
 	public <T extends Tag> List<T> getList(String name, NBTType expected){
 		ListTag<T> listTag = ((ListTag<T>)value.get(name));
-		if(listTag.getElementType() != expected){
-			throw new IllegalArgumentException();
+		if(listTag.getElementType() != NBTType.END && listTag.getElementType() != expected){
+			throw new IllegalArgumentException("Expected: " + expected + ", current: " + listTag.getElementType());
 		}
 		return listTag.getValue();
 	}
@@ -91,7 +91,7 @@ public final class CompoundTag implements Tag {
 	public <T extends Tag> ListTag<T> getListTag(String name, NBTType expected){
 		ListTag<T> listTag = ((ListTag<T>)value.get(name));
 		if(listTag.getElementType() != NBTType.END && listTag.getElementType() != expected){
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("Expected: " + expected + ", current: " + listTag.getElementType());
 		}
 		return listTag;
 	}
