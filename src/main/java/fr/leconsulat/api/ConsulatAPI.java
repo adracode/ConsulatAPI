@@ -9,6 +9,7 @@ import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.*;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
+import fr.leconsulat.api.events.ChatSyncEvent;
 import fr.leconsulat.api.events.EventManager;
 import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
@@ -99,6 +100,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     public void setSyncChat(boolean syncChat){
         this.syncChat = syncChat;
         CPlayerManager.getInstance().setSyncChat(syncChat);
+        getServer().getPluginManager().callEvent(new ChatSyncEvent(syncChat));
     }
     
     public static ConsulatAPI getConsulatAPI(){
