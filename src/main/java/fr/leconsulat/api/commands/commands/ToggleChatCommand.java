@@ -41,6 +41,6 @@ public class ToggleChatCommand extends ConsulatCommand {
     
     @Override
     public void onCommand(@NotNull ConsulatPlayer sender, @NotNull String[] args){
-        toggleChat.publishAsync(sender.getName());
+        toggleChat.publishAsync(!ConsulatAPI.getConsulatAPI().isChat() + ":" + sender.getName());
     }
 }
