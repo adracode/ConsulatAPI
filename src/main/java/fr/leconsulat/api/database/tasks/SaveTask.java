@@ -54,14 +54,15 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
     private void removeData(@NotNull Saveable toSave, boolean save, boolean force){
         T objectToSave = (T)toSave;
         Objects.requireNonNull(objectToSave, "objectToSave");
-        Object data = lastKnownsData.remove(objectToSave);
-        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ". Last data: " + data);
+        Object data = lastKnownsData.get(objectToSave);
+        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ". Last data: " + data + " " + this);
         if(data == null){
             if(!lastKnownsData.containsKey(objectToSave)){
                 ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ", but not found");
                 return;
             }
         }
+        lastKnownsData.remove(objectToSave);
         if(save){
             if(!ConsulatAPI.getConsulatAPI().isEnabled()){
                 try {
@@ -103,7 +104,7 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                 T saveable = saveableData.getKey();
                 D knownData = saveableData.getValue();
                 D currentData = getData.apply(saveable);
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving " + saveable.getDisplayName() + ", last data: " + knownData + ". Current data: " + currentData);
+                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving " + saveable.getDisplayName() + ", last data: " + knownData + ". Current data: " + currentData + " " + this);
                 if(currentData == null && knownData == null || currentData != null && currentData.equals(knownData)){
                     ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] No need to save this");
                     continue;
