@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class SaveManager {
     
@@ -32,6 +33,7 @@ public class SaveManager {
     }
     
     public void addSaveTask(String id, SaveTask<? extends Saveable, ?> task){
+        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Add SaveTask " + task + " with id " + id);
         tasks.put(id, task);
     }
     

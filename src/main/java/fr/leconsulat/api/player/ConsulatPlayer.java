@@ -3,11 +3,17 @@ package fr.leconsulat.api.player;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
 import fr.leconsulat.api.channel.Channel;
+import fr.leconsulat.api.channel.ChannelManager;
+import fr.leconsulat.api.channel.Speakable;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.ConsulatCommand;
+import fr.leconsulat.api.commands.commands.PersoCommand;
 import fr.leconsulat.api.database.Saveable;
 import fr.leconsulat.api.events.PlayerChangeRankEvent;
 import fr.leconsulat.api.gui.gui.IGui;
+import fr.leconsulat.api.moderation.BanReason;
+import fr.leconsulat.api.moderation.MuteReason;
+import fr.leconsulat.api.moderation.MutedPlayer;
 import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.ranks.Rank;
 import fr.leconsulat.api.redis.RedisManager;
@@ -26,11 +32,13 @@ import org.redisson.api.RFuture;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.*;
 
 @SuppressWarnings({"unused"})
 public class ConsulatPlayer implements Saveable {
+    
+    private static final String SPEAK_PERM = ConsulatAPI.getConsulatAPI().getPermission("bypass-chat");
+    public static final String ERROR = ConsulatAPI.getConsulatAPI().getPermission("error");
     
     private final @NotNull UUID uuid;
     private final @NotNull String name;
@@ -47,6 +55,12 @@ public class ConsulatPlayer implements Saveable {
     private int positionInQueue = 0;
     private boolean disconnectHandled = false;
     private boolean inventoryBlocked = true;
+    private boolean isMuted;
+    private long muteExpireMillis;
+    private String muteReason;
+    private HashMap<BanReason, Integer> banHistory = new HashMap<>();
+    private HashMap<MuteReason, Integer> muteHistory = new HashMap<>();
+    private CustomRankState customRankState = CustomRankState.START;
     
     public ConsulatPlayer(@NotNull UUID uuid, @NotNull String name){
         this.uuid = Objects.requireNonNull(uuid);
@@ -116,11 +130,126 @@ public class ConsulatPlayer implements Saveable {
         return customRank.getCustomPrefix();
     }
     
+    public CustomRankState getPersoState(){
+        return customRankState;
+    }
+    
+    public void setPersoState(CustomRankState customRankState){
+        this.customRankState = customRankState;
+    }
+    
+    public String chat(String message){
+        boolean cancel = false;
+        if(getCurrentChannel() == null){
+            if(!ConsulatAPI.getConsulatAPI().isChat() && !hasPermission(SPEAK_PERM)){
+                sendMessage("§cChat coupé.");
+                cancel = true;
+            }
+        }
+        if(getPersoState() == CustomRankState.PREFIX){
+            if(message.equalsIgnoreCase("cancel")){
+                resetCustomRank();
+                setPersoState(CustomRankState.START);
+                sendMessage("§aChangement de grade annulé.");
+                return null;
+            }
+            if(message.length() > 10){
+                sendMessage("§cTon grade doit faire 10 caractères maximum ! Tape §ocancel §r§csi tu veux annuler.");
+                return null;
+            }
+            PersoCommand persoCommand = (PersoCommand)CommandManager.getInstance().getCommand("perso");
+            if(persoCommand.isCustomRankForbidden(message)){
+                sendMessage("§cTu ne peux pas appeler ton grade comme cela ! Tape §ocancel §r§csi tu veux annuler.");
+                return null;
+            }
+            if(!message.matches("^[a-zA-Z]+$")){
+                sendMessage("§cTu dois utiliser uniquement des lettres dans ton grade.");
+                return null;
+            }
+            setPrefix(message);
+            setPersoState(CustomRankState.NAME_COLOR);
+            sendMessage("§6Voici ton grade: " + getCustomPrefix());
+            sendMessage("§7Maintenant, choisis la couleur de ton pseudo:");
+            sendMessage(persoCommand.getCustomRankColors());
+            return null;
+        }
+        if(isMuted() && System.currentTimeMillis() < getMuteExpireMillis()){
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(getMuteExpireMillis());
+            String resultDate = ConsulatAPI.getConsulatAPI().DATE_FORMAT.format(calendar.getTime());
+            String reason = getMuteReason();
+            sendMessage("§cTu es actuellement mute.\n§4Raison: §c" + reason + "\n§4Jusqu'au: §c" + resultDate);
+            return null;
+        }
+        if(cancel){
+            return null;
+        }
+        Channel channel = getCurrentChannel();
+        if(channel == null){
+            if(hasPower(Rank.MODO)){
+                return ChatColor.translateAlternateColorCodes('&', message);
+            }
+        } else {
+            if(channel instanceof Speakable){
+                channel.sendMessage(((Speakable)channel).speak(this, message));
+            }
+            return null;
+        }
+        return message;
+    }
+    
+    public boolean isError(){
+        return hasPermission(ERROR);
+    }
+    
+    public void setError(boolean error){
+        if(error){
+            addPermission(ERROR);
+        } else {
+            removePermission(ERROR);
+        }
+    }
+    
     public @NotNull String getRegistered(){
         if(!isInitialized()){
             throw new NullPointerException("Registered is null, use ConsulatPlayer#isInitialized() to check");
         }
         return registered;
+    }
+    
+    public long getMuteExpireMillis(){
+        return muteExpireMillis;
+    }
+    
+    public void setMuteExpireMillis(long muteExpireMillis){
+        this.muteExpireMillis = muteExpireMillis;
+    }
+    
+    public String getMuteReason(){
+        return muteReason;
+    }
+    
+    public void setMuteReason(String reason){
+        this.muteReason = reason;
+    }
+    
+    public boolean isMuted(){
+        return isMuted;
+    }
+    
+    public void setMuted(boolean muted){
+        isMuted = muted;
+    }
+    
+    public @Nullable MutedPlayer getMute(){
+        if(System.currentTimeMillis() < muteExpireMillis){
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(muteExpireMillis);
+            String resultDate = ConsulatAPI.getConsulatAPI().DATE_FORMAT.format(calendar.getTime());
+            String reason = muteReason;
+            return new MutedPlayer(reason, resultDate);
+        }
+        return null;
     }
     
     public boolean isVanished(){
@@ -245,9 +374,22 @@ public class ConsulatPlayer implements Saveable {
         this.initialized = true;
     }
     
+    public HashMap<BanReason, Integer> getBanHistory(){
+        return banHistory;
+    }
+    
+    public HashMap<MuteReason, Integer> getMuteHistory(){
+        return muteHistory;
+    }
+    
+    
     public void onQuit(){
         if(isInitialized()){
             save();
+        }
+        Channel staffChannel = ChannelManager.getInstance().getChannel("staff");
+        if(staffChannel.isMember(this)){
+            staffChannel.removePlayer(this);
         }
     }
     
@@ -255,7 +397,7 @@ public class ConsulatPlayer implements Saveable {
         return customRank != null;
     }
     
-    public void resetCustomRank() throws SQLException{
+    public void resetCustomRank(){
         if(!hasCustomRank()){
             return;
         }
@@ -263,7 +405,7 @@ public class ConsulatPlayer implements Saveable {
         this.customRank.reset();
     }
     
-    public void applyCustomRank() throws SQLException{
+    public void applyCustomRank(){
         if(!hasCustomRank()){
             return;
         }

@@ -4,16 +4,16 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 import fr.leconsulat.api.channel.ChannelManager;
+import fr.leconsulat.api.channel.StaffChannel;
 import fr.leconsulat.api.commands.CommandManager;
-import fr.leconsulat.api.commands.commands.ADebugCommand;
-import fr.leconsulat.api.commands.commands.HelpCommand;
-import fr.leconsulat.api.commands.commands.PropertiesCommand;
-import fr.leconsulat.api.commands.commands.RankCommand;
+import fr.leconsulat.api.commands.commands.*;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
+import fr.leconsulat.api.events.ChatSyncEvent;
 import fr.leconsulat.api.events.EventManager;
 import fr.leconsulat.api.events.PostInitEvent;
 import fr.leconsulat.api.gui.GuiManager;
+import fr.leconsulat.api.moderation.ModerationDatabase;
 import fr.leconsulat.api.nms.api.NMS;
 import fr.leconsulat.api.player.CPlayerManager;
 import fr.leconsulat.api.player.ConsulatPlayer;
@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
+import java.text.SimpleDateFormat;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -50,15 +51,19 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
     
     private ConsulatServer server;
     private RTopic debugChannel;
+    public final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy 'à' HH:mm");
     
     private NMS nms;
     private ProtocolManager protocolManager;
     private CPlayerManager playerManager;
     private DatabaseManager databaseManager;
+    private ModerationDatabase moderationDatabase;
     private File log;
     private boolean debug = false;
     private boolean development = false;
     private boolean hasCrashed;
+    private boolean chat = true;
+    private boolean syncChat = false;
     
     private World theEnd;
     
@@ -72,12 +77,30 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         return debug;
     }
     
+    public boolean isChat(){
+        return chat;
+    }
+    
+    public boolean isSyncChat(){
+        return syncChat;
+    }
+    
     public void setDebug(boolean debug){
         this.debug = debug;
     }
     
     public boolean isDevelopment(){
         return development;
+    }
+    
+    public void setChat(boolean chat){
+        this.chat = chat;
+    }
+    
+    public void setSyncChat(boolean syncChat){
+        this.syncChat = syncChat;
+        CPlayerManager.getInstance().setSyncChat(syncChat);
+        getServer().getPluginManager().callEvent(new ChatSyncEvent(syncChat));
     }
     
     public static ConsulatAPI getConsulatAPI(){
@@ -157,12 +180,18 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         this.getServer().getPluginManager().registerEvents(playerManager, this);
     }
     
+    public ModerationDatabase getModerationDatabase(){
+        return moderationDatabase;
+    }
+    
+    
     @Override
     public void onDisable(){
         for(ConsulatPlayer player : CPlayerManager.getInstance().getConsulatPlayers()){
             player.onQuit();
             player.disconnected();
         }
+        Saver.getInstance().end();
         RedisManager.getInstance().getRedis().shutdown();
         SaveManager.getInstance().removeAll();
         databaseManager.disconnect();
@@ -213,6 +242,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
                 config.getInt("redis-port"),
                 config.getString("redis-password"),
                 config.getString("redis-client"));
+        moderationDatabase = new ModerationDatabase();
         debugChannel = redisManager.getRedis().getTopic("Debug");
         protocolManager = ProtocolLibrary.getProtocolManager();
         SaveManager.getInstance();
@@ -221,10 +251,20 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         playerManager = new CPlayerManager();
         CommandManager.getInstance();
         GuiManager.getInstance();
+        new StaffChannel();
         new ADebugCommand().register();
+        new AntecedentsCommand().register();
         new HelpCommand().register();
+        new KickCommand().register();
+        new PersoCommand().register();
         new PropertiesCommand().register();
         new RankCommand().register();
+        new SanctionCommand().register();
+        new SeenCommand().register();
+        new StaffChatCommand().register();
+        new ToggleChatCommand().register();
+        new UnbanCommand().register();
+        new UnmuteCommand().register();
         //new OfflineInventoryCommand().register();
         registerEvents();
         Bukkit.getScheduler().runTaskTimer(this, new KeepAlive(), 0L, 20 * 60 * 5);

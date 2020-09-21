@@ -14,6 +14,7 @@ public class Saver extends Thread {
     
     private static Saver instance;
     
+    private boolean stop = false;
     private long lastUpdate = Long.MAX_VALUE;
     private Set<Runnable> saves = new HashSet<>();
     private DedicatedServer server = ConsulatAPI.getNMS().getServer().getDedicatedServer();
@@ -33,7 +34,7 @@ public class Saver extends Thread {
             lastUpdate = System.currentTimeMillis();
         }, 1L, 1L);
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Starting saver.");
-        while(!server.isStopped()){
+        while(!server.isStopped() && !stop){
             try {
                 if(System.currentTimeMillis() - lastUpdate >= timeBeforeCrash){
                     ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Server has stopped responding, crash ? Saving...");
@@ -46,6 +47,10 @@ public class Saver extends Thread {
             }
         }
         ConsulatAPI.getConsulatAPI().log(Level.INFO, "Server is stopping, saver disabled.");
+    }
+    
+    public void end(){
+        stop = true;
     }
     
     private void save(){

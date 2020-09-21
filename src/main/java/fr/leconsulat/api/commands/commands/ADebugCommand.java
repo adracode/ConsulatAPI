@@ -75,6 +75,7 @@ public class ADebugCommand extends ConsulatCommand {
                                 then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))),
                 LiteralArgumentBuilder.literal("item"),
                 LiteralArgumentBuilder.literal("crash"),
+                LiteralArgumentBuilder.literal("sync-chat"),
                 LiteralArgumentBuilder.literal("debug").
                         then(RequiredArgumentBuilder.argument("valeur", BoolArgumentType.bool()))
         );
@@ -281,6 +282,11 @@ public class ADebugCommand extends ConsulatCommand {
                             break;
                         }
                     }
+                    break;
+                case "sync-chat":
+                    ConsulatAPI api = ConsulatAPI.getConsulatAPI();
+                    api.setSyncChat(!api.isSyncChat());
+                    sender.sendMessage(api.isSyncChat() ? "§aChat synchronisé" : "§aChat dé-synchonisé");
                     break;
             }
         }

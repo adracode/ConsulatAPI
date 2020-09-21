@@ -1,18 +1,21 @@
 package fr.leconsulat.api.player;
 
-import com.comphenix.protocol.utility.MinecraftReflection;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.ConsulatServer;
+import fr.leconsulat.api.Text;
+import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.ADebugCommand;
 import fr.leconsulat.api.events.ConsulatPlayerLeaveEvent;
 import fr.leconsulat.api.events.ConsulatPlayerLoadedEvent;
-import fr.leconsulat.api.nbt.CompoundTag;
-import fr.leconsulat.api.nbt.NBTInputStream;
-import fr.leconsulat.api.nbt.NBTOutputStream;
+import fr.leconsulat.api.moderation.BanReason;
+import fr.leconsulat.api.moderation.MuteReason;
+import fr.leconsulat.api.moderation.SanctionType;
+import fr.leconsulat.api.nbt.*;
 import fr.leconsulat.api.player.stream.OfflinePlayerInputStream;
 import fr.leconsulat.api.player.stream.PlayerInputStream;
 import fr.leconsulat.api.ranks.Rank;
+import fr.leconsulat.api.redis.RedisManager;
 import fr.leconsulat.api.utils.FileUtils;
 import fr.leconsulat.api.utils.ReflectionUtils;
 import org.bukkit.Bukkit;
@@ -24,12 +27,12 @@ import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.redisson.api.RFuture;
+import org.redisson.api.RTopic;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -42,15 +45,6 @@ import java.util.logging.Level;
 public class CPlayerManager implements Listener {
     
     private static CPlayerManager instance;
-    private static Method getEntity;
-    
-    static{
-        try {
-            getEntity = MinecraftReflection.getMinecraftClass("CommandListenerWrapper").getMethod("h");
-        } catch(NoSuchMethodException var1){
-            var1.printStackTrace();
-        }
-    }
     
     private final File playerDataFolder = FileUtils.loadFile(Bukkit.getServer().getWorldContainer(), "world/playerdata/");
     private final Map<UUID, ConsulatPlayer> players = new HashMap<>();
@@ -61,6 +55,8 @@ public class CPlayerManager implements Listener {
     private Function<ConsulatPlayer, Set<String>> rankPermission;
     private Class<?> playerClass;
     private Constructor<?> playerConstructor;
+    private RTopic syncChat;
+    private int syncChatListener;
     
     public CPlayerManager(){
         if(instance != null){
@@ -94,6 +90,18 @@ public class CPlayerManager implements Listener {
             e.printStackTrace();
             ConsulatAPI.getConsulatAPI().log(Level.SEVERE, "Error while loading offline players");
             Bukkit.shutdown();
+        }
+    }
+    
+    public void setSyncChat(boolean syncChat){
+        RedisManager redis = RedisManager.getInstance();
+        String channel = (ConsulatAPI.getConsulatAPI().isDevelopment() ? "Dev" : "") + "Chat";
+        if(syncChat){
+            this.syncChat = redis.getRedis().getTopic(channel);
+            this.syncChatListener = redis.register(channel, String.class, (chan, message) -> Bukkit.broadcastMessage(message));
+        } else {
+            this.syncChat = null;
+            redis.getRedis().getTopic(channel).removeListener(this.syncChatListener);
         }
     }
     
@@ -142,17 +150,35 @@ public class CPlayerManager implements Listener {
             UUID uuid = inputStream.fetchUUID();
             File playerFile = getPlayerFile(uuid);
             NBTInputStream is = new NBTInputStream(playerFile);
-            CompoundTag player = is.read();
+            CompoundTag playerTag = is.read();
             is.close();
             float experience = inputStream.fetchLevel();
             int level = (int)experience;
-            player.putInt("XpLevel", level);
-            player.putFloat("XpP", experience - level);
-            player.put("Inventory", inputStream.fetchInventory());
-            NBTOutputStream os = new NBTOutputStream(playerFile, player);
-            os.write("");
-            os.close();
-        } catch(IOException e){
+            ListTag<CompoundTag> saveInventory = playerTag.getListTag("Inventory", NBTType.COMPOUND);
+            float saveXp = playerTag.getInt("XpLevel") + playerTag.getFloat("XpP");
+            playerTag.putInt("XpLevel", level);
+            playerTag.putFloat("XpP", experience - level);
+            playerTag.put("Inventory", inputStream.fetchInventory());
+            NBTOutputStream os = new NBTOutputStream(playerFile, playerTag);
+            try {
+                os.write("");
+            } catch(Exception e){
+                ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(uuid);
+                if(player != null){
+                    player.addPermission(ConsulatPlayer.ERROR);
+                    player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                } else {
+                    ConsulatPlayer.addPermission(uuid, ConsulatPlayer.ERROR);
+                }
+                playerTag.putInt("XpLevel", (int)saveXp);
+                playerTag.putFloat("XpP", saveXp - (int)saveXp);
+                playerTag.put("Inventory", saveInventory);
+                os = new NBTOutputStream(playerFile, playerTag);
+                os.write("");
+            } finally {
+                os.close();
+            }
+        } catch(IOException | NullPointerException e){
             e.printStackTrace();
         }
     }
@@ -191,17 +217,24 @@ public class CPlayerManager implements Listener {
             try {
                 long start = System.currentTimeMillis();
                 fetchPlayer(player);
+                setAntecedents(player);
+                ConsulatAPI.getConsulatAPI().getModerationDatabase().setMute(player.getPlayer());
                 api.log(Level.INFO, "Player " + (api.isDebug() ? player : player.getName()) + " fetched in " + (System.currentTimeMillis() - start) + " ms");
                 start = System.currentTimeMillis();
                 player.load();
+                if(player.isError()){
+                    api.log(Level.WARNING, "Player " + (api.isDebug() ? player : player.getName()) + " errored !");
+                    Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
+                        player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                    });
+                    return;
+                }
                 if(api.isDebug()){
                     api.log(Level.INFO, "Getting permissions in " + (System.currentTimeMillis() - start) + " ms");
                 }
-                Bukkit.getScheduler().runTask(api,
-                        () -> Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLoadedEvent(player)));
+                Bukkit.getScheduler().runTask(api, () -> Bukkit.getServer().getPluginManager().callEvent(new ConsulatPlayerLoadedEvent(player)));
             } catch(SQLException e){
-                Bukkit.getScheduler().runTask(api, () ->
-                        event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n" + e.getMessage()));
+                Bukkit.getScheduler().runTask(api, () -> event.getPlayer().kickPlayer("§cErreur lors de la récupération de vos données.\n"));
                 e.printStackTrace();
             }
         });
@@ -209,9 +242,13 @@ public class CPlayerManager implements Listener {
     
     @EventHandler
     public void onConsulatPlayerLoaded(ConsulatPlayerLoadedEvent event){
-        CommandManager.getInstance().sendCommands(event.getPlayer());
-        if(ADebugCommand.UUID_PERMISSION.contains(event.getPlayer().getUUID())){
-            event.getPlayer().addPermission(CommandManager.getInstance().getCommand("adebug").getPermission());
+        ConsulatPlayer player = event.getPlayer();
+        CommandManager.getInstance().sendCommands(player);
+        if(ADebugCommand.UUID_PERMISSION.contains(player.getUUID())){
+            player.addPermission(CommandManager.getInstance().getCommand("adebug").getPermission());
+        }
+        if(player.hasPermission(CommandManager.getInstance().getCommand("staffchat").getPermission())){
+            ChannelManager.getInstance().getChannel("staff").addPlayer(player);
         }
     }
     
@@ -234,6 +271,29 @@ public class CPlayerManager implements Listener {
                 }
             });
         }, 20);
+    }
+    
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onChat(AsyncPlayerChatEvent event){
+        ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(event.getPlayer().getUniqueId());
+        if(player == null){
+            event.getPlayer().sendMessage(Text.ERROR);
+            event.setCancelled(true);
+            return;
+        }
+        String message = player.chat(event.getMessage());
+        if(message == null){
+            event.setCancelled(true);
+            return;
+        }
+        ConsulatAPI api = ConsulatAPI.getConsulatAPI();
+        if(api.isSyncChat()){
+            syncChat.publishAsync("§2[" + api.getConsulatServer().getDisplay() + "] " + player.getDisplayName() + "§7: §f" + message);
+            event.setCancelled(true);
+        } else {
+            event.setMessage(message);
+            event.setFormat(player.getDisplayRank() + " %s§7: §f%s");
+        }
     }
     
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -440,12 +500,48 @@ public class CPlayerManager implements Listener {
         }
     }
     
-    public void setCustomRank(UUID uuid, String rank) throws SQLException{
-        PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET prefix_perso = ? WHERE player_uuid = ?");
-        request.setString(1, rank);
-        request.setString(2, uuid.toString());
-        request.executeUpdate();
-        request.close();
+    private void setAntecedents(ConsulatPlayer player) throws SQLException{
+        PreparedStatement preparedStatement = ConsulatAPI.getDatabase().prepareStatement("SELECT sanction, reason FROM antecedents WHERE playeruuid = ? AND cancelled = 0");
+        preparedStatement.setString(1, player.getUUID().toString());
+        ResultSet resultSet = preparedStatement.executeQuery();
+        
+        while(resultSet.next()){
+            SanctionType sanctionType = SanctionType.valueOf(resultSet.getString("sanction"));
+            String reason = resultSet.getString("reason");
+            if(sanctionType == SanctionType.MUTE){
+                MuteReason muteReason = Arrays.stream(MuteReason.values()).filter(mute -> mute.getSanctionName().equals(reason)).findFirst().orElse(null);
+                if(muteReason != null){
+                    if(player.getMuteHistory().containsKey(muteReason)){
+                        int number = player.getMuteHistory().get(muteReason);
+                        player.getMuteHistory().put(muteReason, ++number);
+                    } else {
+                        player.getMuteHistory().put(muteReason, 1);
+                    }
+                }
+            } else {
+                BanReason banReason = Arrays.stream(BanReason.values()).filter(ban -> ban.getSanctionName().equals(reason)).findFirst().orElse(null);
+                if(banReason != null){
+                    if(player.getBanHistory().containsKey(banReason)){
+                        int number = player.getBanHistory().get(banReason);
+                        player.getBanHistory().put(banReason, ++number);
+                    } else {
+                        player.getBanHistory().put(banReason, 1);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void setCustomRank(UUID uuid, String rank) {
+        try {
+            PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET prefix_perso = ? WHERE player_uuid = ?");
+            request.setString(1, rank);
+            request.setString(2, uuid.toString());
+            request.executeUpdate();
+            request.close();
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
     }
     
     public Set<String> getDefaultPermissions(ConsulatPlayer player){
