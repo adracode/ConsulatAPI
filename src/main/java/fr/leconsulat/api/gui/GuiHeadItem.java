@@ -9,11 +9,13 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 public class GuiHeadItem extends GuiItem {
     
     private String name;
     private Consumer<GuiHeadItem> onUpdate;
+    private byte updates = 0;
     
     public GuiHeadItem(UUID uuid, IGui gui){
         super(Material.PLAYER_HEAD);
@@ -27,8 +29,23 @@ public class GuiHeadItem extends GuiItem {
         super(Material.PLAYER_HEAD);
         Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
             setPlayer(Bukkit.getOfflinePlayer(player));
-            gui.update(getSlot());
+            setSlot(gui);
         });
+    }
+    
+    private void setSlot(IGui gui){
+        int slot = getSlot();
+        if(slot == -1){
+            if(updates == 10){
+                ConsulatAPI.getConsulatAPI().log(Level.WARNING, "Couldn't set head slot " + this);
+                return;
+            }
+            Bukkit.getScheduler().runTaskLaterAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+                setSlot(gui);
+            }, ++updates);
+        } else {
+            gui.update(slot);
+        }
     }
     
     public GuiHeadItem onUpdate(Consumer<GuiHeadItem> onUpdate){

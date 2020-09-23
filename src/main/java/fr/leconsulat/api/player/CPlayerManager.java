@@ -98,7 +98,14 @@ public class CPlayerManager implements Listener {
         String channel = (ConsulatAPI.getConsulatAPI().isDevelopment() ? "Dev" : "") + "Chat";
         if(syncChat){
             this.syncChat = redis.getRedis().getTopic(channel);
-            this.syncChatListener = redis.register(channel, String.class, (chan, message) -> Bukkit.broadcastMessage(message));
+            this.syncChatListener = redis.register(channel, String.class, (chan, message) -> {
+                int separator = message.indexOf(':');
+                ConsulatServer server = ConsulatServer.valueOf(message.substring(0, separator));
+                ConsulatServer currentServer = ConsulatAPI.getConsulatAPI().getConsulatServer();
+                Bukkit.broadcastMessage(
+                        (currentServer != server ? "§2[" + server.getDisplay() + "] " : "")
+                        + message.substring(separator + 1));
+            });
         } else {
             this.syncChat = null;
             redis.getRedis().getTopic(channel).removeListener(this.syncChatListener);
@@ -288,7 +295,7 @@ public class CPlayerManager implements Listener {
         }
         ConsulatAPI api = ConsulatAPI.getConsulatAPI();
         if(api.isSyncChat()){
-            syncChat.publishAsync("§2[" + api.getConsulatServer().getDisplay() + "] " + player.getDisplayName() + "§7: §f" + message);
+            syncChat.publishAsync(api.getConsulatServer().name() + ":" + player.getDisplayName() + "§7: §f" + message);
             event.setCancelled(true);
         } else {
             event.setMessage(message);
@@ -532,7 +539,7 @@ public class CPlayerManager implements Listener {
         }
     }
     
-    public void setCustomRank(UUID uuid, String rank) {
+    public void setCustomRank(UUID uuid, String rank){
         try {
             PreparedStatement request = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET prefix_perso = ? WHERE player_uuid = ?");
             request.setString(1, rank);
