@@ -107,7 +107,11 @@ public class GuiManager implements Listener {
                 if(slot < 0 || slot > 53){
                     return;
                 }
-                ItemStack fakeItem = gui.getItem(slot).getFakeItem(event.getPlayer().getUniqueId());
+                GuiItem item = gui.getItem(slot);
+                if(item == null){
+                    return;
+                }
+                ItemStack fakeItem = item.getFakeItem(event.getPlayer().getUniqueId());
                 if(fakeItem != null){
                     container.getItemModifier().write(0, fakeItem);
                 }

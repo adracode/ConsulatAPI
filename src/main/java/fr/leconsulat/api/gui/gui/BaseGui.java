@@ -272,6 +272,9 @@ public class BaseGui implements IGui {
     public void open(@NotNull ConsulatPlayer player){
         GuiOpenEvent event = new GuiOpenEvent(player);
         onOpen(event);
+        if(event.isCancelled()){
+            return;
+        }
         player.getPlayer().openInventory(inventory);
         player.setCurrentlyOpen((IGui)inventory.getHolder());
         onOpened(event);
