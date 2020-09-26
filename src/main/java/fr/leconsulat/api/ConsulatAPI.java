@@ -151,6 +151,12 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         this.getLogger().log(level, message.toString());
     }
     
+    public void debug(Level level, Object message){
+        if(isDebug()){
+            this.getLogger().log(level, message.toString());
+        }
+    }
+    
     public void logFile(Object message){
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             try {
@@ -234,7 +240,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         } catch(InstantiationException | IllegalAccessException | ClassNotFoundException e){
             e.printStackTrace();
         }
-        new Saver().addSave(() -> SaveManager.getInstance().removeAll());
+        new Saver().addSave(() -> SaveManager.getInstance().saveAll());
         databaseManager = new DatabaseManager();
         databaseManager.connect();
         RedisManager redisManager = new RedisManager(

@@ -33,7 +33,7 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
         Objects.requireNonNull(saveable, "saveable");
         D data = getData.apply((T)saveable);
         lastKnownsData.put((T)saveable, data);
-        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Adding " + saveable.getDisplayName() + ". Current data: " + data);
+        ConsulatAPI.getConsulatAPI().debug(Level.INFO, "[Save] Adding " + saveable.getDisplayName() + ". Current data: " + data);
     }
     
     public void removeData(@NotNull Saveable toSave, boolean save){
@@ -55,10 +55,10 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
         T objectToSave = (T)toSave;
         Objects.requireNonNull(objectToSave, "objectToSave");
         Object data = lastKnownsData.get(objectToSave);
-        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ". Last data: " + data + " " + this);
+        ConsulatAPI.getConsulatAPI().debug(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ". Last data: " + data + " " + this);
         if(data == null){
             if(!lastKnownsData.containsKey(objectToSave)){
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ", but not found");
+                ConsulatAPI.getConsulatAPI().debug(Level.INFO, "[Save] Removing " + objectToSave.getDisplayName() + ", but not found");
                 return;
             }
         }
@@ -80,9 +80,9 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                 Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
                     try {
                         Object currentData = getData.apply(objectToSave);
-                        ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving (remove) " + objectToSave.getDisplayName() + ". Current data: " + currentData);
+                        ConsulatAPI.getConsulatAPI().debug(Level.INFO, "[Save] Saving (remove) " + objectToSave.getDisplayName() + ". Current data: " + currentData);
                         if(force || ((currentData != null || data != null) && (currentData == null || !currentData.equals(data)))){
-                            ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving (remove) " + objectToSave.getDisplayName());
+                            ConsulatAPI.getConsulatAPI().debug(Level.INFO, "[Save] Saving (remove) " + objectToSave.getDisplayName());
                             PreparedStatement statement = ConsulatAPI.getDatabase().prepareStatement(sqlStatement);
                             fillUpdate.fill(statement, objectToSave);
                             statement.executeUpdate();
@@ -97,16 +97,17 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
     }
     
     @Override
-    public void run(){
+    public synchronized void run(){
+        ConsulatAPI api = ConsulatAPI.getConsulatAPI();
         try {
             PreparedStatement statement = null;
             for(Map.Entry<T, D> saveableData : new HashSet<>(lastKnownsData.entrySet())){
                 T saveable = saveableData.getKey();
                 D knownData = saveableData.getValue();
                 D currentData = getData.apply(saveable);
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving " + saveable.getDisplayName() + ", last data: " + knownData + ". Current data: " + currentData + " " + this);
+                api.debug(Level.INFO, "[Save] Saving " + saveable.getDisplayName() + ", last data: " + knownData + ". Current data: " + currentData + " " + this);
                 if(currentData == null && knownData == null || currentData != null && currentData.equals(knownData)){
-                    ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] No need to save this");
+                    api.debug(Level.INFO, "[Save] No need to save this");
                     continue;
                 }
                 if(statement == null){
@@ -114,7 +115,7 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
                 }
                 fillUpdate.fill(statement, saveable);
                 lastKnownsData.put(saveable, currentData);
-                ConsulatAPI.getConsulatAPI().log(Level.INFO, "[Save] Saving (" + getData.apply(saveable) + ")");
+                api.debug(Level.INFO, "[Save] Saving (" + getData.apply(saveable) + ")");
                 statement.addBatch();
             }
             if(statement != null){
@@ -125,4 +126,5 @@ public class SaveTask<T extends Saveable, D> implements Runnable {
             e.printStackTrace();
         }
     }
+    
 }
