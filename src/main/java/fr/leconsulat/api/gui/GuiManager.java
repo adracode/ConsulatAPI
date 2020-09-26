@@ -99,7 +99,15 @@ public class GuiManager implements Listener {
                     return;
                 }
                 PacketContainer container = event.getPacket();
-                ItemStack fakeItem = gui.getItem(container.getIntegers().read(1)).getFakeItem(event.getPlayer().getUniqueId());
+                int window = container.getIntegers().read(0);
+                if(window <= 0){
+                    return;
+                }
+                int slot = container.getIntegers().read(1);
+                if(slot < 0 || slot > 53){
+                    return;
+                }
+                ItemStack fakeItem = gui.getItem(slot).getFakeItem(event.getPlayer().getUniqueId());
                 if(fakeItem != null){
                     container.getItemModifier().write(0, fakeItem);
                 }
