@@ -1,5 +1,6 @@
 package fr.leconsulat.api.player.stream;
 
+import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.utils.InventoryUtils;
 import org.bukkit.entity.Player;
 
@@ -35,6 +36,15 @@ public class PlayerOutputStream {
     public PlayerOutputStream writeInventory(){
         try {
             os.writeObject(InventoryUtils.getInventoryAsTag(player.getInventory()));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+    
+    public PlayerOutputStream writeActiveEffects(){
+        try {
+            os.writeObject(ConsulatAPI.getNMS().getPlayer().getEffectsAsTag(player));
         } catch(IOException e){
             e.printStackTrace();
         }

@@ -50,6 +50,16 @@ public class OfflinePlayerInputStream {
         return null;
     }
     
+    @SuppressWarnings("unchecked")
+    public ListTag<CompoundTag> fetchActiveEffects(){
+        try {
+            return (ListTag<CompoundTag>)is.readObject();
+        } catch(IOException | ClassNotFoundException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
     public void close(){
         try {
             is.close();

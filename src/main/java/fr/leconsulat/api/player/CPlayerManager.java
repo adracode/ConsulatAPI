@@ -140,7 +140,7 @@ public class CPlayerManager implements Listener {
             ConsulatPlayer player = players.get(uuid);
             if(player != null){
                 if(player.isInventoryBlocked()){
-                    new PlayerInputStream(player.getPlayer(), data).readLevel().readInventory().close();
+                    new PlayerInputStream(player.getPlayer(), data).readLevel().readInventory().readActiveEffects().close();
                     player.setInventoryBlocked(false);
                     player.sendMessage("§7Inventaire chargé.");
                 }
@@ -161,11 +161,13 @@ public class CPlayerManager implements Listener {
             is.close();
             float experience = inputStream.fetchLevel();
             int level = (int)experience;
-            ListTag<CompoundTag> saveInventory = playerTag.getListTag("Inventory", NBTType.COMPOUND);
             float saveXp = playerTag.getInt("XpLevel") + playerTag.getFloat("XpP");
+            ListTag<CompoundTag> saveInventory = playerTag.getListTag("Inventory", NBTType.COMPOUND);
+            ListTag<CompoundTag> saveEffects = playerTag.getListTag("ActiveEffects", NBTType.COMPOUND);
             playerTag.putInt("XpLevel", level);
             playerTag.putFloat("XpP", experience - level);
             playerTag.put("Inventory", inputStream.fetchInventory());
+            playerTag.put("ActiveEffects", inputStream.fetchActiveEffects());
             NBTOutputStream os = new NBTOutputStream(playerFile, playerTag);
             try {
                 os.write("");
@@ -180,6 +182,7 @@ public class CPlayerManager implements Listener {
                 playerTag.putInt("XpLevel", (int)saveXp);
                 playerTag.putFloat("XpP", saveXp - (int)saveXp);
                 playerTag.put("Inventory", saveInventory);
+                playerTag.put("ActiveEffects", saveEffects);
                 os = new NBTOutputStream(playerFile, playerTag);
                 os.write("");
             } finally {
@@ -198,7 +201,7 @@ public class CPlayerManager implements Listener {
         RFuture<String> server = player.getServer();
         byte[] loadData = pendingPlayer.remove(player.getUUID());
         if(loadData != null){
-            new PlayerInputStream(player.getPlayer(), loadData).readLevel().readInventory().close();
+            new PlayerInputStream(player.getPlayer(), loadData).readLevel().readInventory().readActiveEffects().close();
             player.setInventoryBlocked(false);
         }
         server.thenRun(player::setServer);

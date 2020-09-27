@@ -3,10 +3,12 @@ package fr.leconsulat.api.player.stream;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.nbt.CompoundTag;
 import fr.leconsulat.api.nms.api.Item;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffect;
 
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +57,20 @@ public class PlayerInputStream extends OfflinePlayerInputStream {
         }
         inventory.setArmorContents(armor);
         inventory.setExtraContents(extra);
+        return this;
+    }
+    
+    public PlayerInputStream readActiveEffects(){
+        List<CompoundTag> effects = fetchActiveEffects().getValue();
+        Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
+            for(PotionEffect effect : player.getActivePotionEffects()){
+                player.removePotionEffect(effect.getType());
+            }
+            fr.leconsulat.api.nms.api.Player playerNMS = ConsulatAPI.getNMS().getPlayer();
+            for(CompoundTag effect : effects){
+                playerNMS.addEffect(player, effect);
+            }
+        });
         return this;
     }
     

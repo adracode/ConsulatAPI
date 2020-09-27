@@ -45,7 +45,16 @@ public class OfflinePlayerOutputStream {
         return this;
     }
     
-    public byte[] send(){
+    public OfflinePlayerOutputStream writeActiveEffects(){
+        try {
+            os.writeObject(player.has("ActiveEffects") ? player.getListTag("ActiveEffects", NBTType.COMPOUND) : new ListTag<>(NBTType.COMPOUND));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+        
+        public byte[] send(){
         try {
             os.close();
             os = null;
