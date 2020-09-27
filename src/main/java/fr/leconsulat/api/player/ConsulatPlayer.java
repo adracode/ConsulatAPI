@@ -9,6 +9,8 @@ import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.ConsulatCommand;
 import fr.leconsulat.api.commands.commands.PersoCommand;
 import fr.leconsulat.api.database.Saveable;
+import fr.leconsulat.api.enchantments.CEnchantedItem;
+import fr.leconsulat.api.enchantments.EnchantmentManager;
 import fr.leconsulat.api.events.PlayerChangeRankEvent;
 import fr.leconsulat.api.gui.gui.IGui;
 import fr.leconsulat.api.moderation.BanReason;
@@ -25,6 +27,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.redisson.api.RBucket;
@@ -67,6 +70,14 @@ public class ConsulatPlayer implements Saveable {
         this.name = Objects.requireNonNull(name);
         this.player = Objects.requireNonNull(Bukkit.getPlayer(uuid), "player");
         setInventoryBlocked(true);
+        ItemStack[] currentArmor = getPlayer().getInventory().getArmorContents();
+        for(int i = 0; i < currentArmor.length; i++){
+            ItemStack armor = currentArmor[i];
+            if(CEnchantedItem.isEnchanted(armor)){
+                CEnchantedItem enchantedItem = new CEnchantedItem(armor);
+                EnchantmentManager.getInstance().applyCEnchantment(this, enchantedItem.getEnchants());
+            }
+        }
     }
     
     public int getId(){
