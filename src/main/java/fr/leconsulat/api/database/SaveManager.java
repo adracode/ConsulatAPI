@@ -58,6 +58,12 @@ public class SaveManager {
         }
     }
     
+    public void saveAll(){
+        for(SaveTask<? extends Saveable, ?> task : tasks.values()){
+            task.run();
+        }
+    }
+    
     //Bloquant
     public void removeAll(){
         for(SaveTask<? extends Saveable, ?> task : tasks.values()){
