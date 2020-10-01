@@ -3,8 +3,8 @@ package fr.leconsulat.api.player.stream;
 import fr.leconsulat.api.ConsulatAPI;
 import fr.leconsulat.api.nbt.CompoundTag;
 import fr.leconsulat.api.nms.api.Item;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -25,6 +25,44 @@ public class PlayerInputStream extends OfflinePlayerInputStream {
             close();
             throw new IllegalArgumentException("Bad player, given " + player.getUniqueId() + ", received " + uuid);
         }
+    }
+    
+    public PlayerInputStream readFully(){
+        readActiveEffects().readHealth().readFood().readSaturation().readExhaustion().readFoodTickTimer().readLevel().readInventory();
+        return this;
+    }
+    
+    public PlayerInputStream readHealth(){
+        try {
+            float health = fetchHealth();
+            if(health < 0){
+                health = 0F;
+            }
+            player.setHealth(health);
+        } catch(IllegalArgumentException e){
+            player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+        }
+        return this;
+    }
+    
+    public PlayerInputStream readFood(){
+        player.setFoodLevel(fetchFood());
+        return this;
+    }
+    
+    public PlayerInputStream readSaturation(){
+        player.setSaturation(fetchSaturation());
+        return this;
+    }
+    
+    public PlayerInputStream readExhaustion(){
+        player.setExhaustion(fetchExhaustion());
+        return this;
+    }
+    
+    public PlayerInputStream readFoodTickTimer(){
+        ConsulatAPI.getNMS().getPlayer().setFoodTickTimer(player, fetchFoodTickTimer());
+        return this;
     }
     
     public PlayerInputStream readLevel(){
@@ -62,15 +100,13 @@ public class PlayerInputStream extends OfflinePlayerInputStream {
     
     public PlayerInputStream readActiveEffects(){
         List<CompoundTag> effects = fetchActiveEffects().getValue();
-        Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
-            for(PotionEffect effect : player.getActivePotionEffects()){
-                player.removePotionEffect(effect.getType());
-            }
-            fr.leconsulat.api.nms.api.Player playerNMS = ConsulatAPI.getNMS().getPlayer();
-            for(CompoundTag effect : effects){
-                playerNMS.addEffect(player, effect);
-            }
-        });
+        for(PotionEffect effect : player.getActivePotionEffects()){
+            player.removePotionEffect(effect.getType());
+        }
+        fr.leconsulat.api.nms.api.Player playerNMS = ConsulatAPI.getNMS().getPlayer();
+        for(CompoundTag effect : effects){
+            playerNMS.addEffect(player, effect);
+        }
         return this;
     }
     

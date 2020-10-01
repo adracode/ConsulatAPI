@@ -159,15 +159,25 @@ public class CPlayerManager implements Listener {
             NBTInputStream is = new NBTInputStream(playerFile);
             CompoundTag playerTag = is.read();
             is.close();
-            float experience = inputStream.fetchLevel();
-            int level = (int)experience;
+            float saveHealth = playerTag.getFloat("Health");
+            int saveFood = playerTag.getInt("foodLevel");
+            float saveSaturation = playerTag.getFloat("foodSaturationLevel");
+            float saveExhaustion = playerTag.getFloat("foodExhaustionLevel");
+            int saveFoodTimer = playerTag.getInt("foodTickTimer");
             float saveXp = playerTag.getInt("XpLevel") + playerTag.getFloat("XpP");
             ListTag<CompoundTag> saveInventory = playerTag.getListTag("Inventory", NBTType.COMPOUND);
             ListTag<CompoundTag> saveEffects = playerTag.getListTag("ActiveEffects", NBTType.COMPOUND);
+            playerTag.put("ActiveEffects", inputStream.fetchActiveEffects());
+            playerTag.putFloat("Health", inputStream.fetchHealth());
+            playerTag.putInt("foodLevel", inputStream.fetchFood());
+            playerTag.putFloat("foodSaturationLevel", inputStream.fetchSaturation());
+            playerTag.putFloat("foodExhaustionLevel", inputStream.fetchExhaustion());
+            playerTag.putInt("foodTickTimer", inputStream.fetchFoodTickTimer());
+            float experience = inputStream.fetchLevel();
+            int level = (int)experience;
             playerTag.putInt("XpLevel", level);
             playerTag.putFloat("XpP", experience - level);
             playerTag.put("Inventory", inputStream.fetchInventory());
-            playerTag.put("ActiveEffects", inputStream.fetchActiveEffects());
             NBTOutputStream os = new NBTOutputStream(playerFile, playerTag);
             try {
                 os.write("");
@@ -175,10 +185,17 @@ public class CPlayerManager implements Listener {
                 ConsulatPlayer player = CPlayerManager.getInstance().getConsulatPlayer(uuid);
                 if(player != null){
                     player.addPermission(ConsulatPlayer.ERROR);
-                    player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                    Bukkit.getScheduler().runTask(ConsulatAPI.getConsulatAPI(), () -> {
+                        player.getPlayer().kickPlayer("§7§l§m ----[ §r§6§lLe Consulat §7§l§m]----\n\n§cUne erreur critique est survenue. Contacte un admin / développeur sur Discord.\n");
+                    });
                 } else {
                     ConsulatPlayer.addPermission(uuid, ConsulatPlayer.ERROR);
                 }
+                playerTag.putFloat("Health", saveHealth);
+                playerTag.putInt("foodLevel", saveFood);
+                playerTag.putFloat("foodSaturationLevel", saveSaturation);
+                playerTag.putFloat("foodExhaustionLevel", saveExhaustion);
+                playerTag.putInt("foodTickTimer", saveFoodTimer);
                 playerTag.putInt("XpLevel", (int)saveXp);
                 playerTag.putFloat("XpP", saveXp - (int)saveXp);
                 playerTag.put("Inventory", saveInventory);
@@ -201,7 +218,7 @@ public class CPlayerManager implements Listener {
         RFuture<String> server = player.getServer();
         byte[] loadData = pendingPlayer.remove(player.getUUID());
         if(loadData != null){
-            new PlayerInputStream(player.getPlayer(), loadData).readLevel().readInventory().readActiveEffects().close();
+            new PlayerInputStream(player.getPlayer(), loadData).readFully().close();
             player.setInventoryBlocked(false);
         }
         server.thenRun(player::setServer);
@@ -223,6 +240,8 @@ public class CPlayerManager implements Listener {
         if(!offlinePlayers.containsKey(name)){
             offlinePlayers.put(name, event.getPlayer().getUniqueId());
         }
+        float health = (float)player.getPlayer().getHealth();
+        Bukkit.getScheduler().runTaskLater(ConsulatAPI.getConsulatAPI(), () -> player.getPlayer().setHealth(health), 1L);
         Bukkit.getServer().getScheduler().runTaskAsynchronously(api, () -> {
             try {
                 long start = System.currentTimeMillis();
