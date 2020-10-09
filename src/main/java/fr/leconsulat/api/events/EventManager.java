@@ -9,7 +9,6 @@ import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -210,14 +209,24 @@ public class EventManager implements Listener {
                     return;
                 }
                 PlayerInteractBlockEvent interactBlockEvent = null;
-                Block aboveClicked = clickedBlock.getRelative(BlockFace.UP);
+                if(clickedBlock.getType() == Material.DRAGON_EGG){
+                    interactBlockEvent = new PlayerInteractDragonEggEvent(clickedBlock, player, event.getHand());
+                }
+                if(interactBlockEvent != null){
+                    Bukkit.getPluginManager().callEvent(interactBlockEvent);
+                    event.setCancelled(interactBlockEvent.isCancelled());
+                    if(interactBlockEvent.isCancelled()){
+                        return;
+                    }
+                    interactBlockEvent = null;
+                }
+                Block aboveClicked = clickedBlock.getRelative(event.getBlockFace());
                 if(aboveClicked.getType() == Material.FIRE){
                     interactBlockEvent = new PlayerBreakFireEvent(aboveClicked, player);
                 }
                 if(interactBlockEvent != null){
                     Bukkit.getPluginManager().callEvent(interactBlockEvent);
                     event.setCancelled(interactBlockEvent.isCancelled());
-                    
                 }
             }
             break;
