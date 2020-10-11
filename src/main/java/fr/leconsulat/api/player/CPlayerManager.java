@@ -140,7 +140,7 @@ public class CPlayerManager implements Listener {
             ConsulatPlayer player = players.get(uuid);
             if(player != null){
                 if(player.isInventoryBlocked()){
-                    new PlayerInputStream(player.getPlayer(), data).readLevel().readInventory().readActiveEffects().close();
+                    new PlayerInputStream(player.getPlayer(), data).readFully().close();
                     player.setInventoryBlocked(false);
                     player.sendMessage("§7Inventaire chargé.");
                 }
