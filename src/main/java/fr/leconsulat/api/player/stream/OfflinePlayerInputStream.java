@@ -31,6 +31,51 @@ public class OfflinePlayerInputStream {
         return null;
     }
     
+    public float fetchHealth(){
+        try {
+            return is.readFloat();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
+    public int fetchFood(){
+        try {
+            return is.readInt();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
+    public float fetchSaturation(){
+        try {
+            return is.readFloat();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
+    public float fetchExhaustion(){
+        try {
+            return is.readFloat();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
+    public int fetchFoodTickTimer(){
+        try {
+            return is.readInt();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
     public float fetchLevel(){
         try {
             return is.readFloat();
@@ -42,6 +87,16 @@ public class OfflinePlayerInputStream {
     
     @SuppressWarnings("unchecked")
     public ListTag<CompoundTag> fetchInventory(){
+        try {
+            return (ListTag<CompoundTag>)is.readObject();
+        } catch(IOException | ClassNotFoundException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public ListTag<CompoundTag> fetchActiveEffects(){
         try {
             return (ListTag<CompoundTag>)is.readObject();
         } catch(IOException | ClassNotFoundException e){

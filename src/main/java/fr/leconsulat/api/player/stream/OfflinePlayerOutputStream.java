@@ -27,6 +27,56 @@ public class OfflinePlayerOutputStream {
         }
     }
     
+    public OfflinePlayerOutputStream writeFully(){
+        writeActiveEffects().writeHealth().writeFood().writeSaturation().writeExhaustion().writeFoodTickTimer().writeLevel().writeInventory();
+        return this;
+    }
+    
+    public OfflinePlayerOutputStream writeHealth(){
+        try {
+            os.writeFloat(player.getFloat("Health"));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+    
+    public OfflinePlayerOutputStream writeFood(){
+        try {
+            os.writeInt(player.getInt("foodLevel"));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+    
+    public OfflinePlayerOutputStream writeSaturation(){
+        try {
+            os.writeFloat(player.getFloat("foodSaturationLevel"));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+    
+    public OfflinePlayerOutputStream writeExhaustion(){
+        try {
+            os.writeFloat(player.getFloat("foodExhaustionLevel"));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+    
+    public OfflinePlayerOutputStream writeFoodTickTimer(){
+        try {
+            os.writeInt(player.getInt("foodTickTimer"));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+    
     public OfflinePlayerOutputStream writeLevel(){
         try {
             os.writeFloat(player.getInt("XpLevel") + player.getFloat("XpP"));
@@ -45,7 +95,16 @@ public class OfflinePlayerOutputStream {
         return this;
     }
     
-    public byte[] send(){
+    public OfflinePlayerOutputStream writeActiveEffects(){
+        try {
+            os.writeObject(player.has("ActiveEffects") ? player.getListTag("ActiveEffects", NBTType.COMPOUND) : new ListTag<>(NBTType.COMPOUND));
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return this;
+    }
+        
+        public byte[] send(){
         try {
             os.close();
             os = null;

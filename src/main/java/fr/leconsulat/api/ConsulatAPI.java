@@ -7,8 +7,10 @@ import fr.leconsulat.api.channel.ChannelManager;
 import fr.leconsulat.api.channel.StaffChannel;
 import fr.leconsulat.api.commands.CommandManager;
 import fr.leconsulat.api.commands.commands.*;
+import fr.leconsulat.api.commands.commands.enchantments.CEnchantCommand;
 import fr.leconsulat.api.database.DatabaseManager;
 import fr.leconsulat.api.database.SaveManager;
+import fr.leconsulat.api.enchantments.EnchantmentManager;
 import fr.leconsulat.api.events.ChatSyncEvent;
 import fr.leconsulat.api.events.EventManager;
 import fr.leconsulat.api.events.PostInitEvent;
@@ -252,6 +254,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         debugChannel = redisManager.getRedis().getTopic("Debug");
         protocolManager = ProtocolLibrary.getProtocolManager();
         SaveManager.getInstance();
+        EnchantmentManager.getInstance();
         ChannelManager.getInstance();
         EventManager.getInstance();
         playerManager = new CPlayerManager();
@@ -260,6 +263,7 @@ public class ConsulatAPI extends JavaPlugin implements Listener {
         new StaffChannel();
         new ADebugCommand().register();
         new AntecedentsCommand().register();
+        new CEnchantCommand().register();
         new HelpCommand().register();
         new KickCommand().register();
         new PersoCommand().register();

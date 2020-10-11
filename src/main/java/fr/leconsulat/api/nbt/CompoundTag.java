@@ -1,5 +1,7 @@
 package fr.leconsulat.api.nbt;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 public final class CompoundTag implements Tag {
@@ -144,6 +146,15 @@ public final class CompoundTag implements Tag {
 	@Override
 	public NBTType getType(){
 		return NBTType.COMPOUND;
+	}
+	
+	@NotNull
+	public Set<String> keys(){
+		return Collections.unmodifiableSet(value.keySet());
+	}
+	
+	public Tag remove(String key){
+		return value.remove(key);
 	}
 	
 	@Override
