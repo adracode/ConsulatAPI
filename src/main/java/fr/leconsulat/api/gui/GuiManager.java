@@ -37,7 +37,7 @@ public class GuiManager implements Listener {
     
     private static GuiManager instance;
     
-    static {
+    static{
         new GuiManager();
     }
     
@@ -85,6 +85,36 @@ public class GuiManager implements Listener {
                     items.set(item.getSlot(), fake);
                 }
                 container.getItemListModifier().write(0, items);
+            }
+        });
+        ConsulatAPI.getConsulatAPI().getProtocolManager().addPacketListener(new PacketAdapter(ConsulatAPI.getConsulatAPI(), PacketType.Play.Server.SET_SLOT) {
+            @Override
+            public void onPacketSending(PacketEvent event){
+                Inventory top = event.getPlayer().getOpenInventory().getTopInventory();
+                IGui gui = getGui(top);
+                if(gui == null){
+                    return;
+                }
+                if(!gui.containsFakeItems()){
+                    return;
+                }
+                PacketContainer container = event.getPacket();
+                int window = container.getIntegers().read(0);
+                if(window <= 0){
+                    return;
+                }
+                int slot = container.getIntegers().read(1);
+                if(slot < 0 || slot > 53){
+                    return;
+                }
+                GuiItem item = gui.getItem(slot);
+                if(item == null){
+                    return;
+                }
+                ItemStack fakeItem = item.getFakeItem(event.getPlayer().getUniqueId());
+                if(fakeItem != null){
+                    container.getItemModifier().write(0, fakeItem);
+                }
             }
         });
         Bukkit.getPluginManager().registerEvents(this, ConsulatAPI.getConsulatAPI());
