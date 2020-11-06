@@ -421,7 +421,7 @@ public class CPlayerManager implements Listener {
     }
     
     public void fetchPlayer(ConsulatPlayer player) throws SQLException{
-        PreparedStatement fetch = ConsulatAPI.getDatabase().prepareStatement("SELECT id, player_rank, registered, buyedPerso, prefix_perso FROM players WHERE player_uuid = ?");
+        PreparedStatement fetch = ConsulatAPI.getDatabase().prepareStatement("SELECT id, player_rank, registered, buyedPerso, prefix_perso, public_api FROM players WHERE player_uuid = ?");
         fetch.setString(1, player.getUUID().toString());
         ResultSet resultSet = fetch.executeQuery();
         if(resultSet.next()){
@@ -437,10 +437,11 @@ public class CPlayerManager implements Listener {
                     Rank.byName(rank),
                     resultSet.getBoolean("buyedPerso"),
                     resultSet.getString("prefix_perso"),
-                    resultSet.getString("registered")
+                    resultSet.getString("registered"),
+                    resultSet.getBoolean("public_api")
             );
         } else {
-            player.initialize(0, Rank.INVITE, false, null, null);
+            player.initialize(0, Rank.INVITE, false, null, null, false);
         }
         resultSet.close();
         fetch.close();
@@ -527,6 +528,20 @@ public class CPlayerManager implements Listener {
         } catch(SQLException e){
             e.printStackTrace();
         }
+    }
+    
+    public void setApi(ConsulatPlayer player, boolean api){
+        Bukkit.getScheduler().runTaskAsynchronously(ConsulatAPI.getConsulatAPI(), () -> {
+            try {
+                PreparedStatement setApi = ConsulatAPI.getDatabase().prepareStatement("UPDATE players SET public_api = ? WHERE player_uuid = ?");
+                setApi.setBoolean(1, api);
+                setApi.setString(2, player.getUUID().toString());
+                setApi.executeUpdate();
+                setApi.close();
+            } catch(SQLException e){
+                e.printStackTrace();
+            }
+        });
     }
     
     private void setAntecedents(ConsulatPlayer player) throws SQLException{

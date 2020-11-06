@@ -26,6 +26,10 @@ public final class Text {
     public static final String ALREADY_MUTED = PREFIX + "§cCe joueur est déjà mute.";
     public static final String PLAYER_NOT_CONNECTED = PREFIX + "§cCe joueur n'est pas connecté.";
     public static final String YOU_KICKED_PLAYER = PREFIX + "§aJoueur exclu !";
+    public static final String API_ALREADY_ON = PREFIX + "§cTon API est déjà activé.";
+    public static final String API_ON = PREFIX + "§7Ton API est maintenant §aactivé";
+    public static final String API_ALREADY_OFF = PREFIX + "§cTon API est déjà désactivé.";
+    public static final String API_OFF = PREFIX + "§7Ton API est maintenant §adésactivé";
     
     public static String CUSTOM_RANK_COLOR_CHOSEN(ChatColor color){return PREFIX + "§7Tu as choisi " + color + "cette couleur !\n§6Écris dans le chat le nom de ton grade: §o(10 caractères maximum, celui-ci aura des crochets par défaut)";}
     public static String NEW_CUSTOM_RANK(ConsulatPlayer player){return PREFIX + "§6Voilà ton nouveau grade: " + player.getDisplayName();}
@@ -55,4 +59,8 @@ public final class Text {
     public static String PLAYER_BANNED(String player){return ANNOUNCE_PREFIX + "§c" + player + "§4 a été banni.";}
     public static String PLAYER_MUTED(String player){return Text.ANNOUNCE_PREFIX + "§6" + player + " §ea été mute.";}
     
+    public static String HELP_API(ConsulatPlayer player){
+        return PREFIX + "§7L'API est un moyen d'obtenir certaines informations publiquement (à définir)." +
+                "Ton §cAPI §7est " + (player.isApi() ? "§aactivé" : "§cdésactivé");
+    }
 }

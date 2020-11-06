@@ -49,6 +49,7 @@ public class ConsulatPlayer implements Saveable {
     private int id;
     private @NotNull Set<String> permissions = new HashSet<>();
     private Rank rank;
+    private boolean api;
     private boolean initialized = false;
     private CustomRank customRank;
     private String registered;
@@ -377,11 +378,12 @@ public class ConsulatPlayer implements Saveable {
         this.customRank.setColorName(colorName);
     }
     
-    public void initialize(int id, Rank rank, boolean hasCustomRank, String customRank, String registered){
+    public void initialize(int id, Rank rank, boolean hasCustomRank, String customRank, String registered, boolean api){
         this.id = id;
         this.rank = rank;
         this.customRank = hasCustomRank ? customRank == null ? new CustomRank() : new CustomRank(customRank) : null;
         this.registered = registered;
+        this.api = api;
         this.initialized = true;
     }
     
@@ -480,6 +482,15 @@ public class ConsulatPlayer implements Saveable {
     
     public int decrementPosition(){
         return --positionInQueue;
+    }
+    
+    public boolean isApi(){
+        return api;
+    }
+    
+    public void setApi(boolean api){
+        this.api = api;
+        CPlayerManager.getInstance().setApi(this, api);
     }
     
     public void load(){
